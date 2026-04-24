@@ -1,0 +1,55 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 0;
+}
+
+.greet {
+  flex: 1;
+}
+
+.hello {
+  font-size: 13px;
+  color: var(--ink-dim);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #7ab06a;
+  box-shadow: 0 0 0 3px rgba(122, 176, 106, 0.15);
+}
+
+.title {
+  font-family: var(--font-serif), serif;
+  font-size: 32px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.title em {
+  font-style: italic;
+  color: var(--accent-soft);
+}
+
+.placeholder {
+  color: var(--ink-dim);
+  font-size: 14px;
+  padding: 48px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  text-align: center;
+}

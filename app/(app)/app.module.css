@@ -1,0 +1,11 @@
+.app {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 100vh;
+}
+
+.main {
+  padding: 36px 48px 80px;
+  max-width: 1400px;
+  overflow-x: hidden;
+}

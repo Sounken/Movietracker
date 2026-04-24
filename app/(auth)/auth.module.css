@@ -1,0 +1,145 @@
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  padding: 24px;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 40px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.brand {
+  margin-bottom: 32px;
+}
+
+.brandName {
+  font-family: var(--font-serif), serif;
+  font-size: 22px;
+  color: var(--ink);
+}
+
+.brandName em {
+  font-style: italic;
+  color: var(--accent-soft);
+}
+
+.title {
+  font-family: var(--font-serif), serif;
+  font-size: 32px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: var(--ink-dim);
+  margin-bottom: 28px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.error {
+  background: rgba(194, 65, 44, 0.1);
+  border: 1px solid rgba(194, 65, 44, 0.3);
+  color: #e57060;
+  font-size: 13px;
+  padding: 10px 14px;
+  border-radius: 8px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 12px;
+  font-family: var(--font-geist-mono), monospace;
+  color: var(--ink-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.hint {
+  color: var(--ink-mute);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.input {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-family: var(--font-geist), system-ui, sans-serif;
+  font-size: 14px;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+}
+
+.input::placeholder {
+  color: var(--ink-mute);
+}
+
+.input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(217, 119, 66, 0.12);
+}
+
+.btn {
+  margin-top: 8px;
+  padding: 12px;
+  background: var(--accent);
+  border: none;
+  border-radius: 10px;
+  font-family: var(--font-geist), system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+  cursor: pointer;
+  transition: filter 0.2s, transform 0.2s;
+  box-shadow: 0 4px 20px rgba(217, 119, 66, 0.25);
+}
+
+.btn:hover:not(:disabled) {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.switchLink {
+  margin-top: 20px;
+  font-size: 13px;
+  color: var(--ink-dim);
+  text-align: center;
+}
+
+.switchLink a {
+  color: var(--accent-soft);
+  font-weight: 500;
+}
+
+.switchLink a:hover {
+  text-decoration: underline;
+}
