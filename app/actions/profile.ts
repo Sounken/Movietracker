@@ -21,7 +21,7 @@ export async function updateProfile(data: {
   revalidatePath("/profile");
 }
 
-export async function setFavoriteFilm(position: 1 | 2 | 3, tmdbId: number | null) {
+export async function setFavoriteFilm(position: 1 | 2 | 3 | 4, tmdbId: number | null) {
   const session = await getSession();
   if (!session) throw new Error("Non authentifié");
 

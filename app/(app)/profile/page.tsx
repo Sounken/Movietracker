@@ -2,9 +2,8 @@ import { notFound } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { fetchFilmCard } from "@/lib/tmdb";
-import Link from "next/link";
-import ProfileEditor from "./ProfileEditor";
-import FavoriteFilmsPicker from "./FavoriteFilmsPicker";
+import ProfileHeaderClient from "./ProfileHeaderClient";
+import FavFilmsClient from "./FavFilmsClient";
 import CollectionClient from "../components/CollectionClient";
 import AddFilmButton from "../components/AddFilmButton";
 import { computeXP, getLevelInfo } from "@/lib/xp";
@@ -14,28 +13,15 @@ export default async function ProfilePage() {
   const session = await getSession();
   if (!session) notFound();
 
-  const [user, stats, favoriteEntries, filmEntries] = await Promise.all([
+  const [user, filmEntries, favoriteEntries] = await Promise.all([
     prisma.user.findUnique({ where: { id: session.userId } }),
-    prisma.userFilm.aggregate({
+    prisma.userFilm.findMany({
       where: { userId: session.userId },
-      _count: { id: true },
-      _sum: { runtime: true },
+      orderBy: { updatedAt: "desc" },
     }),
     prisma.userFavoriteFilm.findMany({
       where: { userId: session.userId },
       orderBy: { position: "asc" },
-    }),
-    prisma.userFilm.findMany({
-      where: {
-        userId: session.userId,
-        OR: [
-          { rating: { not: null } },
-          { watched: true },
-          { watchlist: true },
-          { liked: true },
-        ],
-      },
-      orderBy: { updatedAt: "desc" },
     }),
   ]);
 
@@ -43,137 +29,125 @@ export default async function ProfilePage() {
 
   const levelInfo = getLevelInfo(computeXP(filmEntries));
 
-  const [ratedCount, watchlistCount, likedCount] = await Promise.all([
+  const [watchedCount, ratedCount, watchlistCount, likedCount, runtimeAgg] = await Promise.all([
+    prisma.userFilm.count({ where: { userId: session.userId, watched: true } }),
     prisma.userFilm.count({ where: { userId: session.userId, rating: { not: null } } }),
     prisma.userFilm.count({ where: { userId: session.userId, watchlist: true } }),
     prisma.userFilm.count({ where: { userId: session.userId, liked: true } }),
+    prisma.userFilm.aggregate({
+      where: { userId: session.userId, runtime: { not: null } },
+      _sum: { runtime: true },
+    }),
   ]);
 
+  const totalHours = Math.floor((runtimeAgg._sum?.runtime ?? 0) / 60);
+  const avgRating =
+    ratedCount > 0
+      ? filmEntries
+          .filter((e) => e.rating !== null)
+          .reduce((s, e) => s + (e.rating ?? 0), 0) / ratedCount
+      : null;
+
+  // 4 favorite films
   const favoriteFilms = await Promise.all(
-    [1, 2, 3].map(async (pos) => {
+    [1, 2, 3, 4].map(async (pos) => {
       const entry = favoriteEntries.find((e) => e.position === pos);
-      if (!entry) return { position: pos, film: null };
+      if (!entry) return { position: pos, tmdbId: null, title: null, posterUrl: null, year: null };
       const film = await fetchFilmCard(entry.tmdbId);
-      return { position: pos, film, tmdbId: entry.tmdbId };
+      return {
+        position: pos,
+        tmdbId: entry.tmdbId,
+        title: film?.title ?? null,
+        posterUrl: film?.posterUrl ?? null,
+        year: film?.year ?? null,
+      };
     }),
   );
 
+  // Collection (only films with meaningful data)
   const collectionFilms = (
     await Promise.all(
-      filmEntries.map(async (entry) => {
-        const card = await fetchFilmCard(entry.tmdbId);
-        if (!card) return null;
-        return { ...card, rating: entry.rating ?? null };
-      }),
+      filmEntries
+        .filter((e) => e.rating !== null || e.watched || e.watchlist || e.liked)
+        .map(async (entry) => {
+          const card = await fetchFilmCard(entry.tmdbId);
+          if (!card) return null;
+          return { ...card, rating: entry.rating ?? null };
+        }),
     )
   ).filter(Boolean) as Array<{ id: number; title: string; posterUrl: string; year: string; genres: string[]; rating: number | null }>;
 
-  const totalHours = Math.floor((stats._sum.runtime ?? 0) / 60);
   const initial = (user.name ?? user.email)[0].toUpperCase();
+  const joinedYear = new Date(user.createdAt).getFullYear();
 
   return (
     <div className={styles.page}>
-      {/* ——— Banner ——— */}
-      <div
-        className={styles.banner}
-        style={user.bannerUrl ? { backgroundImage: `url("${user.bannerUrl}")` } : undefined}
+      {/* Banner + Header + XP — client component handles edit */}
+      <ProfileHeaderClient
+        name={user.name ?? ""}
+        bio={user.bio ?? ""}
+        avatarUrl={user.avatarUrl ?? ""}
+        bannerUrl={user.bannerUrl ?? ""}
+        initial={initial}
+        levelInfo={levelInfo}
+        joinedYear={joinedYear}
       />
 
-      {/* ——— Header ——— */}
-      <div className={styles.header}>
-        <div className={styles.avatarWrap}>
-          {user.avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={user.avatarUrl} alt={user.name ?? ""} className={styles.avatar} />
-          ) : (
-            <div className={styles.avatarFallback}>{initial}</div>
-          )}
-        </div>
-
-        <div className={styles.headerInfo}>
-          <h1 className={styles.name}>{user.name ?? "Cinéphile"}</h1>
-          <div className={styles.levelBadge}>
-            <span className={styles.levelTitle}>{levelInfo.title}</span>
-            <span className={styles.levelNum}>niv. {levelInfo.level}</span>
+      {/* Stats grid */}
+      <div className={styles.statsSection}>
+        <div className={styles.statsGrid}>
+          <div className={styles.statCard}>
+            <div className={styles.statDeco}>🎬</div>
+            <div className={styles.statLabel}>Films vus</div>
+            <div className={styles.statVal}>{watchedCount}</div>
+            <div className={styles.statSub}>↑ total visionnés</div>
           </div>
-          <div className={styles.xpRow}>
-            <div className={styles.xpBarWrap} title={`${levelInfo.currentXP} / ${levelInfo.nextLevelXP} XP`}>
-              <div className={styles.xpBar} style={{ width: `${levelInfo.percent}%` }} />
-            </div>
-            <span className={styles.xpLabel}>{levelInfo.currentXP} / {levelInfo.nextLevelXP} XP</span>
+          <div className={styles.statCard}>
+            <div className={styles.statDeco}>⭐</div>
+            <div className={styles.statLabel}>Note moyenne</div>
+            <div className={styles.statVal}>{avgRating !== null ? avgRating.toFixed(1) : "—"}</div>
+            <div className={styles.statSub}>sur {ratedCount} films notés</div>
           </div>
-          {user.bio && <p className={styles.bio}>{user.bio}</p>}
-          <div className={styles.headerStats}>
-            <div className={styles.headerStat}>
-              <span className={styles.headerStatVal}>{ratedCount}</span>
-              <span className={styles.headerStatLab}>Films notés</span>
-            </div>
-            <div className={styles.headerStat}>
-              <span className={styles.headerStatVal}>{watchlistCount}</span>
-              <span className={styles.headerStatLab}>À voir</span>
-            </div>
-            <div className={styles.headerStat}>
-              <span className={styles.headerStatVal}>{likedCount}</span>
-              <span className={styles.headerStatLab}>Favoris</span>
-            </div>
-            {totalHours > 0 && (
-              <div className={styles.headerStat}>
-                <span className={styles.headerStatVal}>{totalHours}h</span>
-                <span className={styles.headerStatLab}>Visionnés</span>
-              </div>
-            )}
+          <div className={styles.statCard}>
+            <div className={styles.statDeco}>⏱</div>
+            <div className={styles.statLabel}>Heures visionnées</div>
+            <div className={styles.statVal}>{totalHours}<span style={{ fontSize: 20 }}>h</span></div>
+            <div className={styles.statSub}>≈ {Math.round(totalHours / 24)} jours</div>
+          </div>
+          <div className={styles.statCard}>
+            <div className={styles.statDeco}>❤️</div>
+            <div className={styles.statLabel}>Favoris</div>
+            <div className={styles.statVal}>{likedCount}</div>
+            <div className={styles.statSub}>films aimés</div>
+          </div>
+          <div className={styles.statCard}>
+            <div className={styles.statDeco}>📋</div>
+            <div className={styles.statLabel}>À voir</div>
+            <div className={styles.statVal}>{watchlistCount}</div>
+            <div className={styles.statSub}>dans la watchlist</div>
           </div>
         </div>
-
-        <ProfileEditor
-          name={user.name ?? ""}
-          bio={user.bio ?? ""}
-          avatarUrl={user.avatarUrl ?? ""}
-          bannerUrl={user.bannerUrl ?? ""}
-        />
       </div>
 
-      {/* ——— Films favoris (top 3 Letterboxd style) ——— */}
-      <div className={styles.section}>
-        <div className={styles.sectionTitle}>Films préférés</div>
-        <div className={styles.favGrid}>
-          {favoriteFilms.map(({ position, film, tmdbId }) => (
-            <div key={position} className={styles.favSlot}>
-              {film ? (
-                <Link href={`/film/${tmdbId}`} className={styles.favCard}>
-                  <div
-                    className={styles.favPoster}
-                    style={{ backgroundImage: `url("${film.posterUrl}")` }}
-                  />
-                  <div className={styles.favInfo}>
-                    <div className={styles.favTitle}>{film.title}</div>
-                    {film.year && <div className={styles.favYear}>{film.year}</div>}
-                  </div>
-                </Link>
-              ) : (
-                <div className={styles.favEmpty}>
-                  <span className={styles.favPos}>{position}</span>
-                </div>
-              )}
-            </div>
-          ))}
+      <div className={styles.content}>
+        {/* Favorite films */}
+        <div className={styles.section}>
+          <div className={styles.sectionHead}>
+            <h2 className={styles.sectionTitle}>Films préférés</h2>
+          </div>
+          <FavFilmsClient
+            slots={favoriteFilms.map((f) => ({ ...f, position: f.position as 1 | 2 | 3 | 4 }))}
+          />
         </div>
-        <FavoriteFilmsPicker
-          slots={favoriteFilms.map(({ position, film, tmdbId }) => ({
-            position: position as 1 | 2 | 3,
-            tmdbId: tmdbId ?? null,
-            title: film?.title ?? null,
-          }))}
-        />
-      </div>
 
-      {/* ——— Collection ——— */}
-      <div className={styles.section}>
-        <div className={styles.sectionHead}>
-          <div className={styles.sectionTitle}>Ma collection</div>
-          <AddFilmButton />
+        {/* Collection */}
+        <div className={styles.section}>
+          <div className={styles.sectionHead}>
+            <h2 className={styles.sectionTitle}>Ma collection</h2>
+            <AddFilmButton />
+          </div>
+          <CollectionClient films={collectionFilms} />
         </div>
-        <CollectionClient films={collectionFilms} />
       </div>
     </div>
   );
