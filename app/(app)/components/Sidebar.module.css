@@ -163,3 +163,58 @@
   width: 16px;
   height: 16px;
 }
+
+@media (max-width: 768px) {
+  .nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto;
+    height: 64px;
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 8px;
+    z-index: 50;
+    border-right: 0;
+    border-top: 1px solid var(--line);
+    overflow: visible;
+  }
+
+  .brand,
+  .navLabel,
+  .navFoot {
+    display: none;
+  }
+
+  .navSection {
+    display: contents;
+    margin: 0;
+  }
+
+  .navItem {
+    flex-direction: column;
+    padding: 8px 12px;
+    gap: 3px;
+    border-radius: 10px;
+    flex: 0 0 auto;
+    box-shadow: none;
+    background: none;
+  }
+
+  .navItem.active {
+    box-shadow: none;
+    background: rgba(217, 119, 66, 0.12);
+  }
+
+  .navItem svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .navItem span {
+    display: none;
+  }
+}

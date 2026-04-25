@@ -1,55 +1,148 @@
 .page {
   display: flex;
   flex-direction: column;
-  gap: 36px;
 }
 
-.topbar {
+/* ——— Section headers ——— */
+.sectionHead {
   display: flex;
-  align-items: center;
-  gap: 24px;
-  margin-bottom: 0;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 22px;
 }
 
-.greet {
-  flex: 1;
-}
-
-.hello {
-  font-size: 13px;
-  color: var(--ink-dim);
-  margin-bottom: 6px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #7ab06a;
-  box-shadow: 0 0 0 3px rgba(122, 176, 106, 0.15);
-}
-
-.title {
+.sectionTitle {
   font-family: var(--font-serif), serif;
-  font-size: 32px;
+  font-size: 30px;
+  margin: 0;
   font-weight: 400;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
   color: var(--ink);
 }
 
-.title em {
-  font-style: italic;
-  color: var(--accent-soft);
+.sectionSub {
+  font-size: 12px;
+  color: var(--ink-mute);
+  margin-bottom: 4px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 500;
+  font-family: var(--font-geist-mono), monospace;
 }
 
-.placeholder {
+/* ——— Pills ——— */
+.pills {
+  display: flex;
+  gap: 8px;
+}
+
+.pill {
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: var(--panel);
+  border: 1px solid var(--line);
   color: var(--ink-dim);
+  cursor: pointer;
+  transition: all 0.18s;
+  font-family: var(--font-geist-mono), monospace;
+  letter-spacing: 0.02em;
+}
+
+.pill:hover {
+  color: var(--ink);
+  border-color: var(--ink-mute);
+}
+
+.pillOn {
+  background: var(--ink);
+  color: var(--bg);
+  border-color: var(--ink);
+}
+
+/* ——— Stats row ——— */
+.stats {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.stat {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px 24px;
+  min-width: 120px;
+}
+
+.statVal {
+  font-family: var(--font-serif), serif;
+  font-size: 32px;
+  line-height: 1;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.statLab {
+  font-size: 11px;
+  font-family: var(--font-geist-mono), monospace;
+  color: var(--ink-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* ——— No TMDB banner ——— */
+.noTmdb {
+  margin-bottom: 64px;
+  padding: 20px 24px;
+  border: 1px dashed var(--line);
+  border-radius: 14px;
   font-size: 14px;
+  color: var(--ink-dim);
+}
+
+.noTmdb code {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 12px;
+  background: rgba(217, 119, 66, 0.1);
+  color: var(--accent-soft);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* ——— Empty state ——— */
+.emptyGrid {
   padding: 48px;
   border: 1px dashed var(--line);
   border-radius: var(--radius);
   text-align: center;
+}
+
+.emptyGrid p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-dim);
+}
+
+.emptyHint {
+  margin-top: 8px !important;
+  font-size: 13px !important;
+  color: var(--ink-mute) !important;
+}
+
+/* ——— Responsive ——— */
+@media (max-width: 768px) {
+  .sectionHead {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .sectionTitle {
+    font-size: 22px;
+  }
+
+  .pills {
+    flex-wrap: wrap;
+  }
 }

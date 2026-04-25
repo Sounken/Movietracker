@@ -1,0 +1,203 @@
+.wrap {
+  margin-bottom: 40px;
+}
+
+.widget {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 24px 28px;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+
+.label {
+  font-size: 13px;
+  color: var(--ink-dim);
+}
+
+.label strong {
+  display: block;
+  font-size: 15px;
+  color: var(--ink);
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.divider {
+  width: 1px;
+  height: 40px;
+  background: var(--line);
+}
+
+.stars {
+  display: flex;
+  gap: 4px;
+}
+
+.starBtn {
+  background: none;
+  border: 0;
+  cursor: pointer;
+  padding: 2px;
+  color: var(--ink-mute);
+  transition: transform 0.1s;
+  display: inline-flex;
+  align-items: center;
+}
+
+.starBtn:hover {
+  transform: scale(1.15);
+}
+
+/* Half star layout */
+.halfWrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.halfFill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 50%;
+  overflow: hidden;
+  color: var(--gold);
+}
+
+:global([data-theme="light"]) .halfFill {
+  color: var(--accent);
+}
+
+/* Full star inherits color from parent .starBtn — override when active */
+.stars .starBtn svg[fill="currentColor"] {
+  color: var(--gold);
+}
+
+.note {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 22px;
+  color: var(--gold);
+  min-width: 60px;
+}
+
+:global([data-theme="light"]) .note {
+  color: var(--accent);
+}
+
+/* Review block */
+.reviewBlock {
+  margin-top: 16px;
+  animation: fadeIn 0.25s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+.reviewLabel {
+  font-size: 11px;
+  font-family: var(--font-geist-mono), monospace;
+  color: var(--ink-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 8px;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 100px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  resize: vertical;
+  outline: none;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+
+.textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(217, 119, 66, 0.1);
+}
+
+.textarea::placeholder {
+  color: var(--ink-mute);
+}
+
+.reviewActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.savedMsg {
+  font-size: 12px;
+  color: var(--accent);
+  font-family: var(--font-geist-mono), monospace;
+  margin-right: auto;
+}
+
+.btnSecondary,
+.btnSave {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink-dim);
+  transition: all 0.2s;
+}
+
+.btnSave {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 500;
+}
+
+.btnSave:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.btnSave:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .widget {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 18px;
+  }
+
+  .divider {
+    width: 100%;
+    height: 1px;
+  }
+
+  .starOff,
+  .starOn {
+    padding: 4px;
+  }
+
+  .starOff svg,
+  .starOn svg {
+    width: 30px;
+    height: 30px;
+  }
+}

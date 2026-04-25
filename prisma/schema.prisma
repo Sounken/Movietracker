@@ -8,9 +8,25 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
+  id           String     @id @default(cuid())
   name         String?
-  email        String   @unique
+  email        String     @unique
   passwordHash String
-  createdAt    DateTime @default(now())
+  createdAt    DateTime   @default(now())
+  films        UserFilm[]
+}
+
+model UserFilm {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tmdbId    Int
+  rating    Float?
+  review    String?
+  watchlist Boolean  @default(false)
+  liked     Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, tmdbId])
 }

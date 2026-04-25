@@ -9,3 +9,14 @@
   max-width: 1400px;
   overflow-x: hidden;
 }
+
+@media (max-width: 768px) {
+  .app {
+    grid-template-columns: 1fr;
+    padding-bottom: 72px;
+  }
+
+  .main {
+    padding: 20px 16px 24px;
+  }
+}

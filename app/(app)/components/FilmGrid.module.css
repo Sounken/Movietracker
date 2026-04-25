@@ -1,0 +1,144 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 22px 18px;
+}
+
+.film {
+  cursor: pointer;
+  transition: transform 0.25s;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.film:hover {
+  transform: translateY(-4px);
+}
+
+.poster {
+  aspect-ratio: 2/3;
+  border-radius: 10px;
+  background-size: cover;
+  background-position: center;
+  background-color: var(--panel);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.poster::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 60%, rgba(0, 0, 0, 0.7));
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.film:hover .poster::after {
+  opacity: 1;
+}
+
+.myRate {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  border-radius: 6px;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  color: var(--gold);
+  z-index: 1;
+}
+
+.quick {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: all 0.3s;
+  z-index: 2;
+}
+
+.film:hover .quick {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.quick span {
+  display: block;
+  background: rgba(255, 255, 255, 0.95);
+  color: #000;
+  padding: 7px;
+  font-size: 11px;
+  border-radius: 6px;
+  text-align: center;
+  font-weight: 500;
+}
+
+.info {
+  padding: 12px 2px 0;
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.25;
+  margin-bottom: 4px;
+  letter-spacing: -0.005em;
+  color: var(--ink);
+}
+
+.meta {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  color: var(--ink-mute);
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.stars {
+  color: var(--accent-soft);
+  letter-spacing: 1px;
+}
+
+/* ——— Empty state ——— */
+.empty {
+  padding: 48px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  text-align: center;
+}
+
+.empty p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-dim);
+}
+
+.emptyHint {
+  margin-top: 8px !important;
+  font-size: 13px !important;
+  color: var(--ink-mute) !important;
+}
+
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px 10px;
+  }
+
+  .title {
+    font-size: 12px;
+  }
+}
