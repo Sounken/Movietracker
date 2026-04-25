@@ -2,11 +2,14 @@
   display: grid;
   grid-template-columns: 240px 1fr;
   min-height: 100vh;
+  max-width: 1920px;
+  margin: 0 auto;
 }
 
 .main {
   padding: 36px 48px 80px;
   max-width: 1400px;
+  width: 100%;
   overflow-x: hidden;
 }
 
@@ -18,5 +21,28 @@
 
   .main {
     padding: 20px 16px 24px;
+  }
+}
+
+@media (min-width: 1600px) {
+  .app {
+    grid-template-columns: 280px 1fr;
+  }
+
+  .main {
+    padding: 48px 64px 100px;
+    max-width: 1560px;
+  }
+}
+
+@media (min-width: 2400px) {
+  .app {
+    grid-template-columns: 320px 1fr;
+    max-width: 2560px;
+  }
+
+  .main {
+    padding: 56px 80px 100px;
+    max-width: 1920px;
   }
 }

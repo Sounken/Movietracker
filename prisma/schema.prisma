@@ -8,12 +8,27 @@ datasource db {
 }
 
 model User {
-  id           String     @id @default(cuid())
-  name         String?
-  email        String     @unique
-  passwordHash String
-  createdAt    DateTime   @default(now())
-  films        UserFilm[]
+  id             String              @id @default(cuid())
+  name           String?
+  email          String              @unique
+  passwordHash   String
+  avatarUrl      String?
+  bannerUrl      String?
+  bio            String?
+  createdAt      DateTime            @default(now())
+  films          UserFilm[]
+  favoriteFilms  UserFavoriteFilm[]
+}
+
+model UserFavoriteFilm {
+  id       String @id @default(cuid())
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tmdbId   Int
+  position Int
+
+  @@unique([userId, position])
+  @@unique([userId, tmdbId])
 }
 
 model UserFilm {

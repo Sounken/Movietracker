@@ -115,6 +115,15 @@
   align-items: center;
   gap: 10px;
   min-width: 0;
+  text-decoration: none;
+  flex: 1;
+  border-radius: 8px;
+  padding: 2px;
+  transition: opacity 0.15s;
+}
+
+.footRow:hover {
+  opacity: 0.75;
 }
 
 .avatar {

@@ -123,13 +123,13 @@ export default function Sidebar({ userName, counts }: { userName: string | null;
       </div>
 
       <div className={styles.navFoot}>
-        <div className={styles.footRow}>
+        <Link href="/profile" className={styles.footRow}>
           <div className={styles.avatar}>{initial}</div>
           <div className={styles.footInfo}>
             <div className={styles.footName}>{userName ?? "Cinéphile"}</div>
             <div className={styles.footSub}>cinéphile · niveau 1</div>
           </div>
-        </div>
+        </Link>
         <form action={logout}>
           <button type="submit" className={styles.logoutBtn} title="Se déconnecter">
             <LogoutIcon />
