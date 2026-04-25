@@ -19,6 +19,19 @@ model User {
   films          UserFilm[]
   favoriteFilms  UserFavoriteFilm[]
   lists          UserList[]
+  following      UserFollow[]        @relation("follower")
+  followers      UserFollow[]        @relation("following")
+}
+
+model UserFollow {
+  id          String   @id @default(cuid())
+  followerId  String
+  follower    User     @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId String
+  following   User     @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([followerId, followingId])
 }
 
 model UserFavoriteFilm {
