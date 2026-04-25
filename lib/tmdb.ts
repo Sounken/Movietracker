@@ -34,6 +34,7 @@ export type TmdbCastMember = {
   id: number;
   name: string;
   character: string;
+  profileUrl: string;
 };
 
 const GENRES: Record<number, string> = {
@@ -165,6 +166,7 @@ export async function fetchFilmCredits(id: number): Promise<TmdbCastMember[]> {
       id: c.id,
       name: c.name,
       character: c.character,
+      profileUrl: c.profile_path ? `${IMG}/w185${c.profile_path}` : "",
     }));
   } catch {
     return [];

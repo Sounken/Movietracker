@@ -172,11 +172,18 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
               <div className={styles.castGrid}>
                 {credits.map((c) => (
                   <div key={c.id} className={styles.castCard}>
-                    <div className={styles.castAvatar} style={{ background: castColor(c.name) }}>
-                      {c.name.split(" ").map((w) => w[0]).join("").slice(0, 2)}
+                    {c.profileUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={c.profileUrl} alt={c.name} className={styles.castPhoto} />
+                    ) : (
+                      <div className={styles.castAvatar} style={{ background: castColor(c.name) }}>
+                        {c.name.split(" ").map((w) => w[0]).join("").slice(0, 2)}
+                      </div>
+                    )}
+                    <div className={styles.castInfo}>
+                      <div className={styles.castName}>{c.name}</div>
+                      <div className={styles.castRole}>{c.character}</div>
                     </div>
-                    <div className={styles.castName}>{c.name}</div>
-                    <div className={styles.castRole}>{c.character}</div>
                   </div>
                 ))}
               </div>
