@@ -1,16 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { logout } from "@/app/actions/auth";
 import type { LevelInfo } from "@/lib/xp";
 import styles from "./Sidebar.module.css";
-
-const LogoIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none">
-    <path d="M4 4h4l4 16h4l4-16" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
 const HomeIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
     <path d="M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1Z" />
@@ -85,7 +80,7 @@ export default function Sidebar({ userName, counts, levelInfo }: { userName: str
     <aside className={styles.nav}>
       <div className={styles.brand}>
         <div className={styles.brandMark}>
-          <LogoIcon />
+          <Image src="/logo.png" alt="Movietracker" width={34} height={31} priority />
         </div>
         <div className={styles.brandName}>
           Movie<em>tracker</em>

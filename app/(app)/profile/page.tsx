@@ -41,6 +41,16 @@ export default async function ProfilePage() {
   ]);
 
   const totalHours = Math.floor((runtimeAgg._sum?.runtime ?? 0) / 60);
+
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const watchedThisMonth = filmEntries.filter((e) => e.watched && e.updatedAt >= startOfMonth).length;
+  const hoursThisWeek =
+    filmEntries
+      .filter((e) => e.updatedAt >= sevenDaysAgo && e.runtime !== null)
+      .reduce((sum, e) => sum + (e.runtime ?? 0), 0) / 60;
+
   const avgRating =
     ratedCount > 0
       ? filmEntries
@@ -100,7 +110,7 @@ export default async function ProfilePage() {
             <div className={styles.statDeco}>🎬</div>
             <div className={styles.statLabel}>Films vus</div>
             <div className={styles.statVal}>{watchedCount}</div>
-            <div className={styles.statSub}>↑ total visionnés</div>
+            <div className={styles.statSub}>↑ +{watchedThisMonth} ce mois</div>
           </div>
           <div className={styles.statCard}>
             <div className={styles.statDeco}>⭐</div>
@@ -112,7 +122,7 @@ export default async function ProfilePage() {
             <div className={styles.statDeco}>⏱</div>
             <div className={styles.statLabel}>Heures visionnées</div>
             <div className={styles.statVal}>{totalHours}<span style={{ fontSize: 20 }}>h</span></div>
-            <div className={styles.statSub}>≈ {Math.round(totalHours / 24)} jours</div>
+            <div className={styles.statSub}>↑ +{hoursThisWeek.toFixed(1)}h cette semaine</div>
           </div>
           <div className={styles.statCard}>
             <div className={styles.statDeco}>❤️</div>

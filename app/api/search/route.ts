@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
       id: m.id,
       title: m.title,
       year: typeof m.release_date === "string" ? m.release_date.slice(0, 4) : "",
-      posterUrl: m.poster_path ? `https://image.tmdb.org/t/p/w92${m.poster_path}` : "",
+      posterUrl: m.poster_path ? `https://image.tmdb.org/t/p/w185${m.poster_path}` : "",
       voteAverage: m.vote_average ? Math.round((m.vote_average as number) * 10) / 10 : null,
     }));
 

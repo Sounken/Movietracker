@@ -30,6 +30,10 @@ export async function setFavoriteFilm(position: 1 | 2 | 3 | 4, tmdbId: number | 
       where: { userId: session.userId, position },
     });
   } else {
+    // Remove the film from any other slot first (avoids @@unique([userId, tmdbId]) violation)
+    await prisma.userFavoriteFilm.deleteMany({
+      where: { userId: session.userId, tmdbId, NOT: { position } },
+    });
     await prisma.userFavoriteFilm.upsert({
       where: { userId_position: { userId: session.userId, position } },
       update: { tmdbId },

@@ -18,19 +18,9 @@
 }
 
 .brandMark {
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, var(--accent), #8a3a1c);
-  display: grid;
-  place-items: center;
-  box-shadow: 0 4px 14px rgba(217, 119, 66, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15);
   flex-shrink: 0;
-}
-
-.brandMark svg {
-  width: 18px;
-  height: 18px;
+  display: flex;
+  align-items: center;
 }
 
 .brandName {

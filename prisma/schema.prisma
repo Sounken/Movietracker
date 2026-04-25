@@ -18,6 +18,7 @@ model User {
   createdAt      DateTime            @default(now())
   films          UserFilm[]
   favoriteFilms  UserFavoriteFilm[]
+  lists          UserList[]
 }
 
 model UserFavoriteFilm {
@@ -29,6 +30,29 @@ model UserFavoriteFilm {
 
   @@unique([userId, position])
   @@unique([userId, tmdbId])
+}
+
+model UserList {
+  id          String         @id @default(cuid())
+  userId      String
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  emoji       String         @default("🎬")
+  color       String         @default("#d97742")
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  films       UserListFilm[]
+}
+
+model UserListFilm {
+  id      String   @id @default(cuid())
+  listId  String
+  list    UserList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  tmdbId  Int
+  addedAt DateTime @default(now())
+
+  @@unique([listId, tmdbId])
 }
 
 model UserFilm {
