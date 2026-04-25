@@ -33,6 +33,10 @@ export default function RootLayout({
       className={`${geist.variable} ${geistMono.variable} ${instrumentSerif.variable}`}
       style={{ fontFamily: "var(--font-geist), system-ui, sans-serif" }}
     >
+      <head>
+        {/* Sync theme before first paint to avoid flash */}
+        <script dangerouslySetInnerHTML={{ __html: `(function(){try{if(localStorage.getItem('mt-theme')==='light')document.documentElement.setAttribute('data-theme','light')}catch(e){}})()` }} />
+      </head>
       <body>{children}</body>
     </html>
   );

@@ -10,9 +10,15 @@ const SearchIcon = () => (
     <path d="m20 20-3.5-3.5" />
   </svg>
 );
-const FilterIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-    <path d="M3 6h18M6 12h12M10 18h4" />
+const SunIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+    <circle cx="12" cy="12" r="4" />
+    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+  </svg>
+);
+const MoonIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
   </svg>
 );
 const BellIcon = () => (
@@ -29,7 +35,24 @@ export default function Topbar({ greeting, userName }: Props) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [open, setOpen] = useState(false);
+  const [isDark, setIsDark] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("mt-theme");
+    setIsDark(stored !== "light");
+  }, []);
+
+  function toggleTheme() {
+    const next = isDark ? "light" : "dark";
+    setIsDark(!isDark);
+    localStorage.setItem("mt-theme", next);
+    if (next === "light") {
+      document.documentElement.setAttribute("data-theme", "light");
+    } else {
+      document.documentElement.removeAttribute("data-theme");
+    }
+  }
 
   // Debounced search
   useEffect(() => {
@@ -112,8 +135,8 @@ export default function Topbar({ greeting, userName }: Props) {
         )}
       </div>
 
-      <button className={styles.iconBtn} title="Filtres">
-        <FilterIcon />
+      <button className={styles.iconBtn} title={isDark ? "Passer en clair" : "Passer en sombre"} onClick={toggleTheme}>
+        {isDark ? <SunIcon /> : <MoonIcon />}
       </button>
       <button className={styles.iconBtn} title="Notifications">
         <BellIcon />
