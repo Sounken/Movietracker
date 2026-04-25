@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logout } from "@/app/actions/auth";
+import type { LevelInfo } from "@/lib/xp";
 import styles from "./Sidebar.module.css";
 
 const LogoIcon = () => (
@@ -76,7 +77,7 @@ const socialNav = [
   { href: "/trends", label: "Tendances", icon: TrendIcon },
 ];
 
-export default function Sidebar({ userName, counts }: { userName: string | null; counts: Counts }) {
+export default function Sidebar({ userName, counts, levelInfo }: { userName: string | null; counts: Counts; levelInfo: LevelInfo }) {
   const pathname = usePathname();
   const initial = (userName ?? "?")[0].toUpperCase();
 
@@ -127,7 +128,12 @@ export default function Sidebar({ userName, counts }: { userName: string | null;
           <div className={styles.avatar}>{initial}</div>
           <div className={styles.footInfo}>
             <div className={styles.footName}>{userName ?? "Cinéphile"}</div>
-            <div className={styles.footSub}>cinéphile · niveau 1</div>
+            <div className={styles.footSub}>
+              {levelInfo.title} · niv. {levelInfo.level}
+            </div>
+            <div className={styles.xpBarWrap} title={`${levelInfo.currentXP} / ${levelInfo.nextLevelXP} XP`}>
+              <div className={styles.xpBar} style={{ width: `${levelInfo.percent}%` }} />
+            </div>
           </div>
         </Link>
         <form action={logout}>

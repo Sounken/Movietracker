@@ -66,6 +66,60 @@
   margin: 0 0 4px;
 }
 
+.levelBadge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 8px;
+}
+
+.levelTitle {
+  font-size: 13px;
+  color: var(--accent-soft);
+  font-weight: 500;
+}
+
+.levelNum {
+  font-size: 12px;
+  color: var(--ink-mute);
+  font-family: var(--font-geist-mono), monospace;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--line);
+  padding: 1px 8px;
+  border-radius: 999px;
+}
+
+.xpRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.xpBarWrap {
+  flex: 1;
+  max-width: 200px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.xpBar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), #e8a060);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+  min-width: 2px;
+}
+
+.xpLabel {
+  font-size: 11px;
+  color: var(--ink-mute);
+  font-family: var(--font-geist-mono), monospace;
+  white-space: nowrap;
+}
+
 .bio {
   font-size: 14px;
   color: var(--ink-dim);

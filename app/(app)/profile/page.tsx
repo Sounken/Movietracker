@@ -7,6 +7,7 @@ import ProfileEditor from "./ProfileEditor";
 import FavoriteFilmsPicker from "./FavoriteFilmsPicker";
 import CollectionClient from "../components/CollectionClient";
 import AddFilmButton from "../components/AddFilmButton";
+import { computeXP, getLevelInfo } from "@/lib/xp";
 import styles from "./profile.module.css";
 
 export default async function ProfilePage() {
@@ -39,6 +40,8 @@ export default async function ProfilePage() {
   ]);
 
   if (!user) notFound();
+
+  const levelInfo = getLevelInfo(computeXP(filmEntries));
 
   const [ratedCount, watchlistCount, likedCount] = await Promise.all([
     prisma.userFilm.count({ where: { userId: session.userId, rating: { not: null } } }),
@@ -89,6 +92,16 @@ export default async function ProfilePage() {
 
         <div className={styles.headerInfo}>
           <h1 className={styles.name}>{user.name ?? "Cinéphile"}</h1>
+          <div className={styles.levelBadge}>
+            <span className={styles.levelTitle}>{levelInfo.title}</span>
+            <span className={styles.levelNum}>niv. {levelInfo.level}</span>
+          </div>
+          <div className={styles.xpRow}>
+            <div className={styles.xpBarWrap} title={`${levelInfo.currentXP} / ${levelInfo.nextLevelXP} XP`}>
+              <div className={styles.xpBar} style={{ width: `${levelInfo.percent}%` }} />
+            </div>
+            <span className={styles.xpLabel}>{levelInfo.currentXP} / {levelInfo.nextLevelXP} XP</span>
+          </div>
           {user.bio && <p className={styles.bio}>{user.bio}</p>}
           <div className={styles.headerStats}>
             <div className={styles.headerStat}>
