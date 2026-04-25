@@ -6,6 +6,7 @@ import ProfileHeaderClient from "./ProfileHeaderClient";
 import FavFilmsClient from "./FavFilmsClient";
 import CollectionClient from "../components/CollectionClient";
 import AddFilmButton from "../components/AddFilmButton";
+import ImportButton from "./ImportButton";
 import { computeXP, getLevelInfo } from "@/lib/xp";
 import styles from "./profile.module.css";
 
@@ -102,6 +103,11 @@ export default async function ProfilePage() {
         levelInfo={levelInfo}
         joinedYear={joinedYear}
       />
+
+      {/* Import action */}
+      <div className={styles.importRow}>
+        <ImportButton />
+      </div>
 
       {/* Stats grid */}
       <div className={styles.statsSection}>

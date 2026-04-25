@@ -232,6 +232,30 @@
   display: inline;
 }
 
+.btnImport {
+  padding: 9px 18px;
+  border-radius: 999px;
+  font-size: 13px;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--ink-dim);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+.btnImport:hover {
+  border-color: #00c030;
+  color: #00c030;
+}
+.btnImport svg {
+  width: 14px;
+  height: 14px;
+}
+
 /* ——— XP Section ——— */
 .xpSection {
   padding: 0 52px;
@@ -290,6 +314,13 @@
 }
 
 /* ——— Stats Section ——— */
+.importRow {
+  padding: 0 52px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+
 .statsSection {
   padding: 0 52px;
   margin-bottom: 48px;
