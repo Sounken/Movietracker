@@ -37,7 +37,7 @@ export type TmdbCastMember = {
   profileUrl: string;
 };
 
-const GENRES: Record<number, string> = {
+export const GENRES: Record<number, string> = {
   28: "Action", 12: "Aventure", 16: "Animation", 35: "Comédie",
   80: "Crime", 99: "Documentaire", 18: "Drame", 10751: "Famille",
   14: "Fantastique", 36: "Histoire", 27: "Horreur", 10402: "Musique",
@@ -149,6 +149,54 @@ export async function fetchFilmDetail(id: number): Promise<TmdbFilmDetail | null
     };
   } catch {
     return null;
+  }
+}
+
+export type TmdbDiscoverFilm = {
+  id: number;
+  title: string;
+  year: string;
+  posterUrl: string;
+  voteAverage: number;
+};
+
+export async function fetchDiscover(
+  category: string,
+  genreId: number | null,
+  page: number = 1,
+): Promise<TmdbDiscoverFilm[]> {
+  const key = process.env.TMDB_API_KEY;
+  if (!key) return [];
+  try {
+    const today = new Date().toISOString().split("T")[0];
+    const past45 = new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+    const future90 = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+
+    let extra = "";
+    if (category === "top_rated") {
+      extra = "&sort_by=vote_average.desc&vote_count.gte=300";
+    } else if (category === "now_playing") {
+      extra = `&sort_by=popularity.desc&primary_release_date.gte=${past45}&primary_release_date.lte=${today}`;
+    } else if (category === "upcoming") {
+      extra = `&sort_by=popularity.desc&primary_release_date.gte=${today}&primary_release_date.lte=${future90}`;
+    } else {
+      extra = "&sort_by=popularity.desc";
+    }
+    if (genreId) extra += `&with_genres=${genreId}`;
+
+    const url = `${BASE}/discover/movie?api_key=${key}&language=fr-FR&page=${page}${extra}`;
+    const res = await fetch(url, { next: { revalidate: 3600 } });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.results ?? []).map((m: Record<string, unknown>) => ({
+      id: m.id,
+      title: m.title,
+      year: typeof m.release_date === "string" ? m.release_date.slice(0, 4) : "",
+      posterUrl: m.poster_path ? `${IMG}/w342${m.poster_path}` : "",
+      voteAverage: m.vote_average ? Math.round((m.vote_average as number) * 10) / 10 : 0,
+    }));
+  } catch {
+    return [];
   }
 }
 

@@ -1,0 +1,74 @@
+.wrap {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px 24px 16px;
+  margin-bottom: 28px;
+}
+
+.title {
+  font-size: 11px;
+  font-family: var(--font-geist-mono), monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ink-mute);
+  margin-bottom: 16px;
+}
+
+.bars {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 6px;
+  align-items: end;
+  height: 80px; /* bar area height */
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  gap: 4px;
+}
+
+.countLabel {
+  font-size: 10px;
+  font-family: var(--font-geist-mono), monospace;
+  color: var(--ink-mute);
+  height: 14px;
+  line-height: 14px;
+}
+
+.barTrack {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+
+.bar {
+  width: 100%;
+  border-radius: 3px 3px 0 0;
+  min-height: 3px;
+  transition: opacity 0.2s;
+}
+
+.ratingLabel {
+  font-size: 11px;
+  font-family: var(--font-geist-mono), monospace;
+  color: var(--ink-mute);
+  line-height: 1;
+}
+
+@media (max-width: 480px) {
+  .wrap {
+    padding: 16px;
+  }
+  .countLabel {
+    display: none;
+  }
+  .bars {
+    height: 56px;
+    gap: 3px;
+  }
+}

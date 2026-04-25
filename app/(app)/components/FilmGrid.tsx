@@ -8,14 +8,22 @@ const StarIcon = () => (
   </svg>
 );
 
-type RatedFilm = TmdbFilmCard & { rating: number };
+type RatedFilm = TmdbFilmCard & { rating: number | null };
 
-export default function FilmGrid({ films }: { films: RatedFilm[] }) {
+export default function FilmGrid({
+  films,
+  emptyTitle = "Aucun film ici pour l'instant.",
+  emptyHint,
+}: {
+  films: RatedFilm[];
+  emptyTitle?: string;
+  emptyHint?: string;
+}) {
   if (films.length === 0) {
     return (
       <div className={styles.empty}>
-        <p>Vous n&apos;avez encore noté aucun film.</p>
-        <p className={styles.emptyHint}>Notez un film depuis sa fiche pour le voir apparaître ici.</p>
+        <p>{emptyTitle}</p>
+        {emptyHint && <p className={styles.emptyHint}>{emptyHint}</p>}
       </div>
     );
   }
@@ -28,9 +36,11 @@ export default function FilmGrid({ films }: { films: RatedFilm[] }) {
             className={styles.poster}
             style={film.posterUrl ? { backgroundImage: `url("${film.posterUrl}")` } : undefined}
           >
-            <div className={styles.myRate}>
-              <StarIcon /> {film.rating}
-            </div>
+            {film.rating !== null && (
+              <div className={styles.myRate}>
+                <StarIcon /> {film.rating}
+              </div>
+            )}
             <div className={styles.quick}>
               <span>Voir fiche</span>
             </div>
@@ -41,8 +51,10 @@ export default function FilmGrid({ films }: { films: RatedFilm[] }) {
               {film.year && <span>{film.year}</span>}
               {film.year && film.genres[0] && <span>·</span>}
               {film.genres[0] && <span>{film.genres[0]}</span>}
-              <span>·</span>
-              <span className={styles.stars}>★ {film.rating}/10</span>
+              {film.rating !== null && <span>·</span>}
+              {film.rating !== null && (
+                <span className={styles.stars}>★ {film.rating}/10</span>
+              )}
             </div>
           </div>
         </Link>

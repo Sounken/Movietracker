@@ -90,6 +90,14 @@
   flex-shrink: 0;
 }
 
+.count {
+  margin-left: auto;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  color: var(--ink-mute);
+  letter-spacing: 0.02em;
+}
+
 .navFoot {
   margin-top: auto;
   padding: 14px;
@@ -214,7 +222,8 @@
     height: 20px;
   }
 
-  .navItem span {
+  .navItem span,
+  .count {
     display: none;
   }
 }

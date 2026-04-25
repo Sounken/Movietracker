@@ -61,13 +61,14 @@ const LogoutIcon = () => (
   </svg>
 );
 
+type Counts = { watchlist: number; liked: number };
+
 const mainNav = [
   { href: "/", label: "Accueil", icon: HomeIcon },
   { href: "/discover", label: "Découvrir", icon: FilmIcon },
   { href: "/lists", label: "Mes listes", icon: ListIcon },
-  { href: "/rated", label: "Notés", icon: StarIcon },
-  { href: "/watchlist", label: "À voir", icon: ClockIcon },
-  { href: "/favorites", label: "Favoris", icon: HeartIcon },
+  { href: "/watchlist", label: "À voir", icon: ClockIcon, countKey: "watchlist" as keyof Counts },
+  { href: "/favorites", label: "Favoris", icon: HeartIcon, countKey: "liked" as keyof Counts },
 ];
 
 const socialNav = [
@@ -75,7 +76,7 @@ const socialNav = [
   { href: "/trends", label: "Tendances", icon: TrendIcon },
 ];
 
-export default function Sidebar({ userName }: { userName: string | null }) {
+export default function Sidebar({ userName, counts }: { userName: string | null; counts: Counts }) {
   const pathname = usePathname();
   const initial = (userName ?? "?")[0].toUpperCase();
 
@@ -92,7 +93,7 @@ export default function Sidebar({ userName }: { userName: string | null }) {
 
       <div className={styles.navSection}>
         <div className={styles.navLabel}>Bibliothèque</div>
-        {mainNav.map(({ href, label, icon: Icon }) => (
+        {mainNav.map(({ href, label, icon: Icon, countKey }) => (
           <Link
             key={href}
             href={href}
@@ -100,6 +101,9 @@ export default function Sidebar({ userName }: { userName: string | null }) {
           >
             <Icon />
             <span>{label}</span>
+            {countKey && counts[countKey] > 0 && (
+              <span className={styles.count}>{counts[countKey]}</span>
+            )}
           </Link>
         ))}
       </div>
