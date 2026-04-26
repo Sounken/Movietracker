@@ -206,8 +206,3 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ imported, skipped, total: films.length });
 }
-
-// Increase body size limit for ZIP uploads
-export const config = {
-  api: { bodyParser: false },
-};
