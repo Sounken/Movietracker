@@ -61,10 +61,12 @@ export type TmdbPersonCredit = {
   popularity: number;
 };
 
+export type TmdbCrewMember = { id: number; name: string };
+
 export type TmdbCredits = {
   cast: TmdbCastMember[];
-  directors: string[];
-  writers: string[];
+  directors: TmdbCrewMember[];
+  writers: TmdbCrewMember[];
 };
 
 export type TmdbCastMember = {
@@ -259,13 +261,14 @@ export async function fetchFilmCredits(id: number): Promise<TmdbCredits> {
       character: c.character,
       profileUrl: c.profile_path ? `${IMG}/w185${c.profile_path}` : "",
     }));
-    const crew: Array<{ name: string; job: string; department: string }> = data.crew ?? [];
-    const directors = crew.filter((c) => c.job === "Director").map((c) => c.name);
+    const crew: Array<{ id: number; name: string; job: string; department: string }> = data.crew ?? [];
+    const directors = crew.filter((c) => c.job === "Director").map((c) => ({ id: c.id, name: c.name }));
+    const seen = new Set<number>();
     const writers = crew
       .filter((c) => c.department === "Writing" && ["Screenplay", "Writer", "Story"].includes(c.job))
-      .map((c) => c.name)
-      .filter((v, i, a) => a.indexOf(v) === i)
-      .slice(0, 4);
+      .filter((c) => { if (seen.has(c.id)) return false; seen.add(c.id); return true; })
+      .slice(0, 4)
+      .map((c) => ({ id: c.id, name: c.name }));
     return { cast, directors, writers };
   } catch {
     return { cast: [], directors: [], writers: [] };

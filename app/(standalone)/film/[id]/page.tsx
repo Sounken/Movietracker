@@ -157,13 +157,27 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
               {credits.directors.length > 0 && (
                 <div className={styles.fact}>
                   <div className={styles.factLab}>Réalisation</div>
-                  <div className={styles.factVal}>{credits.directors.join(", ")}</div>
+                  <div className={styles.factVal}>
+                    {credits.directors.map((d, i) => (
+                      <span key={d.id}>
+                        {i > 0 && ", "}
+                        <Link href={`/actor/${d.id}`} className={styles.crewLink}>{d.name}</Link>
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
               {credits.writers.length > 0 && (
                 <div className={styles.fact}>
                   <div className={styles.factLab}>Scénario</div>
-                  <div className={styles.factVal}>{credits.writers.join(", ")}</div>
+                  <div className={styles.factVal}>
+                    {credits.writers.map((w, i) => (
+                      <span key={w.id}>
+                        {i > 0 && ", "}
+                        <Link href={`/actor/${w.id}`} className={styles.crewLink}>{w.name}</Link>
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
               {film.releaseDate && (
