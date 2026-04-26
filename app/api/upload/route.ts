@@ -37,12 +37,22 @@ export async function POST(request: NextRequest) {
   const blobToken = process.env.BLOB_PROFIL_READ_WRITE_TOKEN ?? process.env.BLOB_READ_WRITE_TOKEN;
 
   if (blobToken) {
-    const blob = await put(filename, file, {
-      access: "public",
-      token: blobToken,
-    });
+    try {
+      const blob = await put(filename, file, {
+        access: "public",
+        token: blobToken,
+        addRandomSuffix: false,
+        allowOverwrite: true,
+      });
 
-    return NextResponse.json({ url: blob.url });
+      return NextResponse.json({ url: blob.url });
+    } catch (error) {
+      console.error("Profile image upload failed", error);
+      return NextResponse.json(
+        { error: "Upload impossible vers le stockage d'images" },
+        { status: 500 },
+      );
+    }
   }
 
   if (process.env.NODE_ENV === "production") {

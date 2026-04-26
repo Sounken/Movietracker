@@ -996,6 +996,17 @@
 
 .textarea:focus { border-color: var(--accent); }
 
+.modalError {
+  margin: 16px 24px 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(194,65,44,0.35);
+  border-radius: 10px;
+  background: rgba(194,65,44,0.1);
+  color: #e58a78;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
 .saveBtn {
   margin: 24px 24px 0;
   width: calc(100% - 48px);

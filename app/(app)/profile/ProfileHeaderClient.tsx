@@ -45,6 +45,7 @@ export default function ProfileHeaderClient({
   const [bannerPreview, setBannerPreview] = useState(bannerUrl);
   const [isPending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
 
   const avatarRef = useRef<HTMLInputElement>(null);
   const bannerRef = useRef<HTMLInputElement>(null);
@@ -54,7 +55,13 @@ export default function ProfileHeaderClient({
     form.append("file", file);
     form.append("type", type);
     const res = await fetch("/api/upload", { method: "POST", body: form });
-    const { url } = await res.json();
+    const data: { url?: string; error?: string } = await res
+      .json()
+      .catch(() => ({ error: "Réponse d'upload invalide" }));
+    if (!res.ok || !data.url) {
+      throw new Error(data.error ?? "Upload impossible");
+    }
+    const { url } = data;
     return url as string;
   };
 
@@ -79,23 +86,28 @@ export default function ProfileHeaderClient({
   };
 
   const handleSave = () => {
+    setError("");
     startTransition(async () => {
-      const updates: Record<string, string> = {
-        name: nameVal,
-        bio: bioVal.slice(0, BIO_MAX_LENGTH),
-      };
-      if (avatarRef.current?.files?.[0])
-        updates.avatarUrl = await uploadFile(avatarRef.current.files[0], "avatar");
-      else if (!avatarPreview && avatarUrl)
-        updates.avatarUrl = "";
-      if (bannerRef.current?.files?.[0])
-        updates.bannerUrl = await uploadFile(bannerRef.current.files[0], "banner");
-      else if (!bannerPreview && bannerUrl)
-        updates.bannerUrl = "";
-      await updateProfile(updates);
-      setSaved(true);
-      router.refresh();
-      setTimeout(() => { setSaved(false); setOpen(false); }, 800);
+      try {
+        const updates: Record<string, string> = {
+          name: nameVal,
+          bio: bioVal.slice(0, BIO_MAX_LENGTH),
+        };
+        if (avatarRef.current?.files?.[0])
+          updates.avatarUrl = await uploadFile(avatarRef.current.files[0], "avatar");
+        else if (!avatarPreview && avatarUrl)
+          updates.avatarUrl = "";
+        if (bannerRef.current?.files?.[0])
+          updates.bannerUrl = await uploadFile(bannerRef.current.files[0], "banner");
+        else if (!bannerPreview && bannerUrl)
+          updates.bannerUrl = "";
+        await updateProfile(updates);
+        setSaved(true);
+        router.refresh();
+        setTimeout(() => { setSaved(false); setOpen(false); }, 800);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Enregistrement impossible");
+      }
     });
   };
 
@@ -240,6 +252,8 @@ export default function ProfileHeaderClient({
                 maxLength={BIO_MAX_LENGTH}
               />
             </div>
+
+            {error && <div className={styles.modalError}>{error}</div>}
 
             <button className={styles.saveBtn} onClick={handleSave} disabled={isPending || saved}>
               {saved ? "✓ Sauvegardé !" : isPending ? "Enregistrement…" : "Sauvegarder"}
