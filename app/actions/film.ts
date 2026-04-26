@@ -84,6 +84,19 @@ export async function toggleWatchlist(tmdbId: number) {
   revalidatePath(`/film/${tmdbId}`);
 }
 
+export async function deleteRating(tmdbId: number) {
+  const session = await getSession();
+  if (!session) throw new Error("Non authentifié");
+
+  await prisma.userFilm.updateMany({
+    where: { userId: session.userId, tmdbId },
+    data: { rating: null, review: "" },
+  });
+
+  revalidatePath("/");
+  revalidatePath(`/film/${tmdbId}`);
+}
+
 export async function toggleLiked(tmdbId: number) {
   const session = await getSession();
   if (!session) throw new Error("Non authentifié");

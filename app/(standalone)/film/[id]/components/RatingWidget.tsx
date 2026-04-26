@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { saveRating } from "@/app/actions/film";
+import { saveRating, deleteRating } from "@/app/actions/film";
 import styles from "./RatingWidget.module.css";
 
 // Full star
@@ -59,6 +59,13 @@ export default function RatingWidget({ tmdbId, initialRating, initialReview, fil
     startTransition(async () => { await saveRating(tmdbId, value, review); });
   };
 
+  const handleDelete = () => {
+    setRating(0);
+    setReview("");
+    setSaved(false);
+    startTransition(async () => { await deleteRating(tmdbId); });
+  };
+
   const handleSave = () => {
     startTransition(async () => {
       await saveRating(tmdbId, rating, review);
@@ -88,8 +95,13 @@ export default function RatingWidget({ tmdbId, initialRating, initialReview, fil
           ))}
         </div>
         <div className={styles.note}>
-          {displayed > 0 ? displayed % 1 === 0 ? `${displayed}/10` : `${displayed}/10` : "—"}
+          {displayed > 0 ? `${displayed}/10` : "—"}
         </div>
+        {rating > 0 && (
+          <button className={styles.btnDelete} onClick={handleDelete} disabled={isPending} title="Supprimer ma note">
+            × Supprimer
+          </button>
+        )}
       </div>
 
       {rating > 0 && (

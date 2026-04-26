@@ -15,6 +15,7 @@ export type TmdbMovie = {
 export type TmdbFilmDetail = {
   id: number;
   title: string;
+  originalTitle: string;
   overview: string;
   posterUrl: string;
   backdropUrl: string;
@@ -28,6 +29,42 @@ export type TmdbFilmDetail = {
   budget: number;
   revenue: number;
   productionCompanies: string[];
+  originalLanguage: string;
+  spokenLanguages: string[];
+  productionCountries: string[];
+};
+
+export type TmdbPerson = {
+  id: number;
+  name: string;
+  biography: string;
+  birthday: string | null;
+  deathday: string | null;
+  placeOfBirth: string | null;
+  profileUrl: string;
+  knownForDepartment: string;
+  popularity: number;
+  imdbId: string | null;
+  instagramId: string | null;
+  twitterId: string | null;
+  alsoKnownAs: string[];
+};
+
+export type TmdbPersonCredit = {
+  id: number;
+  title: string;
+  character: string;
+  posterUrl: string;
+  year: string;
+  voteAverage: number;
+  voteCount: number;
+  popularity: number;
+};
+
+export type TmdbCredits = {
+  cast: TmdbCastMember[];
+  directors: string[];
+  writers: string[];
 };
 
 export type TmdbCastMember = {
@@ -69,6 +106,7 @@ export type TmdbFilmCard = {
   posterUrl: string;
   year: string;
   genres: string[];
+  voteAverage: number;
 };
 
 export async function fetchFilmCard(id: number): Promise<TmdbFilmCard | null> {
@@ -87,6 +125,7 @@ export async function fetchFilmCard(id: number): Promise<TmdbFilmCard | null> {
       posterUrl: m.poster_path ? `${IMG}/w342${m.poster_path}` : "",
       year: m.release_date?.slice(0, 4) ?? "",
       genres: (m.genres ?? []).slice(0, 2).map((g: { name: string }) => g.name),
+      voteAverage: m.vote_average ? Math.round((m.vote_average as number) * 10) / 10 : 0,
     };
   } catch {
     return null;
@@ -131,6 +170,7 @@ export async function fetchFilmDetail(id: number): Promise<TmdbFilmDetail | null
     return {
       id: m.id,
       title: m.title ?? "",
+      originalTitle: m.original_title ?? "",
       overview: m.overview ?? "",
       posterUrl: m.poster_path ? `${IMG}/w500${m.poster_path}` : "",
       backdropUrl: m.backdrop_path ? `${IMG}/original${m.backdrop_path}` : "",
@@ -146,6 +186,9 @@ export async function fetchFilmDetail(id: number): Promise<TmdbFilmDetail | null
       productionCompanies: (m.production_companies ?? [])
         .slice(0, 5)
         .map((c: { name: string }) => c.name),
+      originalLanguage: m.original_language ?? "",
+      spokenLanguages: (m.spoken_languages ?? []).map((l: { name: string }) => l.name),
+      productionCountries: (m.production_countries ?? []).map((c: { name: string }) => c.name),
     };
   } catch {
     return null;
@@ -200,23 +243,150 @@ export async function fetchDiscover(
   }
 }
 
-export async function fetchFilmCredits(id: number): Promise<TmdbCastMember[]> {
+export async function fetchFilmCredits(id: number): Promise<TmdbCredits> {
   const key = process.env.TMDB_API_KEY;
-  if (!key) return [];
+  if (!key) return { cast: [], directors: [], writers: [] };
   try {
     const res = await fetch(
       `${BASE}/movie/${id}/credits?api_key=${key}&language=fr-FR`,
       { next: { revalidate: 3600 } }
     );
-    if (!res.ok) return [];
+    if (!res.ok) return { cast: [], directors: [], writers: [] };
     const data = await res.json();
-    return (data.cast ?? []).slice(0, 12).map((c: Record<string, unknown>) => ({
+    const cast: TmdbCastMember[] = (data.cast ?? []).slice(0, 20).map((c: Record<string, unknown>) => ({
       id: c.id,
       name: c.name,
       character: c.character,
       profileUrl: c.profile_path ? `${IMG}/w185${c.profile_path}` : "",
     }));
+    const crew: Array<{ name: string; job: string; department: string }> = data.crew ?? [];
+    const directors = crew.filter((c) => c.job === "Director").map((c) => c.name);
+    const writers = crew
+      .filter((c) => c.department === "Writing" && ["Screenplay", "Writer", "Story"].includes(c.job))
+      .map((c) => c.name)
+      .filter((v, i, a) => a.indexOf(v) === i)
+      .slice(0, 4);
+    return { cast, directors, writers };
+  } catch {
+    return { cast: [], directors: [], writers: [] };
+  }
+}
+
+export async function fetchSimilarFilms(id: number): Promise<TmdbFilmCard[]> {
+  const key = process.env.TMDB_API_KEY;
+  if (!key) return [];
+  try {
+    const res = await fetch(
+      `${BASE}/movie/${id}/recommendations?api_key=${key}&language=fr-FR&page=1`,
+      { next: { revalidate: 86400 } }
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.results ?? []).slice(0, 8).map((m: Record<string, unknown>) => ({
+      id: m.id,
+      title: m.title,
+      posterUrl: m.poster_path ? `${IMG}/w342${m.poster_path}` : "",
+      year: typeof m.release_date === "string" ? m.release_date.slice(0, 4) : "",
+      genres: ((m.genre_ids as number[]) ?? []).slice(0, 2).map((gid) => GENRES[gid]).filter(Boolean),
+    }));
   } catch {
     return [];
+  }
+}
+
+export async function fetchFilmKeywords(id: number): Promise<string[]> {
+  const key = process.env.TMDB_API_KEY;
+  if (!key) return [];
+  try {
+    const res = await fetch(
+      `${BASE}/movie/${id}/keywords?api_key=${key}`,
+      { next: { revalidate: 86400 } }
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.keywords ?? []).map((k: { name: string }) => k.name as string);
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchPersonDetail(id: number): Promise<TmdbPerson | null> {
+  const key = process.env.TMDB_API_KEY;
+  if (!key) return null;
+  try {
+    const res = await fetch(
+      `${BASE}/person/${id}?api_key=${key}&language=fr-FR&append_to_response=external_ids`,
+      { next: { revalidate: 86400 } }
+    );
+    if (!res.ok) return null;
+    const p = await res.json();
+    return {
+      id: p.id,
+      name: p.name ?? "",
+      biography: p.biography ?? "",
+      birthday: p.birthday ?? null,
+      deathday: p.deathday ?? null,
+      placeOfBirth: p.place_of_birth ?? null,
+      profileUrl: p.profile_path ? `${IMG}/w500${p.profile_path}` : "",
+      knownForDepartment: p.known_for_department ?? "",
+      popularity: Math.round((p.popularity ?? 0) * 10) / 10,
+      imdbId: p.external_ids?.imdb_id ?? p.imdb_id ?? null,
+      instagramId: p.external_ids?.instagram_id ?? null,
+      twitterId: p.external_ids?.twitter_id ?? null,
+      alsoKnownAs: (p.also_known_as ?? []).slice(0, 4),
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchPersonCredits(id: number): Promise<TmdbPersonCredit[]> {
+  const key = process.env.TMDB_API_KEY;
+  if (!key) return [];
+  try {
+    const res = await fetch(
+      `${BASE}/person/${id}/movie_credits?api_key=${key}&language=fr-FR`,
+      { next: { revalidate: 86400 } }
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.cast ?? [])
+      .filter((m: Record<string, unknown>) => m.poster_path)
+      .sort((a: Record<string, unknown>, b: Record<string, unknown>) =>
+        (b.vote_count as number) - (a.vote_count as number)
+      )
+      .map((m: Record<string, unknown>) => ({
+        id: m.id,
+        title: m.title,
+        character: m.character ?? "",
+        posterUrl: m.poster_path ? `${IMG}/w342${m.poster_path}` : "",
+        year: typeof m.release_date === "string" ? m.release_date.slice(0, 4) : "",
+        voteAverage: m.vote_average ? Math.round((m.vote_average as number) * 10) / 10 : 0,
+        voteCount: (m.vote_count as number) ?? 0,
+        popularity: typeof m.popularity === "number" ? Math.round(m.popularity * 10) / 10 : 0,
+      }));
+  } catch {
+    return [];
+  }
+}
+
+const RANK_PAGES = 250; // top 5000 actors
+
+export async function fetchPersonPopularRank(id: number): Promise<number | null> {
+  const key = process.env.TMDB_API_KEY;
+  if (!key) return null;
+  try {
+    const pageNums = Array.from({ length: RANK_PAGES }, (_, i) => i + 1);
+    const pages = await Promise.all(
+      pageNums.map((page) =>
+        fetch(`${BASE}/person/popular?api_key=${key}&page=${page}`, { next: { revalidate: 86400 } })
+          .then((r) => r.ok ? r.json() : { results: [] })
+      )
+    );
+    const all = pages.flatMap((p) => (p.results ?? []) as { id: number }[]);
+    const idx = all.findIndex((p) => p.id === id);
+    return idx !== -1 ? idx + 1 : null;
+  } catch {
+    return null;
   }
 }

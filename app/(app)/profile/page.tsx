@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import { fetchFilmCard } from "@/lib/tmdb";
+import { fetchFilmCard, type TmdbFilmCard } from "@/lib/tmdb";
 import ProfileHeaderClient from "./ProfileHeaderClient";
 import FavFilmsClient from "./FavFilmsClient";
 import CollectionClient from "../components/CollectionClient";
@@ -75,18 +75,20 @@ export default async function ProfilePage() {
     }),
   );
 
-  // Collection (only films with meaningful data)
+  // Collection — first 24 only, rest loads on demand
+  const collectionEntries = filmEntries.filter(
+    (e) => e.rating !== null || e.watched || e.watchlist || e.liked
+  );
+  const totalCollection = collectionEntries.length;
   const collectionFilms = (
     await Promise.all(
-      filmEntries
-        .filter((e) => e.rating !== null || e.watched || e.watchlist || e.liked)
-        .map(async (entry) => {
-          const card = await fetchFilmCard(entry.tmdbId);
-          if (!card) return null;
-          return { ...card, rating: entry.rating ?? null };
-        }),
+      collectionEntries.slice(0, 24).map(async (entry) => {
+        const card = await fetchFilmCard(entry.tmdbId);
+        if (!card) return null;
+        return { ...card, rating: entry.rating ?? null };
+      }),
     )
-  ).filter(Boolean) as Array<{ id: number; title: string; posterUrl: string; year: string; genres: string[]; rating: number | null }>;
+  ).filter(Boolean) as Array<TmdbFilmCard & { rating: number | null }>;
 
   const initial = (user.name ?? user.email)[0].toUpperCase();
   const joinedYear = new Date(user.createdAt).getFullYear();
@@ -162,7 +164,7 @@ export default async function ProfilePage() {
             <h2 className={styles.sectionTitle}>Ma collection</h2>
             <AddFilmButton />
           </div>
-          <CollectionClient films={collectionFilms} />
+          <CollectionClient films={collectionFilms} total={totalCollection} type="all" />
         </div>
       </div>
     </div>

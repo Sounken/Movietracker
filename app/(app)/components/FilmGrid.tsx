@@ -36,9 +36,9 @@ export default function FilmGrid({
             className={styles.poster}
             style={film.posterUrl ? { backgroundImage: `url("${film.posterUrl}")` } : undefined}
           >
-            {film.rating !== null && (
+            {film.voteAverage > 0 && (
               <div className={styles.myRate}>
-                <StarIcon /> {film.rating}
+                <StarIcon /> {film.voteAverage}
               </div>
             )}
             <div className={styles.quick}>

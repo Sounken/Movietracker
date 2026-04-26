@@ -1,35 +1,53 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import { fetchFilmDetail, fetchFilmCredits, formatMoney, formatRuntime } from "@/lib/tmdb";
+import { fetchFilmDetail, fetchFilmCredits, fetchSimilarFilms, fetchFilmKeywords, formatMoney, formatRuntime } from "@/lib/tmdb";
 import FilmTopbar from "./components/FilmTopbar";
 import PosterActions from "./components/PosterActions";
 import RatingWidget from "./components/RatingWidget";
+import CastGrid from "./components/CastGrid";
 import styles from "./film.module.css";
 
-function castColor(name: string) {
-  const hues = [18, 200, 280, 140, 30, 340, 60, 220];
-  return `hsl(${hues[name.charCodeAt(0) % hues.length]}, 35%, 28%)`;
-}
+const LANG_NAMES: Record<string, string> = {
+  en: "Anglais", fr: "Français", es: "Espagnol", de: "Allemand", it: "Italien",
+  ja: "Japonais", ko: "Coréen", zh: "Chinois", pt: "Portugais", ru: "Russe",
+  ar: "Arabe", hi: "Hindi", nl: "Néerlandais", sv: "Suédois", da: "Danois",
+};
 
 export default async function FilmPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: idStr } = await params;
   const id = parseInt(idStr);
   if (isNaN(id)) notFound();
 
-  const [session, film, credits] = await Promise.all([
+  const [session, film, credits, similar, keywords] = await Promise.all([
     getSession(),
     fetchFilmDetail(id),
     fetchFilmCredits(id),
+    fetchSimilarFilms(id),
+    fetchFilmKeywords(id),
   ]);
 
   if (!film) notFound();
 
-  const userFilm = session
-    ? await prisma.userFilm.findUnique({
-        where: { userId_tmdbId: { userId: session.userId, tmdbId: id } },
-      })
-    : null;
+  const [userFilm, userLists, listsWithFilmRaw] = session
+    ? await Promise.all([
+        prisma.userFilm.findUnique({
+          where: { userId_tmdbId: { userId: session.userId, tmdbId: id } },
+        }),
+        prisma.userList.findMany({
+          where: { userId: session.userId },
+          select: { id: true, name: true, emoji: true },
+          orderBy: { createdAt: "asc" },
+        }),
+        prisma.userListFilm.findMany({
+          where: { tmdbId: id, list: { userId: session.userId } },
+          select: { listId: true },
+        }),
+      ])
+    : [null, [], []];
+
+  const listsWithFilm = (listsWithFilmRaw as { listId: string }[]).map((r) => r.listId);
 
   const roi =
     film.budget > 0
@@ -37,6 +55,13 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
       : null;
 
   const words = film.title.split(" ");
+  const showOriginalTitle = film.originalTitle && film.originalTitle !== film.title;
+  const langLabel = LANG_NAMES[film.originalLanguage] ?? film.originalLanguage?.toUpperCase();
+
+  const AWARD_KEYWORDS = ["oscar", "academy award", "cannes", "golden globe", "palme d'or", "césar", "bafta", "venice", "berlin", "sundance", "prix du jury", "grand prix"];
+  const awardKeywords = keywords.filter((k) =>
+    AWARD_KEYWORDS.some((a) => k.toLowerCase().includes(a))
+  );
 
   return (
     <>
@@ -59,6 +84,8 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
             initialRating={userFilm?.rating ?? 0}
             initialWatchlist={userFilm?.watchlist ?? false}
             initialLiked={userFilm?.liked ?? false}
+            userLists={userLists}
+            listsWithFilm={listsWithFilm}
           />
         </div>
 
@@ -77,10 +104,16 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
             {words.length > 1 ? " " + words.slice(1).join(" ") : ""}
           </h1>
 
+          {showOriginalTitle && (
+            <div style={{ fontSize: 14, color: "var(--ink-mute)", marginTop: -20, marginBottom: 24, fontStyle: "italic" }}>
+              {film.originalTitle}
+            </div>
+          )}
+
           <div className={styles.scores}>
             <div className={`${styles.scoreCard} ${styles.scoreAccent}`}>
               <div className={`${styles.scoreVal} ${styles.scoreGold}`}>★ {film.voteAverage}</div>
-              <div className={styles.scoreLab}>Note moyenne</div>
+              <div className={styles.scoreLab}>Note TMDB</div>
             </div>
             <div className={styles.scoreCard}>
               <div className={styles.scoreVal}>{film.voteCount.toLocaleString("fr")}</div>
@@ -121,6 +154,18 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
           <div className={styles.section}>
             <div className={styles.sectionTitle}>Fiche technique</div>
             <div className={styles.facts}>
+              {credits.directors.length > 0 && (
+                <div className={styles.fact}>
+                  <div className={styles.factLab}>Réalisation</div>
+                  <div className={styles.factVal}>{credits.directors.join(", ")}</div>
+                </div>
+              )}
+              {credits.writers.length > 0 && (
+                <div className={styles.fact}>
+                  <div className={styles.factLab}>Scénario</div>
+                  <div className={styles.factVal}>{credits.writers.join(", ")}</div>
+                </div>
+              )}
               {film.releaseDate && (
                 <div className={styles.fact}>
                   <div className={styles.factLab}>Date de sortie</div>
@@ -133,6 +178,18 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
                 <div className={styles.fact}>
                   <div className={styles.factLab}>Durée</div>
                   <div className={styles.factVal}>{formatRuntime(film.runtime)}</div>
+                </div>
+              )}
+              {langLabel && (
+                <div className={styles.fact}>
+                  <div className={styles.factLab}>Langue originale</div>
+                  <div className={styles.factVal}>{langLabel}</div>
+                </div>
+              )}
+              {film.productionCountries.length > 0 && (
+                <div className={styles.fact}>
+                  <div className={styles.factLab}>Pays d&apos;origine</div>
+                  <div className={styles.factVal}>{film.productionCountries.slice(0, 3).join(", ")}</div>
                 </div>
               )}
               {film.genres.length > 0 && (
@@ -166,29 +223,7 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
             </div>
           </div>
 
-          {credits.length > 0 && (
-            <div className={styles.section}>
-              <div className={styles.sectionTitle}>Casting</div>
-              <div className={styles.castGrid}>
-                {credits.map((c) => (
-                  <div key={c.id} className={styles.castCard}>
-                    {c.profileUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={c.profileUrl} alt={c.name} className={styles.castPhoto} />
-                    ) : (
-                      <div className={styles.castAvatar} style={{ background: castColor(c.name) }}>
-                        {c.name.split(" ").map((w) => w[0]).join("").slice(0, 2)}
-                      </div>
-                    )}
-                    <div className={styles.castInfo}>
-                      <div className={styles.castName}>{c.name}</div>
-                      <div className={styles.castRole}>{c.character}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          {credits.cast.length > 0 && <CastGrid cast={credits.cast} />}
 
           {film.productionCompanies.length > 0 && (
             <div className={styles.section}>
@@ -196,6 +231,37 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
               <div className={styles.companies}>
                 {film.productionCompanies.map((c) => (
                   <div key={c} className={styles.companyTag}>{c}</div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {awardKeywords.length > 0 && (
+            <div className={styles.section}>
+              <div className={styles.sectionTitle}>Distinctions</div>
+              <div className={styles.awardTags}>
+                {awardKeywords.map((k) => (
+                  <span key={k} className={styles.awardTag}>{k}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {similar.length > 0 && (
+            <div className={styles.section}>
+              <div className={styles.sectionTitle}>Films similaires</div>
+              <div className={styles.similarGrid}>
+                {similar.map((s) => (
+                  <Link key={s.id} href={`/film/${s.id}`} className={styles.similarCard}>
+                    {s.posterUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={s.posterUrl} alt={s.title} className={styles.similarPoster} />
+                    ) : (
+                      <div className={styles.similarPosterEmpty} />
+                    )}
+                    <div className={styles.similarTitle}>{s.title}</div>
+                    {s.year && <div className={styles.similarYear}>{s.year}</div>}
+                  </Link>
                 ))}
               </div>
             </div>

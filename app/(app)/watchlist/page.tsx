@@ -1,9 +1,11 @@
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import { fetchFilmCard } from "@/lib/tmdb";
+import { fetchFilmCard, type TmdbFilmCard } from "@/lib/tmdb";
 import Topbar from "../components/Topbar";
-import FilmGrid from "../components/FilmGrid";
+import CollectionClient from "../components/CollectionClient";
 import styles from "../collection.module.css";
+
+const PAGE_SIZE = 24;
 
 export default async function WatchlistPage() {
   const session = await getSession();
@@ -11,12 +13,20 @@ export default async function WatchlistPage() {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
 
-  const entries = session
-    ? await prisma.userFilm.findMany({
-        where: { userId: session.userId, watchlist: true },
-        orderBy: { updatedAt: "desc" },
-      })
-    : [];
+  const [total, entries, ratedCount] = session
+    ? await Promise.all([
+        prisma.userFilm.count({ where: { userId: session.userId, watchlist: true } }),
+        prisma.userFilm.findMany({
+          where: { userId: session.userId, watchlist: true },
+          orderBy: { updatedAt: "desc" },
+          take: PAGE_SIZE,
+          select: { tmdbId: true, rating: true },
+        }),
+        prisma.userFilm.count({
+          where: { userId: session.userId, watchlist: true, rating: { not: null } },
+        }),
+      ])
+    : [0, [], 0];
 
   const films = (
     await Promise.all(
@@ -24,16 +34,9 @@ export default async function WatchlistPage() {
         const card = await fetchFilmCard(entry.tmdbId);
         if (!card) return null;
         return { ...card, rating: entry.rating ?? null };
-      }),
+      })
     )
-  ).filter(Boolean) as Array<{
-    id: number;
-    title: string;
-    posterUrl: string;
-    year: string;
-    genres: string[];
-    rating: number | null;
-  }>;
+  ).filter(Boolean) as Array<TmdbFilmCard & { rating: number | null }>;
 
   return (
     <div className={styles.page}>
@@ -44,25 +47,26 @@ export default async function WatchlistPage() {
         <h2 className={styles.sectionTitle}>À voir</h2>
       </div>
 
-      {films.length > 0 && (
+      {total > 0 && (
         <div className={styles.stats}>
           <div className={styles.stat}>
-            <div className={styles.statVal}>{films.length}</div>
+            <div className={styles.statVal}>{total}</div>
             <div className={styles.statLab}>Films à voir</div>
           </div>
           <div className={styles.stat}>
-            <div className={styles.statVal}>
-              {films.filter((f) => f.rating !== null).length}
-            </div>
+            <div className={styles.statVal}>{ratedCount}</div>
             <div className={styles.statLab}>Déjà notés</div>
           </div>
         </div>
       )}
 
-      <FilmGrid
+      <CollectionClient
         films={films}
+        total={total}
+        type="watchlist"
+        ratingField="voteAverage"
         emptyTitle="Votre liste est vide."
-        emptyHint="Ajoutez des films depuis leur fiche en cliquant sur « Ajouter à une liste »."
+        emptyHint="Ajoutez des films depuis leur fiche en cliquant sur « Ajouter à la watchlist »."
       />
     </div>
   );

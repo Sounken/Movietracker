@@ -107,7 +107,6 @@ export default function Topbar({ greeting, userName }: Props) {
             placeholder="Chercher un film, un réalisateur…"
             className={styles.searchInput}
           />
-          <span className={styles.kbd}>⌘K</span>
         </div>
 
         {open && results.length > 0 && (

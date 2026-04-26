@@ -1,6 +1,6 @@
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import { fetchNowPlaying, fetchFilmCard } from "@/lib/tmdb";
+import { fetchNowPlaying, fetchFilmCard, type TmdbFilmCard } from "@/lib/tmdb";
 import Topbar from "./components/Topbar";
 import HeroCarousel from "./components/HeroCarousel";
 import CollectionClient from "./components/CollectionClient";
@@ -88,7 +88,7 @@ export default async function DashboardPage() {
   startOfMonth.setDate(1);
   startOfMonth.setHours(0, 0, 0, 0);
 
-  const [nowPlaying, ratedEntries, runtimeAgg] = await Promise.all([
+  const [nowPlaying, ratedEntries, runtimeAgg, totalRated] = await Promise.all([
     fetchNowPlaying(),
     session
       ? prisma.userFilm.findMany({
@@ -102,19 +102,21 @@ export default async function DashboardPage() {
           _sum: { runtime: true },
         })
       : Promise.resolve({ _sum: { runtime: null } }),
+    session
+      ? prisma.userFilm.count({ where: { userId: session.userId, rating: { not: null } } })
+      : Promise.resolve(0),
   ]);
 
+  // Only fetch TMDB cards for the first 24 — rest loads on demand
   const ratedFilms = (
     await Promise.all(
-      ratedEntries.map(async (entry) => {
+      ratedEntries.slice(0, 24).map(async (entry) => {
         const card = await fetchFilmCard(entry.tmdbId);
         if (!card) return null;
         return { ...card, rating: entry.rating! };
       }),
     )
-  ).filter(Boolean) as Array<{
-    id: number; title: string; posterUrl: string; year: string; genres: string[]; rating: number;
-  }>;
+  ).filter(Boolean) as Array<TmdbFilmCard & { rating: number }>;
 
   const avgRating =
     ratedEntries.length > 0
@@ -225,7 +227,7 @@ export default async function DashboardPage() {
           </div>
         )}
 
-        <CollectionClient films={ratedFilms} />
+        <CollectionClient films={ratedFilms} total={totalRated} />
       </section>
     </div>
   );

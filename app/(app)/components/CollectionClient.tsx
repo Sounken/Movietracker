@@ -1,38 +1,72 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useTransition } from "react";
 import FilmGrid from "./FilmGrid";
 import type { TmdbFilmCard } from "@/lib/tmdb";
 import styles from "./CollectionClient.module.css";
+import loadMoreStyles from "./FilmGridInfinite.module.css";
 
 type Film = TmdbFilmCard & { rating: number | null };
 
 const RATINGS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+const PAGE_SIZE = 24;
 
-export default function CollectionClient({ films }: { films: Film[] }) {
+export default function CollectionClient({
+  films: initialFilms,
+  total,
+  type = "rated",
+  ratingField = "rating",
+  emptyTitle,
+  emptyHint,
+}: {
+  films: Film[];
+  total: number;
+  type?: "rated" | "watchlist" | "liked" | "all";
+  ratingField?: "rating" | "voteAverage";
+  emptyTitle?: string;
+  emptyHint?: string;
+}) {
+  const [films, setFilms] = useState<Film[]>(initialFilms);
   const [minRating, setMinRating] = useState<number | null>(null);
   const [maxRating, setMaxRating] = useState<number | null>(null);
   const [yearFilter, setYearFilter] = useState<string>("");
   const [sortBy, setSortBy] = useState<"recent" | "rating" | "year">("recent");
+  const [isPending, startTransition] = useTransition();
+
   const years = useMemo(() => {
     const set = new Set(films.map((f) => f.year).filter(Boolean));
     return Array.from(set).sort((a, b) => Number(b) - Number(a));
   }, [films]);
 
+  const ratingVal = (f: Film) =>
+    ratingField === "voteAverage" ? (f.voteAverage ?? 0) : (f.rating ?? 0);
+
   const filtered = useMemo(() => {
     let result = [...films];
-    if (minRating !== null) result = result.filter((f) => f.rating !== null && f.rating >= minRating);
-    if (maxRating !== null) result = result.filter((f) => f.rating !== null && f.rating <= maxRating);
+    if (minRating !== null) result = result.filter((f) => ratingVal(f) >= minRating);
+    if (maxRating !== null) result = result.filter((f) => ratingVal(f) <= maxRating);
     if (yearFilter) result = result.filter((f) => f.year === yearFilter);
     result.sort((a, b) => {
-      if (sortBy === "rating") return (b.rating ?? 0) - (a.rating ?? 0);
+      if (sortBy === "rating") return ratingVal(b) - ratingVal(a);
       if (sortBy === "year") return Number(b.year) - Number(a.year);
-      return 0; // "recent" order preserved from server (updatedAt desc)
+      return 0;
     });
     return result;
-  }, [films, minRating, maxRating, yearFilter, sortBy]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [films, minRating, maxRating, yearFilter, sortBy, ratingField]);
 
   const hasFilters = minRating !== null || maxRating !== null || yearFilter;
+  const remaining = total - films.length;
+  const hasMore = remaining > 0;
+
+  function loadMore() {
+    startTransition(async () => {
+      const res = await fetch(`/api/collection?type=${type}&skip=${films.length}&take=${PAGE_SIZE}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setFilms((prev) => [...prev, ...(data.films as Film[])]);
+    });
+  }
 
   return (
     <>
@@ -96,7 +130,21 @@ export default function CollectionClient({ films }: { films: Film[] }) {
       {hasFilters && filtered.length === 0 ? (
         <div className={styles.noResult}>Aucun film ne correspond à ces filtres.</div>
       ) : (
-        <FilmGrid films={filtered} emptyTitle="Vous n'avez encore noté aucun film." emptyHint='Utilisez le bouton "+ Ajouter un film" pour commencer.' />
+        <FilmGrid
+          films={filtered}
+          emptyTitle={emptyTitle ?? "Vous n'avez encore noté aucun film."}
+          emptyHint={emptyHint ?? 'Utilisez le bouton "+ Ajouter un film" pour commencer.'}
+        />
+      )}
+
+      {hasMore && !hasFilters && (
+        <div className={loadMoreStyles.loadMore}>
+          <button className={loadMoreStyles.btn} onClick={loadMore} disabled={isPending}>
+            {isPending
+              ? "Chargement…"
+              : `Charger ${Math.min(remaining, PAGE_SIZE)} film${Math.min(remaining, PAGE_SIZE) > 1 ? "s" : ""} de plus · ${remaining} restant${remaining > 1 ? "s" : ""}`}
+          </button>
+        </div>
       )}
     </>
   );
