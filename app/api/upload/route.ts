@@ -39,13 +39,13 @@ export async function POST(request: NextRequest) {
   if (blobToken) {
     try {
       const blob = await put(filename, file, {
-        access: "public",
+        access: "private",
         token: blobToken,
         addRandomSuffix: false,
         allowOverwrite: true,
       });
 
-      return NextResponse.json({ url: blob.url });
+      return NextResponse.json({ url: `/api/profile-media/${blob.pathname}?v=${Date.now()}` });
     } catch (error) {
       console.error("Profile image upload failed", error);
       return NextResponse.json(
