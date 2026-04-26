@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { saveRating, deleteRating } from "@/app/actions/film";
 import styles from "./RatingWidget.module.css";
 
@@ -30,6 +31,9 @@ function StarHalf() {
 
 const GOLD = "var(--gold)";
 const MUTED = "var(--ink-mute)";
+const CLEAR_RATING_REQUEST_EVENT = "movietracker:clear-rating-request";
+const RATING_CLEARED_EVENT = "movietracker:rating-cleared";
+const RATING_CHANGED_EVENT = "movietracker:rating-changed";
 
 function StarIcon({ value, position }: { value: number; position: number }) {
   if (value >= position) return <span style={{ color: GOLD }}><StarFilled /></span>;
@@ -40,6 +44,7 @@ function StarIcon({ value, position }: { value: number; position: number }) {
 type Props = { tmdbId: number; initialRating: number; initialReview: string; filmTitle: string };
 
 export default function RatingWidget({ tmdbId, initialRating, initialReview, filmTitle }: Props) {
+  const router = useRouter();
   const [rating, setRating] = useState(initialRating);
   const [hover, setHover] = useState(0);
   const [review, setReview] = useState(initialReview);
@@ -56,25 +61,43 @@ export default function RatingWidget({ tmdbId, initialRating, initialReview, fil
   const handleRate = (value: number) => {
     setRating(value);
     setSaved(false);
-    startTransition(async () => { await saveRating(tmdbId, value, review); });
-  };
-
-  const handleDelete = () => {
-    setRating(0);
-    setReview("");
-    setSaved(false);
-    startTransition(async () => { await deleteRating(tmdbId); });
+    window.dispatchEvent(new CustomEvent(RATING_CHANGED_EVENT, { detail: { tmdbId, rating: value } }));
+    startTransition(async () => {
+      await saveRating(tmdbId, value, review);
+      router.refresh();
+    });
   };
 
   const handleSave = () => {
     startTransition(async () => {
       await saveRating(tmdbId, rating, review);
       setSaved(true);
+      router.refresh();
     });
   };
 
+  const handleClearReview = useCallback(() => {
+    setRating(0);
+    setReview("");
+    setSaved(false);
+    window.dispatchEvent(new CustomEvent(RATING_CLEARED_EVENT, { detail: { tmdbId } }));
+    startTransition(async () => {
+      await deleteRating(tmdbId);
+      router.refresh();
+    });
+  }, [router, tmdbId]);
+
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent<{ tmdbId: number }>).detail;
+      if (detail?.tmdbId === tmdbId) handleClearReview();
+    };
+    window.addEventListener(CLEAR_RATING_REQUEST_EVENT, handler);
+    return () => window.removeEventListener(CLEAR_RATING_REQUEST_EVENT, handler);
+  }, [handleClearReview, tmdbId]);
+
   return (
-    <div className={styles.wrap}>
+    <div id="rating-widget" className={styles.wrap}>
       <div className={styles.widget}>
         <div className={styles.label}>
           <strong>Votre note</strong>
@@ -97,11 +120,6 @@ export default function RatingWidget({ tmdbId, initialRating, initialReview, fil
         <div className={styles.note}>
           {displayed > 0 ? `${displayed}/10` : "—"}
         </div>
-        {rating > 0 && (
-          <button className={styles.btnDelete} onClick={handleDelete} disabled={isPending} title="Supprimer ma note">
-            × Supprimer
-          </button>
-        )}
       </div>
 
       {rating > 0 && (
@@ -115,7 +133,9 @@ export default function RatingWidget({ tmdbId, initialRating, initialReview, fil
           />
           <div className={styles.reviewActions}>
             {saved && <span className={styles.savedMsg}>✓ Avis sauvegardé</span>}
-            <button onClick={() => { setReview(""); setSaved(false); }} className={styles.btnSecondary}>Effacer</button>
+            <button onClick={handleClearReview} disabled={isPending} className={styles.btnSecondary}>
+              Effacer l'avis
+            </button>
             <button onClick={handleSave} disabled={isPending} className={styles.btnSave}>
               {isPending ? "Sauvegarde…" : "Sauvegarder l'avis"}
             </button>

@@ -65,8 +65,9 @@
 }
 
 .profileHeaderInner {
+  --profile-text-offset: 54px;
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 28px;
   margin-bottom: 24px;
   flex-wrap: wrap;
@@ -148,7 +149,7 @@
 .nameBlock {
   flex: 1;
   min-width: 0;
-  padding-bottom: 6px;
+  padding-top: var(--profile-text-offset);
 }
 
 .name {
@@ -192,14 +193,30 @@
   color: var(--ink-dim);
   margin: 10px 0 0;
   line-height: 1.5;
+  max-height: 4.6em;
+  overflow-y: auto;
+  padding-right: 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+.bio::-webkit-scrollbar {
+  width: 6px;
+}
+
+.bio::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 999px;
 }
 
 /* ——— Edit button ——— */
 .profileActions {
   display: flex;
   gap: 10px;
-  padding-bottom: 6px;
-  align-self: flex-end;
+  padding-top: var(--profile-text-offset);
+  align-self: flex-start;
 }
 
 .btnEdit {
@@ -780,6 +797,7 @@
 }
 
 .bannerPreview {
+  position: relative;
   width: 100%;
   height: 120px;
   background: linear-gradient(135deg, #1a1210, #2a1a10);
@@ -794,6 +812,35 @@
 
 .bannerPreview:hover {
   opacity: 0.85;
+}
+
+.bannerRemoveBtn,
+.avatarRemoveBtn {
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(8,8,8,0.72);
+  color: rgba(255,255,255,0.86);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.15s;
+}
+
+.bannerRemoveBtn:hover,
+.avatarRemoveBtn:hover {
+  background: #c2412c;
+  border-color: #e05a5a;
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.bannerRemoveBtn {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  z-index: 2;
 }
 
 .uploadHint {
@@ -820,15 +867,27 @@
   display: grid;
   place-items: center;
   cursor: pointer;
-  overflow: hidden;
+  overflow: visible;
   position: relative;
   flex-shrink: 0;
+}
+
+.avatarRemoveBtn {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  z-index: 2;
+  opacity: 0;
 }
 
 .avatarImg {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-radius: 50%;
 }
 
 .avatarInitial {
@@ -840,6 +899,7 @@
 .avatarOverlay {
   position: absolute;
   inset: 0;
+  border-radius: 50%;
   background: rgba(0,0,0,0.5);
   display: grid;
   place-items: center;
@@ -849,6 +909,11 @@
 }
 
 .avatarPreview:hover .avatarOverlay {
+  opacity: 1;
+}
+
+.avatarPreview:hover .avatarRemoveBtn,
+.avatarRemoveBtn:focus-visible {
   opacity: 1;
 }
 
@@ -870,6 +935,24 @@
   letter-spacing: 0.1em;
   font-family: var(--font-geist-mono), monospace;
   margin-bottom: 8px;
+}
+
+.labelRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.labelRow .label {
+  margin-bottom: 8px;
+}
+
+.charCount {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  color: var(--ink-mute);
+  white-space: nowrap;
 }
 
 .optional {
@@ -948,8 +1031,8 @@
   .name { font-size: 28px; }
   .statsGrid { grid-template-columns: repeat(2, 1fr); }
   .favsGrid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-  .profileHeaderInner { flex-wrap: wrap; gap: 16px; }
-  .profileActions { padding-bottom: 0; }
+  .profileHeaderInner { --profile-text-offset: 36px; flex-wrap: wrap; gap: 16px; }
+  .profileActions { padding-top: 36px; }
   .statVal { font-size: 28px; }
   .btnEditLabel { display: none; }
   .btnEdit { padding: 9px 12px; }
@@ -966,5 +1049,6 @@
   .profileHeader { padding: 0 72px; margin-top: -72px; }
   .xpSection, .statsSection, .content { padding-left: 72px; padding-right: 72px; }
   .avatar, .avatarFallback { width: 140px; height: 140px; font-size: 60px; }
+  .profileHeaderInner { --profile-text-offset: 66px; }
   .name { font-size: 44px; }
 }

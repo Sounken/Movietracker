@@ -4,6 +4,8 @@ import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
+const BIO_MAX_LENGTH = 1000;
+
 export async function updateProfile(data: {
   name?: string;
   bio?: string;
@@ -13,9 +15,14 @@ export async function updateProfile(data: {
   const session = await getSession();
   if (!session) throw new Error("Non authentifié");
 
+  const updateData = {
+    ...data,
+    ...(data.bio !== undefined ? { bio: data.bio.slice(0, BIO_MAX_LENGTH) } : {}),
+  };
+
   await prisma.user.update({
     where: { id: session.userId },
-    data,
+    data: updateData,
   });
 
   revalidatePath("/profile");

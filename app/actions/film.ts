@@ -88,12 +88,25 @@ export async function deleteRating(tmdbId: number) {
   const session = await getSession();
   if (!session) throw new Error("Non authentifié");
 
-  await prisma.userFilm.updateMany({
-    where: { userId: session.userId, tmdbId },
-    data: { rating: null, review: "" },
+  const existing = await prisma.userFilm.findUnique({
+    where: { userId_tmdbId: { userId: session.userId, tmdbId } },
   });
 
+  if (!existing) return;
+
+  if (!existing.watchlist && !existing.liked) {
+    await prisma.userFilm.delete({
+      where: { userId_tmdbId: { userId: session.userId, tmdbId } },
+    });
+  } else {
+    await prisma.userFilm.update({
+      where: { userId_tmdbId: { userId: session.userId, tmdbId } },
+      data: { rating: null, review: "" },
+    });
+  }
+
   revalidatePath("/");
+  revalidatePath("/profile");
   revalidatePath(`/film/${tmdbId}`);
 }
 

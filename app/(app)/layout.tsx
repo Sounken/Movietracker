@@ -13,12 +13,16 @@ export default async function AppLayout({
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const [watchlist, liked, filmEntries] = await Promise.all([
+  const [watchlist, liked, filmEntries, user] = await Promise.all([
     prisma.userFilm.count({ where: { userId: session.userId, watchlist: true } }),
     prisma.userFilm.count({ where: { userId: session.userId, liked: true } }),
     prisma.userFilm.findMany({
       where: { userId: session.userId },
       select: { rating: true, review: true, liked: true, watched: true },
+    }),
+    prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { avatarUrl: true },
     }),
   ]);
 
@@ -26,7 +30,12 @@ export default async function AppLayout({
 
   return (
     <div className={styles.app}>
-      <Sidebar userName={session.name} counts={{ watchlist, liked }} levelInfo={levelInfo} />
+      <Sidebar
+        userName={session.name}
+        avatarUrl={user?.avatarUrl ?? null}
+        counts={{ watchlist, liked }}
+        levelInfo={levelInfo}
+      />
       <main className={styles.main}>{children}</main>
     </div>
   );

@@ -72,7 +72,17 @@ const socialNav = [
   { href: "/trends", label: "Tendances", icon: TrendIcon },
 ];
 
-export default function Sidebar({ userName, counts, levelInfo }: { userName: string | null; counts: Counts; levelInfo: LevelInfo }) {
+export default function Sidebar({
+  userName,
+  avatarUrl,
+  counts,
+  levelInfo,
+}: {
+  userName: string | null;
+  avatarUrl: string | null;
+  counts: Counts;
+  levelInfo: LevelInfo;
+}) {
   const pathname = usePathname();
   const initial = (userName ?? "?")[0].toUpperCase();
 
@@ -120,7 +130,14 @@ export default function Sidebar({ userName, counts, levelInfo }: { userName: str
 
       <div className={styles.navFoot}>
         <Link href="/profile" className={styles.footRow}>
-          <div className={styles.avatar}>{initial}</div>
+          <div className={styles.avatar}>
+            {avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={avatarUrl} alt={userName ?? "Profil"} className={styles.avatarImg} />
+            ) : (
+              initial
+            )}
+          </div>
           <div className={styles.footInfo}>
             <div className={styles.footName}>{userName ?? "Cinéphile"}</div>
             <div className={styles.footSub}>
