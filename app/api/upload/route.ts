@@ -34,10 +34,12 @@ export async function POST(request: NextRequest) {
 
   const ext = ALLOWED_TYPES.get(file.type) ?? "jpg";
   const filename = `${type}/${session.userId}.${ext}`;
+  const blobToken = process.env.BLOB_PROFIL_READ_WRITE_TOKEN ?? process.env.BLOB_READ_WRITE_TOKEN;
 
-  if (process.env.BLOB_READ_WRITE_TOKEN) {
+  if (blobToken) {
     const blob = await put(filename, file, {
       access: "public",
+      token: blobToken,
     });
 
     return NextResponse.json({ url: blob.url });
