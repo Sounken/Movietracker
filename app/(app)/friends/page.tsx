@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { fetchFilmCard } from "@/lib/tmdb";
@@ -8,7 +8,7 @@ import styles from "../dashboard.module.css";
 
 export default async function FriendsPage() {
   const session = await getSession();
-  if (!session) notFound();
+  if (!session) redirect("/login");
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";

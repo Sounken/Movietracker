@@ -173,6 +173,27 @@
   min-width: 2px;
 }
 
+.loginBtn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink-dim);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.loginBtn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .logoutBtn {
   background: none;
   border: none;

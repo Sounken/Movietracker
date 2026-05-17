@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { fetchFilmCard, type TmdbFilmCard } from "@/lib/tmdb";
@@ -12,7 +12,7 @@ import styles from "./profile.module.css";
 
 export default async function ProfilePage() {
   const session = await getSession();
-  if (!session) notFound();
+  if (!session) redirect("/login");
 
   const [user, filmEntries, favoriteEntries] = await Promise.all([
     prisma.user.findUnique({ where: { id: session.userId } }),

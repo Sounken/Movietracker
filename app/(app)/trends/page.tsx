@@ -45,7 +45,6 @@ export default async function TrendsPage({
   searchParams: Promise<{ period?: string }>;
 }) {
   const session = await getSession();
-  if (!session) notFound();
 
   const { period: periodParam } = await searchParams;
   const period: Period = (["week", "month", "year", "all"] as const).includes(
@@ -227,7 +226,7 @@ export default async function TrendsPage({
 
   return (
     <div>
-      <Topbar greeting={greeting} userName={session.name} />
+      <Topbar greeting={greeting} userName={session?.name ?? null} />
       <TrendsClient
         period={period}
         stats={{

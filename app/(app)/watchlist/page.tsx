@@ -1,4 +1,5 @@
 import { getSession } from "@/lib/session";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { fetchFilmCard, type TmdbFilmCard } from "@/lib/tmdb";
 import Topbar from "../components/Topbar";
@@ -9,6 +10,7 @@ const PAGE_SIZE = 24;
 
 export default async function WatchlistPage() {
   const session = await getSession();
+  if (!session) redirect("/login");
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";

@@ -1,4 +1,5 @@
 import { getSession } from "@/lib/session";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { fetchNowPlaying, fetchFilmCard, type TmdbFilmCard } from "@/lib/tmdb";
 import Topbar from "./components/Topbar";
@@ -80,6 +81,7 @@ function runtimeByWeek(entries: { updatedAt: Date; runtime: number | null }[], n
 
 export default async function DashboardPage() {
   const session = await getSession();
+  if (!session) redirect("/discover");
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";

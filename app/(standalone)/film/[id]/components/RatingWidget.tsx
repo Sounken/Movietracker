@@ -41,9 +41,9 @@ function StarIcon({ value, position }: { value: number; position: number }) {
   return <span style={{ color: MUTED }}><StarOutline /></span>;
 }
 
-type Props = { tmdbId: number; initialRating: number; initialReview: string; filmTitle: string };
+type Props = { tmdbId: number; initialRating: number; initialReview: string; filmTitle: string; isAuthenticated: boolean };
 
-export default function RatingWidget({ tmdbId, initialRating, initialReview, filmTitle }: Props) {
+export default function RatingWidget({ tmdbId, initialRating, initialReview, filmTitle, isAuthenticated }: Props) {
   const router = useRouter();
   const [rating, setRating] = useState(initialRating);
   const [hover, setHover] = useState(0);
@@ -59,6 +59,7 @@ export default function RatingWidget({ tmdbId, initialRating, initialReview, fil
   };
 
   const handleRate = (value: number) => {
+    if (!isAuthenticated) { router.push("/login"); return; }
     setRating(value);
     setSaved(false);
     window.dispatchEvent(new CustomEvent(RATING_CHANGED_EVENT, { detail: { tmdbId, rating: value } }));

@@ -86,6 +86,7 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
             initialLiked={userFilm?.liked ?? false}
             userLists={userLists}
             listsWithFilm={listsWithFilm}
+            isAuthenticated={!!session}
           />
         </div>
 
@@ -142,6 +143,7 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
             initialRating={userFilm?.rating ?? 0}
             initialReview={userFilm?.review ?? ""}
             filmTitle={film.title}
+            isAuthenticated={!!session}
           />
 
           {film.overview && (

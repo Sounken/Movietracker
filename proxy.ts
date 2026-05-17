@@ -1,20 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { decrypt } from "@/lib/session";
 
-const publicRoutes = ["/login", "/register"];
+const privateRoutes = ["/", "/lists", "/watchlist", "/favorites", "/friends", "/profile"];
+const authRoutes = ["/login", "/register"];
+
+function isPrivateRoute(path: string): boolean {
+  return privateRoutes.some(route => path === route || path.startsWith(route + "/"));
+}
 
 export default async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
-  const isPublicRoute = publicRoutes.includes(path);
 
   const session = request.cookies.get("session")?.value;
   const payload = await decrypt(session);
 
-  if (!isPublicRoute && !payload) {
-    return NextResponse.redirect(new URL("/login", request.nextUrl));
+  if (isPrivateRoute(path) && !payload) {
+    return NextResponse.redirect(new URL("/discover", request.nextUrl));
   }
 
-  if (isPublicRoute && payload) {
+  if (authRoutes.includes(path) && payload) {
     return NextResponse.redirect(new URL("/", request.nextUrl));
   }
 

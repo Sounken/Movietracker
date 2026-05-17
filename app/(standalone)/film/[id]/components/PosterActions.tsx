@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { toggleWatchlist, toggleLiked } from "@/app/actions/film";
 import { addFilmToList, removeFilmFromList } from "@/app/actions/lists";
 import styles from "./PosterActions.module.css";
@@ -44,6 +45,7 @@ type Props = {
   initialLiked: boolean;
   userLists: UserList[];
   listsWithFilm: string[];
+  isAuthenticated: boolean;
 };
 
 export default function PosterActions({
@@ -53,7 +55,10 @@ export default function PosterActions({
   initialLiked,
   userLists,
   listsWithFilm,
+  isAuthenticated,
 }: Props) {
+  const router = useRouter();
+  const requireAuth = () => { if (!isAuthenticated) { router.push("/login"); return false; } return true; };
   const [rating, setRating] = useState(initialRating);
   const [watchlist, setWatchlist] = useState(initialWatchlist);
   const [liked, setLiked] = useState(initialLiked);
@@ -93,6 +98,7 @@ export default function PosterActions({
   }, [tmdbId]);
 
   function handleRatingAction() {
+    if (!requireAuth()) return;
     if (rating <= 0) {
       document.getElementById("rating-widget")?.scrollIntoView({
         behavior: "smooth",
@@ -105,6 +111,7 @@ export default function PosterActions({
   }
 
   function toggleList(listId: string) {
+    if (!requireAuth()) return;
     const isIn = listMembership.has(listId);
     setListMembership((prev) => {
       const next = new Set(prev);
@@ -131,12 +138,13 @@ export default function PosterActions({
       {/* Watchlist */}
       <button
         className={watchlist ? styles.rated : ""}
-        onClick={() =>
+        onClick={() => {
+          if (!requireAuth()) return;
           startTransition(async () => {
             setWatchlist((v) => !v);
             await toggleWatchlist(tmdbId);
-          })
-        }
+          });
+        }}
       >
         <ClockIcon />
         {watchlist ? "Dans ma watchlist ✓" : "Ajouter à la watchlist"}
@@ -180,12 +188,13 @@ export default function PosterActions({
       {/* Liked */}
       <button
         className={liked ? styles.rated : ""}
-        onClick={() =>
+        onClick={() => {
+          if (!requireAuth()) return;
           startTransition(async () => {
             setLiked((v) => !v);
             await toggleLiked(tmdbId);
-          })
-        }
+          });
+        }}
       >
         <HeartIcon />
         {liked ? "Dans vos favoris ✓" : "Ajouter aux favoris"}

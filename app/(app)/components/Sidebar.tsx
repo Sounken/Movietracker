@@ -60,24 +60,32 @@ const LogoutIcon = () => (
 type Counts = { watchlist: number; liked: number };
 
 const mainNav = [
-  { href: "/", label: "Accueil", icon: HomeIcon },
-  { href: "/discover", label: "Découvrir", icon: FilmIcon },
-  { href: "/lists", label: "Mes listes", icon: ListIcon },
-  { href: "/watchlist", label: "À voir", icon: ClockIcon, countKey: "watchlist" as keyof Counts },
-  { href: "/favorites", label: "Favoris", icon: HeartIcon, countKey: "liked" as keyof Counts },
+  { href: "/", label: "Accueil", icon: HomeIcon, authOnly: true },
+  { href: "/discover", label: "Découvrir", icon: FilmIcon, authOnly: false },
+  { href: "/lists", label: "Mes listes", icon: ListIcon, authOnly: true },
+  { href: "/watchlist", label: "À voir", icon: ClockIcon, countKey: "watchlist" as keyof Counts, authOnly: true },
+  { href: "/favorites", label: "Favoris", icon: HeartIcon, countKey: "liked" as keyof Counts, authOnly: true },
 ];
 
 const socialNav = [
-  { href: "/friends", label: "Amis", icon: UsersIcon },
-  { href: "/trends", label: "Tendances", icon: TrendIcon },
+  { href: "/friends", label: "Amis", icon: UsersIcon, authOnly: true },
+  { href: "/trends", label: "Tendances", icon: TrendIcon, authOnly: false },
 ];
 
+const LoginIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
+    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3" />
+  </svg>
+);
+
 export default function Sidebar({
+  isAuthenticated,
   userName,
   avatarUrl,
   counts,
   levelInfo,
 }: {
+  isAuthenticated: boolean;
   userName: string | null;
   avatarUrl: string | null;
   counts: Counts;
@@ -85,6 +93,7 @@ export default function Sidebar({
 }) {
   const pathname = usePathname();
   const initial = (userName ?? "?")[0].toUpperCase();
+
 
   return (
     <aside className={styles.nav}>
@@ -99,7 +108,7 @@ export default function Sidebar({
 
       <div className={styles.navSection}>
         <div className={styles.navLabel}>Bibliothèque</div>
-        {mainNav.map(({ href, label, icon: Icon, countKey }) => (
+        {mainNav.filter(({ authOnly }) => !authOnly || isAuthenticated).map(({ href, label, icon: Icon, countKey }) => (
           <Link
             key={href}
             href={href}
@@ -116,7 +125,7 @@ export default function Sidebar({
 
       <div className={styles.navSection}>
         <div className={styles.navLabel}>Social</div>
-        {socialNav.map(({ href, label, icon: Icon }) => (
+        {socialNav.filter(({ authOnly }) => !authOnly || isAuthenticated).map(({ href, label, icon: Icon }) => (
           <Link
             key={href}
             href={href}
@@ -129,30 +138,39 @@ export default function Sidebar({
       </div>
 
       <div className={styles.navFoot}>
-        <Link href="/profile" className={styles.footRow}>
-          <div className={styles.avatar}>
-            {avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={avatarUrl} alt={userName ?? "Profil"} className={styles.avatarImg} />
-            ) : (
-              initial
-            )}
-          </div>
-          <div className={styles.footInfo}>
-            <div className={styles.footName}>{userName ?? "Cinéphile"}</div>
-            <div className={styles.footSub}>
-              {levelInfo.title} · niv. {levelInfo.level}
-            </div>
-            <div className={styles.xpBarWrap} title={`${levelInfo.currentXP} / ${levelInfo.nextLevelXP} XP`}>
-              <div className={styles.xpBar} style={{ width: `${levelInfo.percent}%` }} />
-            </div>
-          </div>
-        </Link>
-        <form action={logout}>
-          <button type="submit" className={styles.logoutBtn} title="Se déconnecter">
-            <LogoutIcon />
-          </button>
-        </form>
+        {isAuthenticated ? (
+          <>
+            <Link href="/profile" className={styles.footRow}>
+              <div className={styles.avatar}>
+                {avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={avatarUrl} alt={userName ?? "Profil"} className={styles.avatarImg} />
+                ) : (
+                  initial
+                )}
+              </div>
+              <div className={styles.footInfo}>
+                <div className={styles.footName}>{userName ?? "Cinéphile"}</div>
+                <div className={styles.footSub}>
+                  {levelInfo.title} · niv. {levelInfo.level}
+                </div>
+                <div className={styles.xpBarWrap} title={`${levelInfo.currentXP} / ${levelInfo.nextLevelXP} XP`}>
+                  <div className={styles.xpBar} style={{ width: `${levelInfo.percent}%` }} />
+                </div>
+              </div>
+            </Link>
+            <form action={logout}>
+              <button type="submit" className={styles.logoutBtn} title="Se déconnecter">
+                <LogoutIcon />
+              </button>
+            </form>
+          </>
+        ) : (
+          <Link href="/login" className={styles.loginBtn}>
+            <LoginIcon />
+            <span>Se connecter</span>
+          </Link>
+        )}
       </div>
     </aside>
   );
