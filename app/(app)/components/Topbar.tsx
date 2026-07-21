@@ -93,7 +93,13 @@ export default function Topbar({ greeting, userName }: Props) {
           En ligne · {greeting.toLowerCase()}
         </div>
         <h1 className={styles.title}>
-          {greeting}, <em>{userName ?? "Cinéphile"}</em>.
+          {userName ? (
+            <>
+              {greeting}, <em>{userName}</em>.
+            </>
+          ) : (
+            "Bienvenue 👋"
+          )}
         </h1>
       </div>
 
