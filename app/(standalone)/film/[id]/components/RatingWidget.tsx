@@ -135,7 +135,7 @@ export default function RatingWidget({ tmdbId, initialRating, initialReview, fil
           <div className={styles.reviewActions}>
             {saved && <span className={styles.savedMsg}>✓ Avis sauvegardé</span>}
             <button onClick={handleClearReview} disabled={isPending} className={styles.btnSecondary}>
-              Effacer l'avis
+              Effacer l&apos;avis
             </button>
             <button onClick={handleSave} disabled={isPending} className={styles.btnSave}>
               {isPending ? "Sauvegarde…" : "Sauvegarder l'avis"}

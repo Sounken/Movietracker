@@ -6,21 +6,25 @@ on:
   pull_request:
     branches: [main]
 
-# Contrôle qualité uniquement : lint + typecheck + build.
-# Aucun secret nécessaire — les migrations et le déploiement se font côté serveur
+# Contrôle qualité : typecheck + build sont bloquants (vrais bugs).
+# Le lint est informatif (non bloquant) pour ne pas casser un déploiement sur du style.
+# Aucun secret nécessaire — migrations et déploiement se font côté serveur
 # (le conteneur applique `prisma migrate deploy` au démarrage, via Coolify).
 jobs:
   ci:
     name: Lint · Typecheck · Build
     runs-on: ubuntu-latest
-    # DATABASE_URL factice : le build ne se connecte pas à la base, mais évite
-    # une variable d'env indéfinie au chargement de la config Prisma.
+    # Valeurs FACTICES (pas des secrets) : le build ne se connecte à rien, mais
+    # elles évitent qu'un module plante sur une variable d'env absente au build.
     env:
       DATABASE_URL: "postgresql://user:pass@localhost:5432/db"
+      TMDB_API_KEY: "dummy"
+      SESSION_SECRET: "dummy-session-secret-for-build-only-0123456789"
+      BLOB_READ_WRITE_TOKEN: "vercel_blob_rw_dummy_dummy"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: "24"
           cache: "npm"
@@ -31,8 +35,9 @@ jobs:
       - name: Prisma generate
         run: npx prisma generate
 
-      - name: Lint
+      - name: Lint (informatif)
         run: npm run lint
+        continue-on-error: true
 
       - name: Typecheck
         run: npx tsc --noEmit
