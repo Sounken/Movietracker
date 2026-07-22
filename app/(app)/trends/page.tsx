@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { unstable_cache } from "next/cache";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { fetchFilmCard } from "@/lib/tmdb";
@@ -39,20 +39,10 @@ function getPeriodStart(period: Period): Date | null {
   return null;
 }
 
-export default async function TrendsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ period?: string }>;
-}) {
-  const session = await getSession();
-
-  const { period: periodParam } = await searchParams;
-  const period: Period = (["week", "month", "year", "all"] as const).includes(
-    periodParam as Period
-  )
-    ? (periodParam as Period)
-    : "month";
-
+// ——— Données communautaires (identiques pour tous) : calcul lourd mis en cache ———
+// Recalculé au plus une fois toutes les 10 min par période, au lieu de chaque visite.
+const getTrendsData = unstable_cache(
+  async (period: Period) => {
   const since = getPeriodStart(period);
   const dateFilter = since ? { updatedAt: { gte: since } } : {};
 
@@ -221,6 +211,44 @@ export default async function TrendsPage({
     };
   });
 
+  return {
+    stats: {
+      totalUsers,
+      totalWatched,
+      totalRated,
+      totalReviews,
+      totalWatchlist,
+      totalHours: Math.round((runtimeAgg._sum.runtime ?? 0) / 60),
+    },
+    topWatched: buildRanking(topWatchedRaw),
+    topLiked: buildRanking(topLikedRaw),
+    topRated: buildRanking(topRatedRaw),
+    topWatchlisted: buildRanking(topWatchlistedRaw),
+    genres,
+    recentReviews,
+    activeUsers,
+  };
+  },
+  ["trends-data"],
+  { revalidate: 600, tags: ["trends"] },
+);
+
+export default async function TrendsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ period?: string }>;
+}) {
+  const session = await getSession();
+
+  const { period: periodParam } = await searchParams;
+  const period: Period = (["week", "month", "year", "all"] as const).includes(
+    periodParam as Period
+  )
+    ? (periodParam as Period)
+    : "month";
+
+  const data = await getTrendsData(period);
+
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
 
@@ -229,21 +257,14 @@ export default async function TrendsPage({
       <Topbar greeting={greeting} userName={session?.name ?? null} />
       <TrendsClient
         period={period}
-        stats={{
-          totalUsers,
-          totalWatched,
-          totalRated,
-          totalReviews,
-          totalWatchlist,
-          totalHours: Math.round((runtimeAgg._sum.runtime ?? 0) / 60),
-        }}
-        topWatched={buildRanking(topWatchedRaw)}
-        topLiked={buildRanking(topLikedRaw)}
-        topRated={buildRanking(topRatedRaw)}
-        topWatchlisted={buildRanking(topWatchlistedRaw)}
-        genres={genres}
-        recentReviews={recentReviews}
-        activeUsers={activeUsers}
+        stats={data.stats}
+        topWatched={data.topWatched}
+        topLiked={data.topLiked}
+        topRated={data.topRated}
+        topWatchlisted={data.topWatchlisted}
+        genres={data.genres}
+        recentReviews={data.recentReviews}
+        activeUsers={data.activeUsers}
       />
     </div>
   );

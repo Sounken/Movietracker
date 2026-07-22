@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Contrôle qualité uniquement : lint + typecheck + build.
+# Aucun secret nécessaire — les migrations et le déploiement se font côté serveur
+# (le conteneur applique `prisma migrate deploy` au démarrage, via Coolify).
+jobs:
+  ci:
+    name: Lint · Typecheck · Build
+    runs-on: ubuntu-latest
+    # DATABASE_URL factice : le build ne se connecte pas à la base, mais évite
+    # une variable d'env indéfinie au chargement de la config Prisma.
+    env:
+      DATABASE_URL: "postgresql://user:pass@localhost:5432/db"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install
+        run: npm ci
+
+      - name: Prisma generate
+        run: npx prisma generate
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npx next build

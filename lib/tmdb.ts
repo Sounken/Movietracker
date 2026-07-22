@@ -1,3 +1,5 @@
+import { unstable_cache } from "next/cache";
+
 const BASE = "https://api.themoviedb.org/3";
 export const IMG = "https://image.tmdb.org/t/p";
 
@@ -375,19 +377,32 @@ export async function fetchPersonCredits(id: number): Promise<TmdbPersonCredit[]
 
 const RANK_PAGES = 250; // top 5000 actors
 
-export async function fetchPersonPopularRank(id: number): Promise<number | null> {
-  const key = process.env.TMDB_API_KEY;
-  if (!key) return null;
-  try {
+// Liste ordonnée des IDs d'acteurs populaires (par popularité TMDB).
+// 250 requêtes TMDB, mais mises en cache et reconstruites au plus une fois par 24 h
+// — au lieu d'une fois par affichage de page acteur.
+const getPopularPersonIds = unstable_cache(
+  async (): Promise<number[]> => {
+    const key = process.env.TMDB_API_KEY;
+    if (!key) return [];
     const pageNums = Array.from({ length: RANK_PAGES }, (_, i) => i + 1);
     const pages = await Promise.all(
       pageNums.map((page) =>
         fetch(`${BASE}/person/popular?api_key=${key}&page=${page}`, { next: { revalidate: 86400 } })
-          .then((r) => r.ok ? r.json() : { results: [] })
-      )
+          .then((r) => (r.ok ? r.json() : { results: [] })),
+      ),
     );
-    const all = pages.flatMap((p) => (p.results ?? []) as { id: number }[]);
-    const idx = all.findIndex((p) => p.id === id);
+    return pages.flatMap((p) =>
+      ((p.results ?? []) as { id: number }[]).map((x) => x.id),
+    );
+  },
+  ["popular-person-ids"],
+  { revalidate: 86400 },
+);
+
+export async function fetchPersonPopularRank(id: number): Promise<number | null> {
+  try {
+    const ids = await getPopularPersonIds();
+    const idx = ids.indexOf(id);
     return idx !== -1 ? idx + 1 : null;
   } catch {
     return null;
