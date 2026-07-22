@@ -6,13 +6,14 @@ on:
   pull_request:
     branches: [main]
 
-# Contrôle qualité : typecheck + build sont bloquants (vrais bugs).
-# Le lint est informatif (non bloquant) pour ne pas casser un déploiement sur du style.
-# Aucun secret nécessaire — migrations et déploiement se font côté serveur
+# Barrières qualité : typecheck + build (attrapent les vrais bugs / cassures).
+# Le lint est volontairement absent pour l'instant : le code a une dette de style
+# pré-existante (voir tâche G6 pour les <img>) qu'on nettoiera avant de réactiver
+# un lint strict. Aucun secret nécessaire — migrations + déploiement côté serveur
 # (le conteneur applique `prisma migrate deploy` au démarrage, via Coolify).
 jobs:
   ci:
-    name: Lint · Typecheck · Build
+    name: Typecheck · Build
     runs-on: ubuntu-latest
     # Valeurs FACTICES (pas des secrets) : le build ne se connecte à rien, mais
     # elles évitent qu'un module plante sur une variable d'env absente au build.
@@ -34,10 +35,6 @@ jobs:
 
       - name: Prisma generate
         run: npx prisma generate
-
-      - name: Lint (informatif)
-        run: npm run lint
-        continue-on-error: true
 
       - name: Typecheck
         run: npx tsc --noEmit
