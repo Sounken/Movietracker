@@ -144,6 +144,21 @@
 }
 
 .userInfo { flex: 1; min-width: 0; }
+
+/* Avatar + nom cliquables → profil public de l'utilisateur */
+.userLink {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.userLink:hover .userName {
+  color: var(--accent);
+}
 .userName {
   font-size: 14px;
   font-weight: 500;
@@ -220,7 +235,8 @@
   color: var(--ink-dim);
   line-height: 1.5;
 }
-.feedName { color: var(--ink); font-weight: 500; }
+.feedName { color: var(--ink); font-weight: 500; text-decoration: none; }
+.feedName:hover { color: var(--accent); }
 .feedFilm {
   color: var(--accent-soft);
   font-weight: 500;

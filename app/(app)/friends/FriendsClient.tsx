@@ -116,11 +116,13 @@ export default function FriendsClient({
               const isFollowing = followingIds.has(u.id) || u.isFollowing;
               return (
                 <div key={u.id} className={styles.userCard}>
-                  <Avatar url={u.avatarUrl} name={u.name} />
-                  <div className={styles.userInfo}>
-                    <div className={styles.userName}>{u.name}</div>
-                    <div className={styles.userMeta}>{u.filmCount} film{u.filmCount !== 1 ? "s" : ""} dans la collection</div>
-                  </div>
+                  <Link href={`/user/${u.id}`} className={styles.userLink}>
+                    <Avatar url={u.avatarUrl} name={u.name} />
+                    <div className={styles.userInfo}>
+                      <div className={styles.userName}>{u.name}</div>
+                      <div className={styles.userMeta}>{u.filmCount} film{u.filmCount !== 1 ? "s" : ""} dans la collection</div>
+                    </div>
+                  </Link>
                   <button
                     className={isFollowing ? styles.btnUnfollow : styles.btnFollow}
                     onClick={() => toggle(u.id, isFollowing)}
@@ -150,14 +152,16 @@ export default function FriendsClient({
               <div className={styles.userList}>
                 {initialFollowing.map((u) => (
                   <div key={u.id} className={styles.userCard}>
-                    <Avatar url={u.avatarUrl} name={u.name} />
-                    <div className={styles.userInfo}>
-                      <div className={styles.userName}>{u.name}</div>
-                      <div className={styles.userMeta}>
-                        {u.filmCount} film{u.filmCount !== 1 ? "s" : ""}
-                        {u.avgRating != null && <> · ★ {u.avgRating.toFixed(1)}</>}
+                    <Link href={`/user/${u.id}`} className={styles.userLink}>
+                      <Avatar url={u.avatarUrl} name={u.name} />
+                      <div className={styles.userInfo}>
+                        <div className={styles.userName}>{u.name}</div>
+                        <div className={styles.userMeta}>
+                          {u.filmCount} film{u.filmCount !== 1 ? "s" : ""}
+                          {u.avgRating != null && <> · ★ {u.avgRating.toFixed(1)}</>}
+                        </div>
                       </div>
-                    </div>
+                    </Link>
                     <button
                       className={styles.btnUnfollow}
                       onClick={() => toggle(u.id, true)}
@@ -183,11 +187,13 @@ export default function FriendsClient({
               <div className={styles.userList}>
                 {followers.map((u) => (
                   <div key={u.id} className={styles.userCard}>
-                    <Avatar url={u.avatarUrl} name={u.name} />
-                    <div className={styles.userInfo}>
-                      <div className={styles.userName}>{u.name}</div>
-                      {u.followsBack && <div className={styles.mutualBadge}>Abonné mutuel</div>}
-                    </div>
+                    <Link href={`/user/${u.id}`} className={styles.userLink}>
+                      <Avatar url={u.avatarUrl} name={u.name} />
+                      <div className={styles.userInfo}>
+                        <div className={styles.userName}>{u.name}</div>
+                        {u.followsBack && <div className={styles.mutualBadge}>Abonné mutuel</div>}
+                      </div>
+                    </Link>
                     {!u.followsBack && (
                       <button
                         className={styles.btnFollow}
@@ -222,7 +228,9 @@ export default function FriendsClient({
                     <Avatar url={item.user.avatarUrl} name={item.user.name} size={34} />
                     <div className={styles.feedContent}>
                       <div className={styles.feedText}>
-                        <span className={styles.feedName}>{item.user.name}</span>
+                        <Link href={`/user/${item.user.id}`} className={styles.feedName}>
+                          {item.user.name}
+                        </Link>
                         {item.liked && !item.rating && " a aimé "}
                         {item.watched && !item.rating && !item.liked && " a regardé "}
                         {item.rating != null && " a noté "}

@@ -213,9 +213,13 @@ export default function TrendsClient({
                     )}
                     <div className={styles.reviewBody}>
                       <div className={styles.reviewTop}>
-                        <Avatar url={r.user.avatarUrl} name={r.user.name} size={28} />
+                        <Link href={`/user/${r.user.id}`}>
+                          <Avatar url={r.user.avatarUrl} name={r.user.name} size={28} />
+                        </Link>
                         <div className={styles.reviewMeta}>
-                          <span className={styles.reviewUser}>{r.user.name}</span>
+                          <Link href={`/user/${r.user.id}`} className={styles.reviewUser}>
+                            {r.user.name}
+                          </Link>
                           {" · "}
                           <Link href={`/film/${r.tmdbId}`} className={styles.reviewFilm}>
                             {r.title}
@@ -272,7 +276,7 @@ export default function TrendsClient({
             ) : (
               <div className={styles.userList}>
                 {activeUsers.map((u, i) => (
-                  <div key={u.id} className={styles.userCard}>
+                  <Link key={u.id} href={`/user/${u.id}`} className={styles.userCard}>
                     <span className={styles.userRank}>{i + 1}</span>
                     <Avatar url={u.avatarUrl} name={u.name} size={34} />
                     <div className={styles.userInfo}>
@@ -280,7 +284,7 @@ export default function TrendsClient({
                       <div className={styles.userMeta}>{u.count} action{u.count !== 1 ? "s" : ""}</div>
                     </div>
                     <div className={styles.userCount}>{u.count}</div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}

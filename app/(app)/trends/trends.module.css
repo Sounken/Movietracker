@@ -325,6 +325,13 @@
   gap: 10px;
   padding: 9px 16px;
   transition: background 0.15s;
+  /* carte cliquable → profil public */
+  text-decoration: none;
+  color: inherit;
+}
+
+.userCard:hover .userName {
+  color: var(--accent);
 }
 .userCard:hover {
   background: rgba(217, 119, 66, 0.04);
@@ -426,6 +433,11 @@
 .reviewUser {
   font-weight: 500;
   color: var(--ink);
+  text-decoration: none;
+}
+
+.reviewUser:hover {
+  color: var(--accent);
 }
 .reviewFilm {
   color: var(--accent-soft);
