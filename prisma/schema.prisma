@@ -84,4 +84,9 @@ model UserFilm {
   updatedAt DateTime  @updatedAt
 
   @@unique([userId, tmdbId])
+  @@index([userId, updatedAt])
+  @@index([userId, rating])
+  @@index([userId, watchlist])
+  @@index([tmdbId])
+  @@index([updatedAt])
 }
