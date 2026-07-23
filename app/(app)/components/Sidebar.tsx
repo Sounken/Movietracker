@@ -78,6 +78,13 @@ const LoginIcon = () => (
   </svg>
 );
 
+const UserIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
+  </svg>
+);
+
 export default function Sidebar({
   isAuthenticated,
   userName,
@@ -135,6 +142,34 @@ export default function Sidebar({
             <span>{label}</span>
           </Link>
         ))}
+      </div>
+
+      {/* Accès rapide mobile : la barre du bas masque le pied de page (profil / connexion) */}
+      <div className={styles.mobileOnly}>
+        {isAuthenticated ? (
+          <Link
+            href="/profile"
+            className={`${styles.navItem} ${pathname === "/profile" ? styles.active : ""}`}
+            aria-label="Mon profil"
+          >
+            {avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={avatarUrl} alt="" className={styles.navAvatar} />
+            ) : (
+              <UserIcon />
+            )}
+            <span>Profil</span>
+          </Link>
+        ) : (
+          <Link
+            href="/login"
+            className={`${styles.navItem} ${pathname === "/login" ? styles.active : ""}`}
+            aria-label="Se connecter"
+          >
+            <LoginIcon />
+            <span>Connexion</span>
+          </Link>
+        )}
       </div>
 
       <div className={styles.navFoot}>

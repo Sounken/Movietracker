@@ -225,7 +225,23 @@
   height: 16px;
 }
 
+/* Entrée réservée à la barre du bas mobile (profil / connexion) */
+.mobileOnly {
+  display: none;
+}
+
 @media (max-width: 768px) {
+  .mobileOnly {
+    display: contents;
+  }
+
+  .navAvatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
   .nav {
     position: fixed;
     bottom: 0;
@@ -257,8 +273,11 @@
 
   .navItem {
     flex-direction: column;
-    padding: 8px 12px;
+    justify-content: center;
+    padding: 10px 14px;
     gap: 3px;
+    min-width: 52px;
+    min-height: 48px;
     border-radius: 10px;
     flex: 0 0 auto;
     box-shadow: none;
@@ -271,8 +290,8 @@
   }
 
   .navItem svg {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
   }
 
   .navItem span,
