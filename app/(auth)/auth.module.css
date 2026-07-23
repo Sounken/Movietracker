@@ -16,8 +16,35 @@
   max-width: 400px;
 }
 
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-bottom: 20px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--ink-dim);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.backBtn:hover {
+  color: var(--ink);
+}
+
 .brand {
   margin-bottom: 32px;
+  /* la marque est un lien vers l'accueil */
+  display: inline-block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.brand:hover {
+  opacity: 0.85;
 }
 
 .brandName {

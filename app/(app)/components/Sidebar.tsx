@@ -97,14 +97,14 @@ export default function Sidebar({
 
   return (
     <aside className={styles.nav}>
-      <div className={styles.brand}>
+      <Link href="/" className={styles.brand} aria-label="Retour à l'accueil">
         <div className={styles.brandMark}>
           <Image src="/logo.png" alt="Movietracker" width={34} height={31} priority />
         </div>
         <div className={styles.brandName}>
           Movie<em>tracker</em>
         </div>
-      </div>
+      </Link>
 
       <div className={styles.navSection}>
         <div className={styles.navLabel}>Bibliothèque</div>

@@ -23,6 +23,11 @@ const PlusIcon = () => (
     <path d="M12 5v14M5 12h14" />
   </svg>
 );
+const CheckIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" width="14" height="14">
+    <path d="m5 13 4 4L19 7" />
+  </svg>
+);
 const PrevIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" width="15" height="15">
     <path d="m15 18-6-6 6-6" />
@@ -36,21 +41,43 @@ const NextIcon = () => (
 
 const DURATION = 6000;
 
-export default function HeroCarousel({ movies }: { movies: TmdbMovie[] }) {
+export default function HeroCarousel({
+  movies,
+  initialWatchlist = [],
+}: {
+  movies: TmdbMovie[];
+  initialWatchlist?: number[];
+}) {
   const [idx, setIdx] = useState(0);
   const [prog, setProg] = useState(0);
-  const [added, setAdded] = useState<Set<number>>(new Set());
+  // État réel de la watchlist, initialisé depuis le serveur
+  const [inWatchlist, setInWatchlist] = useState<Set<number>>(new Set(initialWatchlist));
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const n = movies.length;
 
   function handleWatchlist(id: number) {
+    const wasIn = inWatchlist.has(id);
+
+    // Mise à jour optimiste (ajout ou retrait)
+    setInWatchlist((prev) => {
+      const next = new Set(prev);
+      if (wasIn) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
     startTransition(async () => {
       try {
         await toggleWatchlist(id);
-        setAdded((prev) => new Set(prev).add(id));
       } catch {
-        // Non connecté → rediriger vers la connexion
+        // Échec (ex. non connecté) → on annule l'affichage optimiste
+        setInWatchlist((prev) => {
+          const next = new Set(prev);
+          if (wasIn) next.add(id);
+          else next.delete(id);
+          return next;
+        });
         router.push("/login");
       }
     });
@@ -106,8 +133,21 @@ export default function HeroCarousel({ movies }: { movies: TmdbMovie[] }) {
             className={styles.btnGhost}
             onClick={() => handleWatchlist(cur.id)}
             disabled={isPending}
+            title={
+              inWatchlist.has(cur.id)
+                ? "Retirer de la watchlist"
+                : "Ajouter à la watchlist"
+            }
           >
-            <PlusIcon /> {added.has(cur.id) ? "Dans la watchlist" : "Watchlist"}
+            {inWatchlist.has(cur.id) ? (
+              <>
+                <CheckIcon /> Dans la watchlist
+              </>
+            ) : (
+              <>
+                <PlusIcon /> Watchlist
+              </>
+            )}
           </button>
         </div>
       </div>

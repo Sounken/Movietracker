@@ -2,8 +2,15 @@
 
 import { useActionState, useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { login } from "@/app/actions/auth";
 import styles from "../auth.module.css";
+
+const BackIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
+    <path d="m15 18-6-6 6-6" />
+  </svg>
+);
 
 const PHRASES = [
   "Content de vous revoir.",
@@ -31,16 +38,27 @@ const PHRASES = [
 export default function LoginPage() {
   const [state, action, pending] = useActionState(login, undefined);
   const [phrase, setPhrase] = useState(PHRASES[0]);
+  const router = useRouter();
   useEffect(() => { setPhrase(PHRASES[Math.floor(Math.random() * PHRASES.length)]); }, []);
+
+  // Retour à la page précédente ; si on est arrivé directement ici, retour à l'accueil.
+  function goBack() {
+    if (typeof window !== "undefined" && window.history.length > 1) router.back();
+    else router.push("/");
+  }
 
   return (
     <div className={styles.container}>
       <div className={styles.card}>
-        <div className={styles.brand}>
+        <button type="button" onClick={goBack} className={styles.backBtn}>
+          <BackIcon /> Retour
+        </button>
+
+        <Link href="/" className={styles.brand} aria-label="Retour à l'accueil">
           <span className={styles.brandName}>
             Movie<em>tracker</em>
           </span>
-        </div>
+        </Link>
 
         <h1 className={styles.title}>Connexion</h1>
         <p className={styles.subtitle}>{phrase}</p>

@@ -128,6 +128,21 @@ export default async function DashboardPage() {
 
   const totalMinutes = runtimeAgg._sum?.runtime ?? 0;
 
+  // Films du carrousel déjà présents dans la watchlist → pour synchroniser le bouton
+  const heroWatchlistIds =
+    session && nowPlaying.length > 0
+      ? (
+          await prisma.userFilm.findMany({
+            where: {
+              userId: session.userId,
+              watchlist: true,
+              tmdbId: { in: nowPlaying.map((m) => m.id) },
+            },
+            select: { tmdbId: true },
+          })
+        ).map((e) => e.tmdbId)
+      : [];
+
   // ——— Sparkline data ———
   // Films notés : count par mois sur 6 mois
   const filmsByMonth = countByMonth(ratedEntries, 6);
@@ -180,7 +195,7 @@ export default async function DashboardPage() {
       </section>
 
       {nowPlaying.length > 0 ? (
-        <HeroCarousel movies={nowPlaying} />
+        <HeroCarousel movies={nowPlaying} initialWatchlist={heroWatchlistIds} />
       ) : (
         <div className={styles.noTmdb}>
           Ajoutez <code>TMDB_API_KEY</code> dans <code>.env.local</code> pour voir les films en salle.

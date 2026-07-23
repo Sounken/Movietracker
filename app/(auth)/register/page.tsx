@@ -11,11 +11,11 @@ export default function RegisterPage() {
   return (
     <div className={styles.container}>
       <div className={styles.card}>
-        <div className={styles.brand}>
+        <Link href="/" className={styles.brand} aria-label="Retour à l'accueil">
           <span className={styles.brandName}>
             Movie<em>tracker</em>
           </span>
-        </div>
+        </Link>
 
         <h1 className={styles.title}>Créer un compte</h1>
         <p className={styles.subtitle}>Rejoignez la communauté cinéphile.</p>
