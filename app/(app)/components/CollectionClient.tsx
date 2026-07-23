@@ -18,6 +18,7 @@ export default function CollectionClient({
   ratingField = "rating",
   emptyTitle,
   emptyHint,
+  userId,
 }: {
   films: Film[];
   total: number;
@@ -25,6 +26,8 @@ export default function CollectionClient({
   ratingField?: "rating" | "voteAverage";
   emptyTitle?: string;
   emptyHint?: string;
+  /** Collection d'un autre utilisateur (profil public). Par défaut : soi-même. */
+  userId?: string;
 }) {
   const [films, setFilms] = useState<Film[]>(initialFilms);
   const [minRating, setMinRating] = useState<number | null>(null);
@@ -61,7 +64,10 @@ export default function CollectionClient({
 
   function loadMore() {
     startTransition(async () => {
-      const res = await fetch(`/api/collection?type=${type}&skip=${films.length}&take=${PAGE_SIZE}`);
+      const res = await fetch(
+        `/api/collection?type=${type}&skip=${films.length}&take=${PAGE_SIZE}` +
+          (userId ? `&userId=${userId}` : ""),
+      );
       if (!res.ok) return;
       const data = await res.json();
       setFilms((prev) => [...prev, ...(data.films as Film[])]);

@@ -2,8 +2,9 @@ import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { type TmdbFilmCard } from "@/lib/tmdb";
-import { getFilmCard } from "@/lib/films";
+import { getFilmCards } from "@/lib/films";
 import FilmGrid from "../../components/FilmGrid";
+import CollectionClient from "../../components/CollectionClient";
 import FollowButton from "./FollowButton";
 import { computeXP, getLevelInfo } from "@/lib/xp";
 import styles from "../../profile/profile.module.css";
@@ -51,26 +52,29 @@ export default async function PublicProfilePage({
         ratedCount
       : null;
 
-  // Films notés (les plus récents d'abord)
+  // Films notés (les plus récents d'abord) — 1re page, la suite se charge à la demande
   const ratedEntries = filmEntries.filter((e) => e.rating !== null);
-  const ratedFilms = (
-    await Promise.all(
-      ratedEntries.slice(0, COLLECTION_LIMIT).map(async (entry) => {
-        const card = await getFilmCard(entry.tmdbId);
-        return card ? { ...card, rating: entry.rating } : null;
-      }),
-    )
-  ).filter(Boolean) as Array<TmdbFilmCard & { rating: number | null }>;
+  const firstPage = ratedEntries.slice(0, COLLECTION_LIMIT);
 
-  // Films préférés
-  const favoriteFilms = (
-    await Promise.all(
-      favoriteEntries.map(async (entry) => {
-        const card = await getFilmCard(entry.tmdbId);
-        return card ? { ...card, rating: null } : null;
-      }),
-    )
-  ).filter(Boolean) as Array<TmdbFilmCard & { rating: number | null }>;
+  // Une seule requête base pour toutes les fiches (1re page + films préférés)
+  const cards = await getFilmCards([
+    ...firstPage.map((e) => e.tmdbId),
+    ...favoriteEntries.map((e) => e.tmdbId),
+  ]);
+
+  const ratedFilms = firstPage
+    .map((entry) => {
+      const card = cards.get(entry.tmdbId);
+      return card ? { ...card, rating: entry.rating } : null;
+    })
+    .filter(Boolean) as Array<TmdbFilmCard & { rating: number | null }>;
+
+  const favoriteFilms = favoriteEntries
+    .map((entry) => {
+      const card = cards.get(entry.tmdbId);
+      return card ? { ...card, rating: null } : null;
+    })
+    .filter(Boolean) as Array<TmdbFilmCard & { rating: number | null }>;
 
   const displayName = user.name ?? user.email.split("@")[0];
   const initial = displayName[0]?.toUpperCase() ?? "?";
@@ -177,17 +181,14 @@ export default async function PublicProfilePage({
           <div className={styles.sectionHead}>
             <h2 className={styles.sectionTitle}>Films notés</h2>
           </div>
-          <FilmGrid
+          <CollectionClient
             films={ratedFilms}
+            total={ratedCount}
+            type="rated"
+            userId={id}
             emptyTitle={`${displayName} n'a encore noté aucun film.`}
             emptyHint=""
           />
-          {ratedEntries.length > COLLECTION_LIMIT && (
-            <p className={styles.statSub} style={{ marginTop: 16 }}>
-              {ratedEntries.length - COLLECTION_LIMIT} film
-              {ratedEntries.length - COLLECTION_LIMIT > 1 ? "s" : ""} de plus dans sa collection.
-            </p>
-          )}
         </div>
       </div>
     </div>
