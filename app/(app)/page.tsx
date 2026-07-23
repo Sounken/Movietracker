@@ -1,7 +1,8 @@
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { fetchNowPlaying, fetchFilmCard, type TmdbFilmCard } from "@/lib/tmdb";
+import { fetchNowPlaying, type TmdbFilmCard } from "@/lib/tmdb";
+import { getFilmCard } from "@/lib/films";
 import Topbar from "./components/Topbar";
 import HeroCarousel from "./components/HeroCarousel";
 import CollectionClient from "./components/CollectionClient";
@@ -113,7 +114,7 @@ export default async function DashboardPage() {
   const ratedFilms = (
     await Promise.all(
       ratedEntries.slice(0, 24).map(async (entry) => {
-        const card = await fetchFilmCard(entry.tmdbId);
+        const card = await getFilmCard(entry.tmdbId);
         if (!card) return null;
         return { ...card, rating: entry.rating! };
       }),

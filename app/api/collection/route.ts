@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import { fetchFilmCard } from "@/lib/tmdb";
+import { getFilmCard } from "@/lib/films";
 
 const PAGE_SIZE = 24;
 
@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
   const films = (
     await Promise.all(
       entries.map(async (entry) => {
-        const card = await fetchFilmCard(entry.tmdbId);
+        const card = await getFilmCard(entry.tmdbId);
         if (!card) return null;
         return { ...card, rating: entry.rating ?? null };
       })

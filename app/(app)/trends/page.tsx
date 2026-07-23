@@ -1,7 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import { fetchFilmCard } from "@/lib/tmdb";
+import { getFilmCard } from "@/lib/films";
 import Topbar from "../components/Topbar";
 import TrendsClient from "./TrendsClient";
 
@@ -128,7 +128,7 @@ const getTrendsData = unstable_cache(
   const tmdbMap = new Map<number, { title: string; posterUrl: string; year: string; genres: string[] }>();
   for (let i = 0; i < allIds.length; i += 8) {
     const batch = allIds.slice(i, i + 8);
-    const results = await Promise.all(batch.map((id) => fetchFilmCard(id)));
+    const results = await Promise.all(batch.map((id) => getFilmCard(id)));
     results.forEach((card, idx) => {
       if (card) tmdbMap.set(batch[idx], card);
     });

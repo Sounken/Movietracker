@@ -1,7 +1,8 @@
 import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import { fetchFilmCard, type TmdbFilmCard } from "@/lib/tmdb";
+import { type TmdbFilmCard } from "@/lib/tmdb";
+import { getFilmCard } from "@/lib/films";
 import ProfileHeaderClient from "./ProfileHeaderClient";
 import FavFilmsClient from "./FavFilmsClient";
 import CollectionClient from "../components/CollectionClient";
@@ -64,7 +65,7 @@ export default async function ProfilePage() {
     [1, 2, 3, 4].map(async (pos) => {
       const entry = favoriteEntries.find((e) => e.position === pos);
       if (!entry) return { position: pos, tmdbId: null, title: null, posterUrl: null, year: null };
-      const film = await fetchFilmCard(entry.tmdbId);
+      const film = await getFilmCard(entry.tmdbId);
       return {
         position: pos,
         tmdbId: entry.tmdbId,
@@ -83,7 +84,7 @@ export default async function ProfilePage() {
   const collectionFilms = (
     await Promise.all(
       collectionEntries.slice(0, 24).map(async (entry) => {
-        const card = await fetchFilmCard(entry.tmdbId);
+        const card = await getFilmCard(entry.tmdbId);
         if (!card) return null;
         return { ...card, rating: entry.rating ?? null };
       }),

@@ -68,6 +68,18 @@ model UserListFilm {
   @@unique([listId, tmdbId])
 }
 
+// Cache local des métadonnées TMDB (évite un appel réseau par film à chaque rendu).
+model Film {
+  tmdbId      Int      @id
+  title       String
+  posterUrl   String   @default("")
+  year        String   @default("")
+  genres      String[]
+  voteAverage Float    @default(0)
+  runtime     Int?
+  updatedAt   DateTime @updatedAt
+}
+
 model UserFilm {
   id        String   @id @default(cuid())
   userId    String

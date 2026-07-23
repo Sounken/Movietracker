@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import { fetchFilmCard } from "@/lib/tmdb";
+import { getFilmCard } from "@/lib/films";
 import ListsClient from "./ListsClient";
 
 export default async function ListsPage() {
@@ -22,7 +22,7 @@ export default async function ListsPage() {
       const posters = (
         await Promise.all(
           list.films.map(async (f) => {
-            const card = await fetchFilmCard(f.tmdbId);
+            const card = await getFilmCard(f.tmdbId);
             return card?.posterUrl ?? null;
           }),
         )

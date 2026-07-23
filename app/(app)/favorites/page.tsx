@@ -1,7 +1,8 @@
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { fetchFilmCard, type TmdbFilmCard } from "@/lib/tmdb";
+import { type TmdbFilmCard } from "@/lib/tmdb";
+import { getFilmCard } from "@/lib/films";
 import Topbar from "../components/Topbar";
 import FilmGridInfinite from "../components/FilmGridInfinite";
 import styles from "../collection.module.css";
@@ -33,7 +34,7 @@ export default async function FavoritesPage() {
   const films = (
     await Promise.all(
       entries.map(async (entry) => {
-        const card = await fetchFilmCard(entry.tmdbId);
+        const card = await getFilmCard(entry.tmdbId);
         if (!card) return null;
         return { ...card, rating: entry.rating ?? null };
       })

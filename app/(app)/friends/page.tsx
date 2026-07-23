@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import { fetchFilmCard } from "@/lib/tmdb";
+import { getFilmCard } from "@/lib/films";
 import Topbar from "../components/Topbar";
 import FriendsClient from "./FriendsClient";
 import styles from "../dashboard.module.css";
@@ -61,7 +61,7 @@ export default async function FriendsPage() {
   // Fetch TMDB titles for activity items
   const activityWithTitles = await Promise.all(
     recentActivity.map(async (item) => {
-      const card = await fetchFilmCard(item.tmdbId);
+      const card = await getFilmCard(item.tmdbId);
       return {
         id: item.id,
         tmdbId: item.tmdbId,
