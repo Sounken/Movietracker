@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { TmdbMovie } from "@/lib/tmdb";
 import { genreLabels } from "@/lib/tmdb";
+import { toggleWatchlist } from "@/app/actions/film";
 import styles from "./HeroCarousel.module.css";
 
 const StarIcon = () => (
@@ -37,7 +39,22 @@ const DURATION = 6000;
 export default function HeroCarousel({ movies }: { movies: TmdbMovie[] }) {
   const [idx, setIdx] = useState(0);
   const [prog, setProg] = useState(0);
+  const [added, setAdded] = useState<Set<number>>(new Set());
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
   const n = movies.length;
+
+  function handleWatchlist(id: number) {
+    startTransition(async () => {
+      try {
+        await toggleWatchlist(id);
+        setAdded((prev) => new Set(prev).add(id));
+      } catch {
+        // Non connecté → rediriger vers la connexion
+        router.push("/login");
+      }
+    });
+  }
 
   useEffect(() => {
     if (!n) return;
@@ -85,8 +102,12 @@ export default function HeroCarousel({ movies }: { movies: TmdbMovie[] }) {
           <Link href={`/film/${cur.id}`} className={styles.btnPrimary}>
             <ExternalIcon /> Voir la fiche
           </Link>
-          <button className={styles.btnGhost}>
-            <PlusIcon /> Ma liste
+          <button
+            className={styles.btnGhost}
+            onClick={() => handleWatchlist(cur.id)}
+            disabled={isPending}
+          >
+            <PlusIcon /> {added.has(cur.id) ? "Dans la watchlist" : "Watchlist"}
           </button>
         </div>
       </div>

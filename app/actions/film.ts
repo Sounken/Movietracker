@@ -20,13 +20,15 @@ export async function saveRating(tmdbId: number, rating: number, review: string)
     runtime = detail?.runtime ?? null;
   }
 
+  // Noter un film = film vu → on le retire de la watchlist (« à voir »).
   await prisma.userFilm.upsert({
     where: { userId_tmdbId: { userId: session.userId, tmdbId } },
-    update: { rating, review, watched: true, ...(runtime ? { runtime } : {}) },
-    create: { userId: session.userId, tmdbId, rating, review, watched: true, runtime },
+    update: { rating, review, watched: true, watchlist: false, ...(runtime ? { runtime } : {}) },
+    create: { userId: session.userId, tmdbId, rating, review, watched: true, watchlist: false, runtime },
   });
 
   revalidatePath("/");
+  revalidatePath("/watchlist");
   revalidatePath(`/film/${tmdbId}`);
 }
 
@@ -51,6 +53,8 @@ export async function addFilm(data: {
       watched: data.watched,
       watchedAt: data.watchedAt ? new Date(data.watchedAt) : null,
       runtime,
+      // Un film noté n'est plus « à voir » : on le sort de la watchlist.
+      ...(data.rating != null ? { watchlist: false } : {}),
     },
     create: {
       userId: session.userId,
@@ -60,10 +64,12 @@ export async function addFilm(data: {
       watched: data.watched,
       watchedAt: data.watchedAt ? new Date(data.watchedAt) : null,
       runtime,
+      ...(data.rating != null ? { watchlist: false } : {}),
     },
   });
 
   revalidatePath("/");
+  revalidatePath("/watchlist");
   revalidatePath(`/film/${data.tmdbId}`);
 }
 

@@ -51,7 +51,6 @@ const PERIOD_LABELS: Record<Period, string> = {
   week: "Cette semaine",
   month: "Ce mois",
   year: "Cette année",
-  all: "Tout",
 };
 
 const TAB_LABELS: Record<TabKey, string> = {
@@ -125,7 +124,6 @@ export default function TrendsClient({
         <StatCard value={stats.totalWatched} label="Films vus" icon="👁" />
         <StatCard value={stats.totalRated} label="Notes données" icon="★" />
         <StatCard value={stats.totalReviews} label="Avis rédigés" icon="✍" />
-        <StatCard value={stats.totalWatchlist} label="En watchlist" icon="🕐" />
         <StatCard value={stats.totalHours} label="Heures visionnées" icon="⏱" suffix="h" />
         <StatCard value={stats.totalUsers} label="Utilisateurs" icon="👤" />
       </div>

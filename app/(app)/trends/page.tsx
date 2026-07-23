@@ -5,7 +5,7 @@ import { getFilmCard } from "@/lib/films";
 import Topbar from "../components/Topbar";
 import TrendsClient from "./TrendsClient";
 
-export type Period = "week" | "month" | "year" | "all";
+export type Period = "week" | "month" | "year";
 
 export type FilmRanking = {
   tmdbId: number;
@@ -31,20 +31,18 @@ export type RecentReview = {
   user: { id: string; name: string; avatarUrl: string | null };
 };
 
-function getPeriodStart(period: Period): Date | null {
+function getPeriodStart(period: Period): Date {
   const now = new Date();
   if (period === "week") return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  if (period === "month") return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   if (period === "year") return new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
-  return null;
+  return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000); // month (défaut)
 }
 
 // ——— Données communautaires (identiques pour tous) : calcul lourd mis en cache ———
 // Recalculé au plus une fois toutes les 10 min par période, au lieu de chaque visite.
 const getTrendsData = unstable_cache(
   async (period: Period) => {
-  const since = getPeriodStart(period);
-  const dateFilter = since ? { updatedAt: { gte: since } } : {};
+  const dateFilter = { updatedAt: { gte: getPeriodStart(period) } };
 
   const [
     totalUsers,
@@ -241,7 +239,7 @@ export default async function TrendsPage({
   const session = await getSession();
 
   const { period: periodParam } = await searchParams;
-  const period: Period = (["week", "month", "year", "all"] as const).includes(
+  const period: Period = (["week", "month", "year"] as const).includes(
     periodParam as Period
   )
     ? (periodParam as Period)
