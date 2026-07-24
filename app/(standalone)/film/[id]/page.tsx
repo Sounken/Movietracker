@@ -2,8 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import { fetchFilmDetail, fetchFilmCredits, fetchSimilarFilms, fetchFilmKeywords, formatMoney, formatRuntime } from "@/lib/tmdb";
+import { fetchFilmDetail, fetchFilmCredits, fetchSimilarFilms, fetchFilmKeywords, fetchFilmLogo, formatMoney, formatRuntime } from "@/lib/tmdb";
 import FilmTopbar from "./components/FilmTopbar";
+import FilmTitleLogo from "./components/FilmTitleLogo";
 import PosterActions from "./components/PosterActions";
 import RatingWidget from "./components/RatingWidget";
 import CastGrid from "./components/CastGrid";
@@ -20,12 +21,13 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
   const id = parseInt(idStr);
   if (isNaN(id)) notFound();
 
-  const [session, film, credits, similar, keywords] = await Promise.all([
+  const [session, film, credits, similar, keywords, logoUrl] = await Promise.all([
     getSession(),
     fetchFilmDetail(id),
     fetchFilmCredits(id),
     fetchSimilarFilms(id),
     fetchFilmKeywords(id),
+    fetchFilmLogo(id),
   ]);
 
   if (!film) notFound();
@@ -54,7 +56,6 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
       ? Math.round(((film.revenue - film.budget) / film.budget) * 100)
       : null;
 
-  const words = film.title.split(" ");
   const showOriginalTitle = film.originalTitle && film.originalTitle !== film.title;
   const langLabel = LANG_NAMES[film.originalLanguage] ?? film.originalLanguage?.toUpperCase();
 
@@ -100,10 +101,12 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
             </div>
           )}
 
-          <h1 className={styles.movieTitle}>
-            <em>{words[0]}</em>
-            {words.length > 1 ? " " + words.slice(1).join(" ") : ""}
-          </h1>
+          <FilmTitleLogo
+            logoUrl={logoUrl}
+            title={film.title}
+            titleClassName={styles.movieTitle}
+            logoClassName={styles.movieTitleLogo}
+          />
 
           {showOriginalTitle && (
             <div style={{ fontSize: 14, color: "var(--ink-mute)", marginTop: -20, marginBottom: 24, fontStyle: "italic" }}>
