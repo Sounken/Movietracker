@@ -225,8 +225,21 @@
   height: 16px;
 }
 
-/* Entrée réservée à la barre du bas mobile (profil / connexion) */
+/* Entrées réservées à la barre du bas mobile (profil / connexion / menu) */
 .mobileOnly {
+  display: none;
+}
+
+/* Le bouton « Menu » doit se comporter comme les liens de navigation */
+button.navItem {
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+/* Feuille de menu : mobile uniquement */
+.sheetBackdrop {
   display: none;
 }
 
@@ -240,6 +253,78 @@
     height: 24px;
     border-radius: 50%;
     object-fit: cover;
+  }
+
+  /* Onglets déplacés dans le menu */
+  .hideOnMobile {
+    display: none;
+  }
+
+  /* ——— Feuille du menu ——— */
+  .sheetBackdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 60;
+    animation: fadeIn 0.15s ease;
+  }
+
+  .sheet {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 64px;
+    background: var(--panel);
+    border-top: 1px solid var(--line);
+    border-radius: 16px 16px 0 0;
+    padding: 8px 12px calc(12px + env(safe-area-inset-bottom));
+    animation: slideUp 0.2s ease;
+  }
+
+  .sheetHandle {
+    width: 36px;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--line);
+    margin: 6px auto 10px;
+  }
+
+  .sheetItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 48px;
+    padding: 12px 10px;
+    border: 0;
+    background: none;
+    font: inherit;
+    font-size: 15px;
+    color: var(--ink);
+    text-decoration: none;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+
+  .sheetItem:active {
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .sheetItem svg {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 auto;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(12px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
   }
 
   .nav {

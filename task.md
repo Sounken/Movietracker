@@ -28,7 +28,13 @@ Légende : 🟢 simple · 🟡 moyen · 🔴 gros / à cadrer
 
 ## H. 🎨 Interface & ergonomie (nouveaux retours)
 
-### H9. 🟡 Barre de navigation mobile — mal calibrée
+### H9. ✅ Barre de navigation mobile — refaite
+**Fait** : barre du bas limitée à **4 onglets + Menu**.
+- Connecté : Accueil · Découvrir · À voir · Profil + **Menu** (Mes listes, Favoris, Amis, Tendances, Se déconnecter).
+- Non connecté : Découvrir · Tendances · Connexion (pas de menu, rien à y mettre).
+- Icônes 24 px, cibles tactiles ≥ 48 px, onglets qui se répartissent la largeur (plus de débordement).
+
+<details><summary>Contexte initial (résolu)</summary>
 Sur mobile, la barre du bas ([Sidebar.tsx](app/(app)/components/Sidebar.tsx)) pose deux problèmes opposés :
 - **Non connecté** : seulement **2 icônes**, et elles sont **trop petites** → ça fait vide et peu lisible.
 - **Connecté** : **trop d'icônes** entassées → illisible.
@@ -38,6 +44,7 @@ Sur mobile, la barre du bas ([Sidebar.tsx](app/(app)/components/Sidebar.tsx)) po
 - **Non connecté** : enrichir avec les entrées pertinentes (Découvrir, Tendances, Se connecter) pour remplir la barre.
 - **Connecté** : limiter à 4-5 entrées principales + un bouton **« Plus »** ouvrant un menu (ou un onglet Profil regroupant les entrées secondaires).
 - Vérifier les `authOnly` des items de nav ([Sidebar.tsx:66](app/(app)/components/Sidebar.tsx#L66)).
+</details>
 
 ### H11. 🟡 Mode clair — contraste insuffisant
 Le thème clair manque de contraste, certains textes sont difficiles à lire.

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -85,6 +86,16 @@ const UserIcon = () => (
   </svg>
 );
 
+const MenuIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" width="16" height="16">
+    <path d="M4 7h16M4 12h16M4 17h16" />
+  </svg>
+);
+
+// Onglets gardés dans la barre du bas sur mobile (les autres passent dans le menu).
+const MOBILE_PRIMARY_AUTH = ["/", "/discover", "/watchlist"];
+const MOBILE_PRIMARY_GUEST = ["/discover", "/trends"];
+
 export default function Sidebar({
   isAuthenticated,
   userName,
@@ -100,6 +111,16 @@ export default function Sidebar({
 }) {
   const pathname = usePathname();
   const initial = (userName ?? "?")[0].toUpperCase();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // Onglets visibles dans la barre du bas mobile ; le reste va dans le menu.
+  const primaryHrefs = isAuthenticated ? MOBILE_PRIMARY_AUTH : MOBILE_PRIMARY_GUEST;
+  const isPrimary = (href: string) => primaryHrefs.includes(href);
+
+  const visibleNav = [...mainNav, ...socialNav].filter(
+    ({ authOnly }) => !authOnly || isAuthenticated,
+  );
+  const menuItems = visibleNav.filter(({ href }) => !isPrimary(href));
 
 
   return (
@@ -119,7 +140,7 @@ export default function Sidebar({
           <Link
             key={href}
             href={href}
-            className={`${styles.navItem} ${pathname === href ? styles.active : ""}`}
+            className={`${styles.navItem} ${pathname === href ? styles.active : ""} ${isPrimary(href) ? "" : styles.hideOnMobile}`}
           >
             <Icon />
             <span>{label}</span>
@@ -136,7 +157,7 @@ export default function Sidebar({
           <Link
             key={href}
             href={href}
-            className={`${styles.navItem} ${pathname === href ? styles.active : ""}`}
+            className={`${styles.navItem} ${pathname === href ? styles.active : ""} ${isPrimary(href) ? "" : styles.hideOnMobile}`}
           >
             <Icon />
             <span>{label}</span>
@@ -170,7 +191,48 @@ export default function Sidebar({
             <span>Connexion</span>
           </Link>
         )}
+
+        {/* Onglet « Menu » : regroupe les entrées secondaires */}
+        {menuItems.length > 0 && (
+          <button
+            type="button"
+            className={styles.navItem}
+            onClick={() => setMenuOpen(true)}
+            aria-label="Ouvrir le menu"
+          >
+            <MenuIcon />
+            <span>Menu</span>
+          </button>
+        )}
       </div>
+
+      {/* Feuille du menu mobile */}
+      {menuOpen && (
+        <div className={styles.sheetBackdrop} onClick={() => setMenuOpen(false)}>
+          <div className={styles.sheet} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.sheetHandle} />
+            {menuItems.map(({ href, label, icon: Icon }) => (
+              <Link
+                key={href}
+                href={href}
+                className={styles.sheetItem}
+                onClick={() => setMenuOpen(false)}
+              >
+                <Icon />
+                <span>{label}</span>
+              </Link>
+            ))}
+            {isAuthenticated && (
+              <form action={logout}>
+                <button type="submit" className={styles.sheetItem}>
+                  <LogoutIcon />
+                  <span>Se déconnecter</span>
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className={styles.navFoot}>
         {isAuthenticated ? (
