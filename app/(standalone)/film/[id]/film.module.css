@@ -410,6 +410,91 @@
   color: var(--ink);
 }
 
+/* ——— Avis des amis ——— */
+.friendReviews {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.friendReview {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.friendReviewHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.friendReviewUser {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.friendReviewUser:hover .friendName {
+  color: var(--accent);
+}
+
+.friendAvatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.friendAvatarFallback {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  font-family: var(--font-serif), serif;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.friendName {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  transition: color 0.15s;
+}
+
+.friendRating {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 13px;
+  color: var(--gold);
+}
+
+:global([data-theme="light"]) .friendRating {
+  color: var(--accent);
+}
+
+.friendReviewText {
+  margin: 10px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-dim);
+}
+
+.friendReviewDate {
+  margin-top: 8px;
+  font-size: 11px;
+  font-family: var(--font-geist-mono), monospace;
+  color: var(--ink-mute);
+}
+
 /* ——— Responsive ——— */
 @media (max-width: 768px) {
   .hero {

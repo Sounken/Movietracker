@@ -32,7 +32,7 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
 
   if (!film) notFound();
 
-  const [userFilm, userLists, listsWithFilmRaw] = session
+  const [userFilm, userLists, listsWithFilmRaw, friendFilms] = session
     ? await Promise.all([
         prisma.userFilm.findUnique({
           where: { userId_tmdbId: { userId: session.userId, tmdbId: id } },
@@ -46,8 +46,24 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
           where: { tmdbId: id, list: { userId: session.userId } },
           select: { listId: true },
         }),
+        // UserFilms de ce film dont l'auteur fait partie des personnes que je suis,
+        // avec une note et/ou un avis (les avis sont stockés comme "" quand vides).
+        prisma.userFilm.findMany({
+          where: {
+            tmdbId: id,
+            user: { followers: { some: { followerId: session.userId } } },
+            OR: [{ rating: { not: null } }, { review: { not: "" } }],
+          },
+          select: {
+            rating: true,
+            review: true,
+            updatedAt: true,
+            user: { select: { id: true, name: true, avatarUrl: true } },
+          },
+          orderBy: { updatedAt: "desc" },
+        }),
       ])
-    : [null, [], []];
+    : [null, [], [], []];
 
   const listsWithFilm = (listsWithFilmRaw as { listId: string }[]).map((r) => r.listId);
 
@@ -153,6 +169,38 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
             <div className={styles.section}>
               <div className={styles.sectionTitle}>Synopsis</div>
               <p className={styles.synopsis}>{film.overview}</p>
+            </div>
+          )}
+
+          {friendFilms.length > 0 && (
+            <div className={styles.section}>
+              <div className={styles.sectionTitle}>Ce qu&apos;en pensent tes amis</div>
+              <div className={styles.friendReviews}>
+                {friendFilms.map((f) => (
+                  <div key={f.user.id} className={styles.friendReview}>
+                    <div className={styles.friendReviewHead}>
+                      <Link href={`/user/${f.user.id}`} className={styles.friendReviewUser}>
+                        {f.user.avatarUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={f.user.avatarUrl} alt={f.user.name ?? ""} className={styles.friendAvatar} />
+                        ) : (
+                          <div className={styles.friendAvatarFallback}>
+                            {f.user.name?.[0]?.toUpperCase()}
+                          </div>
+                        )}
+                        <span className={styles.friendName}>{f.user.name}</span>
+                      </Link>
+                      {f.rating != null && (
+                        <span className={styles.friendRating}>★ {f.rating}</span>
+                      )}
+                    </div>
+                    {f.review && <p className={styles.friendReviewText}>{f.review}</p>}
+                    <div className={styles.friendReviewDate}>
+                      {f.updatedAt.toLocaleDateString("fr-FR")}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
