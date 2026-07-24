@@ -46,6 +46,20 @@ Sur mobile, la barre du bas ([Sidebar.tsx](app/(app)/components/Sidebar.tsx)) po
 - Vérifier les `authOnly` des items de nav ([Sidebar.tsx:66](app/(app)/components/Sidebar.tsx#L66)).
 </details>
 
+### H14. 🟡 Remplacer les emojis par une vraie librairie d'icônes
+Aujourd'hui l'interface mélange **emojis** (🎬 ⭐ ⏱ ❤️ 📋 👁 ✍ 🕐 …) et **SVG maison** (les icônes de la sidebar, du carrousel…). Les emojis posent plusieurs problèmes : rendu **différent selon l'OS** (Apple / Windows / Android), alignement vertical hasardeux, taille et couleur non contrôlables, et style incohérent avec les SVG existants.
+
+**Repérage** : ~20 fichiers concernés, dont les cartes de stats du [profil](app/(app)/profile/page.tsx#L118) et du [profil public](app/(app)/user/[id]/page.tsx#L143), les [tendances](app/(app)/trends/TrendsClient.tsx), les [listes](app/(app)/lists/ListsClient.tsx), la [fiche film](app/(standalone)/film/[id]/page.tsx) et les modales.
+
+**À décider :**
+- **Quelle librairie** : `lucide-react` (léger, tree-shakable, style très proche des SVG déjà en place — recommandé), `react-icons` (très large mais plus lourd), ou continuer en SVG maison centralisés dans un fichier `components/icons.tsx`.
+- **Périmètre** : tout d'un coup, ou d'abord les cartes de stats (les plus visibles) puis le reste.
+- ⚠️ Cas à conserver : l'**emoji des listes utilisateur** (`UserList.emoji`, choisi par l'utilisateur) doit rester un emoji — c'est une donnée, pas une icône d'interface.
+
+**Bénéfices attendus** : cohérence visuelle, contrôle de la taille/couleur (`currentColor` → suit le thème clair/sombre), et meilleur alignement.
+
+---
+
 ### H11. ✅ Mode clair — contraste corrigé
 **Fait** dans [globals.css](app/globals.css) : `--ink-dim` 2,1:1 → **6:1**, `--ink-mute` 1,7:1 → **4,7:1**, ajout des overrides clairs pour `--accent` (3,2 → 4,6:1) et `--accent-soft` (2:1 → 5,9:1), bordures un peu plus marquées. Nouvelles variables `--hover` / `--hover-strong` / `--track` (voile sombre en thème clair au lieu d'un blanc invisible).
 
