@@ -59,7 +59,9 @@
   top: 0;
   bottom: 0;
   width: 54%;
-  padding: 0 0 0 52px;
+  /* marge basse réservée au rail des vignettes (20px + 78px + respiration)
+     pour que le contenu centré ne passe jamais dessous */
+  padding: 0 0 112px 52px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -92,6 +94,10 @@
   margin: 0 0 16px;
   letter-spacing: -0.02em;
   color: var(--ink);
+  /* même hauteur réservée que le logo → aucune diapo ne décale les boutons */
+  min-height: 96px;
+  display: flex;
+  align-items: center;
 }
 
 .title em {
@@ -103,10 +109,12 @@
    Contraint en hauteur ET en largeur pour ne jamais déborder du bandeau. */
 .titleLogo {
   display: block;
-  max-height: 120px;
-  max-width: min(440px, 100%);
-  width: auto;
-  height: auto;
+  /* Hauteur FIXE : quel que soit le ratio du logo, le bloc occupe toujours
+     la même place → les boutons ne se décalent plus d'une diapo à l'autre.
+     `contain` redimensionne le logo à l'intérieur sans jamais le déformer. */
+  height: 96px;
+  width: 440px;
+  max-width: 100%;
   object-fit: contain;
   object-position: left center;
   margin: 0 0 16px;
@@ -358,11 +366,12 @@
 
   .title {
     font-size: 34px;
+    min-height: 64px;
   }
 
   .titleLogo {
-    max-height: 76px;
-    max-width: min(280px, 80%);
+    height: 64px;
+    width: 280px;
   }
 
   .synopsis {
