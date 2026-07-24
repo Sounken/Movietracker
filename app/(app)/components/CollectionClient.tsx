@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useMemo, useTransition } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import FilmGrid from "./FilmGrid";
 import type { TmdbFilmCard } from "@/lib/tmdb";
 import styles from "./CollectionClient.module.css";
 import loadMoreStyles from "./FilmGridInfinite.module.css";
 
 type Film = TmdbFilmCard & { rating: number | null };
+type SortKey = "recent" | "rating" | "year";
 
 const RATINGS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 const PAGE_SIZE = 24;
@@ -32,83 +33,121 @@ export default function CollectionClient({
   /** Affiche un bouton « Watchlist » qui bascule la liste sur les films à voir. */
   showWatchlist?: boolean;
 }) {
+  const [films, setFilms] = useState<Film[]>(initialFilms);
+  const [totalCount, setTotalCount] = useState(total);
+  const [years, setYears] = useState<string[]>([]);
+
   const [minRating, setMinRating] = useState<number | null>(null);
   const [maxRating, setMaxRating] = useState<number | null>(null);
   const [yearFilter, setYearFilter] = useState<string>("");
-  const [sortBy, setSortBy] = useState<"recent" | "rating" | "year">("recent");
-  const [isPending, startTransition] = useTransition();
-
-  // Vue courante : la collection reçue en prop, ou la watchlist (chargée à la demande)
+  const [sortBy, setSortBy] = useState<SortKey>("recent");
   const [view, setView] = useState<"default" | "watchlist">("default");
-  const [baseFilms, setBaseFilms] = useState<Film[]>(initialFilms);
-  const [wlFilms, setWlFilms] = useState<Film[] | null>(null); // null = pas encore chargée
-  const [wlTotal, setWlTotal] = useState(0);
+
+  const [loading, setLoading] = useState(false);
+  // true tant qu'on affiche encore les données rendues côté serveur
+  const isInitial = useRef(true);
 
   const isWatchlist = view === "watchlist";
-  const films = isWatchlist ? (wlFilms ?? []) : baseFilms;
-  const currentTotal = isWatchlist ? wlTotal : total;
   const currentType = isWatchlist ? "watchlist" : type;
+  // sur la watchlist, les films n'ont pas de note perso → on trie sur la note TMDB
+  const currentRatingField = isWatchlist ? "voteAverage" : ratingField;
 
-  const years = useMemo(() => {
-    const set = new Set(films.map((f) => f.year).filter(Boolean));
-    return Array.from(set).sort((a, b) => Number(b) - Number(a));
-  }, [films]);
+  const buildUrl = useCallback(
+    (skip: number) => {
+      const p = new URLSearchParams({
+        type: currentType,
+        sort: sortBy,
+        ratingField: currentRatingField,
+        skip: String(skip),
+        take: String(PAGE_SIZE),
+      });
+      if (userId) p.set("userId", userId);
+      if (minRating !== null) p.set("minRating", String(minRating));
+      if (maxRating !== null) p.set("maxRating", String(maxRating));
+      if (yearFilter) p.set("year", yearFilter);
+      return `/api/collection?${p.toString()}`;
+    },
+    [currentType, sortBy, currentRatingField, userId, minRating, maxRating, yearFilter],
+  );
 
-  const ratingVal = (f: Film) =>
-    ratingField === "voteAverage" ? (f.voteAverage ?? 0) : (f.rating ?? 0);
+  // ——— Tri / filtres : rechargés depuis le serveur, sur TOUTE la collection ———
+  useEffect(() => {
+    // au tout premier rendu on garde les données du serveur, mais on récupère
+    // quand même la liste complète des années pour le menu déroulant
+    const metaOnly = isInitial.current;
+    isInitial.current = false;
 
-  const filtered = useMemo(() => {
-    let result = [...films];
-    if (minRating !== null) result = result.filter((f) => ratingVal(f) >= minRating);
-    if (maxRating !== null) result = result.filter((f) => ratingVal(f) <= maxRating);
-    if (yearFilter) result = result.filter((f) => f.year === yearFilter);
-    result.sort((a, b) => {
-      if (sortBy === "rating") return ratingVal(b) - ratingVal(a);
-      if (sortBy === "year") return Number(b.year) - Number(a.year);
-      return 0;
-    });
-    return result;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [films, minRating, maxRating, yearFilter, sortBy, ratingField]);
+    let cancelled = false;
+    setLoading(true);
 
-  const hasFilters = minRating !== null || maxRating !== null || yearFilter;
-  const remaining = currentTotal - films.length;
-  const hasMore = remaining > 0;
+    fetch(metaOnly ? buildUrl(0).replace(`take=${PAGE_SIZE}`, "take=0") : buildUrl(0))
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled || !data) return;
+        setYears(data.years as string[]);
+        if (!metaOnly) {
+          setFilms(data.films as Film[]);
+          setTotalCount(data.total as number);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
 
-  function fetchPage(kind: string, skip: number) {
-    return fetch(
-      `/api/collection?type=${kind}&skip=${skip}&take=${PAGE_SIZE}` +
-        (userId ? `&userId=${userId}` : ""),
-    ).then((r) => (r.ok ? r.json() : null));
-  }
+    return () => {
+      cancelled = true;
+    };
+  }, [buildUrl]);
 
-  function loadMore() {
-    startTransition(async () => {
-      const data = await fetchPage(currentType, films.length);
-      if (!data) return;
-      const more = data.films as Film[];
-      if (isWatchlist) setWlFilms((prev) => [...(prev ?? []), ...more]);
-      else setBaseFilms((prev) => [...prev, ...more]);
-    });
+  // ——— Chargement de la suite ———
+  const loadingRef = useRef(false);
+  const loadMore = useCallback(() => {
+    if (loadingRef.current) return;
+    loadingRef.current = true;
+    setLoading(true);
+
+    fetch(buildUrl(films.length))
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data) setFilms((prev) => [...prev, ...(data.films as Film[])]);
+      })
+      .finally(() => {
+        loadingRef.current = false;
+        setLoading(false);
+      });
+  }, [buildUrl, films.length]);
+
+  const hasMore = films.length < totalCount;
+
+  // ——— Scroll infini : on charge dès que la sentinelle approche du viewport ———
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || !hasMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) loadMore();
+      },
+      { rootMargin: "400px" }, // anticipe pour que le chargement soit invisible
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasMore, loadMore]);
+
+  function resetFilters() {
+    setMinRating(null);
+    setMaxRating(null);
+    setYearFilter("");
   }
 
   function switchView(next: "default" | "watchlist") {
     setView(next);
-    // on repart d'une vue propre : les filtres d'une liste n'ont pas de sens sur l'autre
-    setMinRating(null);
-    setMaxRating(null);
-    setYearFilter("");
-
-    // la watchlist n'est chargée qu'au premier affichage, puis gardée en mémoire
-    if (next === "watchlist" && wlFilms === null) {
-      startTransition(async () => {
-        const data = await fetchPage("watchlist", 0);
-        if (!data) return;
-        setWlFilms(data.films as Film[]);
-        setWlTotal(data.total as number);
-      });
-    }
+    resetFilters(); // les filtres d'une liste n'ont pas de sens sur l'autre
   }
+
+  const hasFilters = minRating !== null || maxRating !== null || yearFilter !== "";
+  const remaining = totalCount - films.length;
 
   return (
     <>
@@ -146,10 +185,7 @@ export default function CollectionClient({
               ))}
             </select>
             {hasFilters && (
-              <button
-                className={styles.clearBtn}
-                onClick={() => { setMinRating(null); setMaxRating(null); setYearFilter(""); }}
-              >
+              <button className={styles.clearBtn} onClick={resetFilters}>
                 Effacer
               </button>
             )}
@@ -182,11 +218,13 @@ export default function CollectionClient({
         </div>
       </div>
 
-      {hasFilters && filtered.length === 0 ? (
-        <div className={styles.noResult}>Aucun film ne correspond à ces filtres.</div>
+      {films.length === 0 && (hasFilters || loading) ? (
+        <div className={styles.noResult}>
+          {loading ? "Chargement…" : "Aucun film ne correspond à ces filtres."}
+        </div>
       ) : (
         <FilmGrid
-          films={filtered}
+          films={films}
           emptyTitle={
             isWatchlist
               ? "Aucun film dans la watchlist."
@@ -200,10 +238,12 @@ export default function CollectionClient({
         />
       )}
 
-      {hasMore && !hasFilters && (
-        <div className={loadMoreStyles.loadMore}>
-          <button className={loadMoreStyles.btn} onClick={loadMore} disabled={isPending}>
-            {isPending
+      {/* Sentinelle : déclenche le chargement automatique au scroll.
+          Le bouton reste disponible (accessibilité / JS lent). */}
+      {hasMore && (
+        <div ref={sentinelRef} className={loadMoreStyles.loadMore}>
+          <button className={loadMoreStyles.btn} onClick={loadMore} disabled={loading}>
+            {loading
               ? "Chargement…"
               : `Charger ${Math.min(remaining, PAGE_SIZE)} film${Math.min(remaining, PAGE_SIZE) > 1 ? "s" : ""} de plus · ${remaining} restant${remaining > 1 ? "s" : ""}`}
           </button>

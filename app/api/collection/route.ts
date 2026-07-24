@@ -9,56 +9,106 @@ const PAGE_SIZE = 24;
 // (la watchlist et « all » restent privés : réservés à son propre compte)
 const PUBLIC_TYPES = new Set(["rated", "watched", "liked"]);
 
+// Fragments SQL en liste blanche — jamais construits depuis l'entrée utilisateur.
+const TYPE_SQL: Record<string, string> = {
+  watched: 'uf."watched" = true',
+  liked: 'uf."liked" = true',
+  watchlist: 'uf."watchlist" = true',
+  rated: 'uf."rating" IS NOT NULL',
+  all: "TRUE",
+};
+
+// Colonne de note : la note perso, ou celle de TMDB (watchlist, films non notés)
+function ratingColumn(field: string | null) {
+  return field === "voteAverage" ? 'f."voteAverage"' : 'uf."rating"';
+}
+
+function orderSql(sort: string, ratingCol: string) {
+  if (sort === "rating") return `${ratingCol} DESC NULLS LAST, uf."updatedAt" DESC`;
+  // year est stocké en texte sur 4 caractères : le tri lexicographique est correct
+  if (sort === "year") return 'f."year" DESC NULLS LAST, uf."updatedAt" DESC';
+  return 'uf."updatedAt" DESC';
+}
+
 export async function GET(req: NextRequest) {
   const session = await getSession();
 
   const { searchParams } = req.nextUrl;
   const type = searchParams.get("type") ?? "watched";
-  const skip = parseInt(searchParams.get("skip") ?? "0");
+  const sort = searchParams.get("sort") ?? "recent";
+  const skip = Math.max(parseInt(searchParams.get("skip") ?? "0"), 0);
   const take = Math.min(parseInt(searchParams.get("take") ?? String(PAGE_SIZE)), 60);
   const requestedUserId = searchParams.get("userId");
+
+  const minRating = searchParams.get("minRating");
+  const maxRating = searchParams.get("maxRating");
+  const year = searchParams.get("year");
 
   // Sans userId explicite → sa propre collection (comportement historique)
   const targetUserId = requestedUserId ?? session?.userId;
   if (!targetUserId) {
-    return NextResponse.json({ films: [], total: 0 }, { status: 401 });
+    return NextResponse.json({ films: [], total: 0, years: [] }, { status: 401 });
   }
 
   // Collection d'un autre utilisateur : uniquement ce qui est déjà public sur son profil
   const isSelf = session?.userId === targetUserId;
   if (!isSelf && !PUBLIC_TYPES.has(type)) {
-    return NextResponse.json({ films: [], total: 0 }, { status: 403 });
+    return NextResponse.json({ films: [], total: 0, years: [] }, { status: 403 });
   }
 
-  const filterMap: Record<string, object> = {
-    watched: { watched: true },
-    liked: { liked: true },
-    watchlist: { watchlist: true },
-    rated: { rating: { not: null } },
-    all: {},
-  };
-  const filter = filterMap[type] ?? { watched: true };
+  const typeSql = TYPE_SQL[type] ?? TYPE_SQL.watched;
+  const ratingCol = ratingColumn(searchParams.get("ratingField"));
+  const order = orderSql(sort, ratingCol);
 
-  const [total, entries] = await Promise.all([
-    prisma.userFilm.count({ where: { userId: targetUserId, ...filter } }),
-    prisma.userFilm.findMany({
-      where: { userId: targetUserId, ...filter },
-      orderBy: { updatedAt: "desc" },
-      skip,
-      take,
-      select: { tmdbId: true, rating: true },
-    }),
+  // ——— Construction des filtres (valeurs toujours paramétrées) ———
+  const params: unknown[] = [targetUserId];
+  let where = `uf."userId" = $1 AND ${typeSql}`;
+
+  if (minRating !== null && minRating !== "") {
+    params.push(Number(minRating));
+    where += ` AND ${ratingCol} >= $${params.length}`;
+  }
+  if (maxRating !== null && maxRating !== "") {
+    params.push(Number(maxRating));
+    where += ` AND ${ratingCol} <= $${params.length}`;
+  }
+  if (year) {
+    params.push(year);
+    where += ` AND f."year" = $${params.length}`;
+  }
+
+  const FROM = `FROM "UserFilm" uf LEFT JOIN "Film" f ON f."tmdbId" = uf."tmdbId"`;
+
+  // Le tri et la pagination se font en base, sur TOUTE la collection.
+  const pageParams = [...params, take, skip];
+  const [rows, countRows, yearRows] = await Promise.all([
+    prisma.$queryRawUnsafe<Array<{ tmdbId: number; rating: number | null }>>(
+      `SELECT uf."tmdbId", uf."rating" ${FROM} WHERE ${where} ORDER BY ${order} LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+      ...pageParams,
+    ),
+    prisma.$queryRawUnsafe<Array<{ count: number }>>(
+      `SELECT COUNT(*)::int AS count ${FROM} WHERE ${where}`,
+      ...params,
+    ),
+    // Années disponibles pour le menu déroulant (indépendant des filtres en cours)
+    prisma.$queryRawUnsafe<Array<{ year: string }>>(
+      `SELECT DISTINCT f."year" AS year ${FROM} WHERE uf."userId" = $1 AND ${typeSql} AND f."year" <> '' ORDER BY year DESC`,
+      targetUserId,
+    ),
   ]);
 
-  // Une seule requête pour toutes les fiches (au lieu d'une par film)
-  const cards = await getFilmCards(entries.map((e) => e.tmdbId));
+  const total = countRows[0]?.count ?? 0;
+  const years = yearRows.map((r) => r.year).filter(Boolean);
 
-  const films = entries
-    .map((entry) => {
-      const card = cards.get(entry.tmdbId);
-      return card ? { ...card, rating: entry.rating ?? null } : null;
+  // Une seule requête pour toutes les fiches (au lieu d'une par film)
+  const cards = await getFilmCards(rows.map((r) => r.tmdbId));
+
+  const films = rows
+    .map((row) => {
+      const card = cards.get(row.tmdbId);
+      return card ? { ...card, rating: row.rating ?? null } : null;
     })
     .filter(Boolean);
 
-  return NextResponse.json({ films, total });
+  return NextResponse.json({ films, total, years });
 }

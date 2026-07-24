@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import type { TmdbDiscoverFilm } from "@/lib/tmdb";
 import styles from "./discover.module.css";
@@ -29,20 +29,46 @@ export default function DiscoverGrid({
   const [films, setFilms] = useState(initialFilms);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(initialFilms.length === 20);
-  const [isPending, startTransition] = useTransition();
+  const [loading, setLoading] = useState(false);
+  const loadingRef = useRef(false);
 
-  const loadMore = () => {
-    startTransition(async () => {
-      const nextPage = page + 1;
-      const params = new URLSearchParams({ category, page: String(nextPage) });
-      if (genre) params.set("genre", genre);
-      const res = await fetch(`/api/discover?${params}`);
-      const more: TmdbDiscoverFilm[] = await res.json();
-      setFilms((prev) => [...prev, ...more]);
-      setPage(nextPage);
-      if (more.length < 20) setHasMore(false);
-    });
-  };
+  const loadMore = useCallback(() => {
+    if (loadingRef.current) return;
+    loadingRef.current = true;
+    setLoading(true);
+
+    const nextPage = page + 1;
+    const params = new URLSearchParams({ category, page: String(nextPage) });
+    if (genre) params.set("genre", genre);
+
+    fetch(`/api/discover?${params}`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((more: TmdbDiscoverFilm[]) => {
+        setFilms((prev) => [...prev, ...more]);
+        setPage(nextPage);
+        if (more.length < 20) setHasMore(false);
+      })
+      .finally(() => {
+        loadingRef.current = false;
+        setLoading(false);
+      });
+  }, [category, genre, page]);
+
+  // Scroll infini : la carte « Afficher plus » se déclenche seule à l'approche
+  const sentinelRef = useRef<HTMLButtonElement | null>(null);
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || !hasMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) loadMore();
+      },
+      { rootMargin: "400px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasMore, loadMore]);
 
   if (films.length === 0) {
     return <div className={styles.empty}>Aucun film trouvé pour ces filtres.</div>;
@@ -69,16 +95,17 @@ export default function DiscoverGrid({
 
       {hasMore && (
         <button
+          ref={sentinelRef}
           className={`${styles.filmCard} ${styles.loadMoreCard}`}
           onClick={loadMore}
-          disabled={isPending}
+          disabled={loading}
         >
           <div className={styles.loadMorePoster}>
-            {isPending ? <SpinnerIcon /> : <PlusIcon />}
+            {loading ? <SpinnerIcon /> : <PlusIcon />}
           </div>
           <div className={styles.info}>
             <div className={styles.title}>
-              {isPending ? "Chargement…" : "Afficher plus"}
+              {loading ? "Chargement…" : "Afficher plus"}
             </div>
           </div>
         </button>

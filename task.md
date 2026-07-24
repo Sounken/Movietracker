@@ -77,9 +77,30 @@ TMDB fournit les **logos officiels** des films (endpoint `/movie/{id}/images` �
 
 ---
 
+## S. Social & communauté
+
+### S13. 🟡 Afficher les avis de nos amis sur la fiche d'un film
+Sur la page d'un film ([app/(standalone)/film/[id]](app/(standalone)/film/[id]/page.tsx)), afficher les **notes et avis des personnes qu'on suit** pour ce film.
+
+**À faire :**
+- Récupérer les `UserFilm` du film courant dont le `userId` fait partie des personnes suivies (`UserFollow` où `followerId = session.userId`), avec une note et/ou un avis.
+- Afficher : avatar + nom (cliquable → `/user/[id]`), note ★, texte de l'avis, date.
+- Section masquée si on n'est pas connecté ou si aucun ami n'a vu le film.
+- Penser à l'index : la requête filtre sur `tmdbId` + `userId IN (...)` — `@@index([tmdbId])` existe déjà.
+
+---
+
 ## B. Listes de films — tri, pagination, scroll
 
-### B2. 🔴 Bug : le tri (note / année) ne porte que sur les films déjà chargés
+### B2. ✅ Tri et filtres serveur sur toute la collection
+**Fait** : `/api/collection` accepte désormais `sort` (`recent|rating|year`), `minRating`, `maxRating`, `year` et `ratingField`. Le tri et la pagination se font **en base** via une requête SQL avec jointure `UserFilm ⟕ Film` (l'année vit dans la table cache `Film`), donc sur **toute** la collection et non plus sur les films déjà chargés. Fragments SQL en liste blanche, valeurs toujours paramétrées. L'API renvoie aussi la liste complète des **années disponibles** pour le menu déroulant. `CollectionClient` est maintenant **piloté par le serveur** : tout changement de tri/filtre recharge la page 0.
+
+### B3. ✅ Scroll infini
+**Fait** : `IntersectionObserver` (marge de 400 px pour anticiper) dans `CollectionClient`, `FilmGridInfinite` et `DiscoverGrid`. Le bouton « Charger plus » reste présent en repli (accessibilité / JS lent), et un verrou évite les chargements en double.
+
+<details><summary>Contexte initial (résolu)</summary>
+
+#### Bug d'origine : le tri (note / année) ne portait que sur les films déjà chargés
 Dans [CollectionClient.tsx](app/(app)/components/CollectionClient.tsx), le tri/filtre se fait **côté client** sur les films déjà chargés, pas sur toute la collection ([CollectionClient.tsx:44-56](app/(app)/components/CollectionClient.tsx#L44)). Trier par note ne classe qu'un sous-ensemble, et « charger plus » remélange la liste.
 
 **Cause :** l'API [collection/route.ts](app/api/collection/route.ts) ne trie que par `updatedAt: desc` et n'accepte ni tri ni filtre.
@@ -94,12 +115,7 @@ Dans [CollectionClient.tsx](app/(app)/components/CollectionClient.tsx), le tri/f
 > - soit faire une **requête SQL avec jointure** manuelle.
 > → **B2 conditionne B3** (même composant).
 
-### B3. 🟡 Scroll infini (remplacer les boutons « Charger la suite »)
-Bouton manuel aujourd'hui ([CollectionClient.tsx:140-148](app/(app)/components/CollectionClient.tsx#L140), [FilmGridInfinite.tsx](app/(app)/components/FilmGridInfinite.tsx)).
-
-**À faire :** charger la page suivante au scroll via `IntersectionObserver` (sentinelle en bas de liste), fallback bouton pour l'accessibilité. À appliquer à `CollectionClient`, `FilmGridInfinite` et `DiscoverGrid`.
-
-> À faire **après / avec B2**.
+</details>
 
 ---
 
