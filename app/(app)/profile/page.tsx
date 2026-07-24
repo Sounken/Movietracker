@@ -76,10 +76,9 @@ export default async function ProfilePage() {
     }),
   );
 
-  // Collection — first 24 only, rest loads on demand
-  const collectionEntries = filmEntries.filter(
-    (e) => e.rating !== null || e.watched || e.watchlist || e.liked
-  );
+  // Collection — films notés uniquement (comme l'accueil) ; la watchlist a son
+  // propre bouton dans la barre d'outils. Première page seulement, la suite se charge à la demande.
+  const collectionEntries = filmEntries.filter((e) => e.rating !== null);
   const totalCollection = collectionEntries.length;
   const collectionFilms = (
     await Promise.all(
@@ -165,7 +164,12 @@ export default async function ProfilePage() {
             <h2 className={styles.sectionTitle}>Ma collection</h2>
             <AddFilmButton />
           </div>
-          <CollectionClient films={collectionFilms} total={totalCollection} type="all" />
+          <CollectionClient
+            films={collectionFilms}
+            total={totalCollection}
+            type="rated"
+            showWatchlist
+          />
         </div>
       </div>
     </div>

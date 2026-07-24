@@ -25,6 +25,23 @@
 .right {
   display: flex;
   gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* Bascule de liste (Watchlist) : légèrement détachée des boutons de tri */
+.viewBtn {
+  margin-left: 6px;
+  position: relative;
+}
+
+.viewBtn::before {
+  content: "";
+  position: absolute;
+  left: -7px;
+  top: 20%;
+  bottom: 20%;
+  width: 1px;
+  background: var(--line);
 }
 
 .select {

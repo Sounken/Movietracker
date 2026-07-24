@@ -19,6 +19,7 @@ export default function CollectionClient({
   emptyTitle,
   emptyHint,
   userId,
+  showWatchlist = false,
 }: {
   films: Film[];
   total: number;
@@ -28,13 +29,25 @@ export default function CollectionClient({
   emptyHint?: string;
   /** Collection d'un autre utilisateur (profil public). Par défaut : soi-même. */
   userId?: string;
+  /** Affiche un bouton « Watchlist » qui bascule la liste sur les films à voir. */
+  showWatchlist?: boolean;
 }) {
-  const [films, setFilms] = useState<Film[]>(initialFilms);
   const [minRating, setMinRating] = useState<number | null>(null);
   const [maxRating, setMaxRating] = useState<number | null>(null);
   const [yearFilter, setYearFilter] = useState<string>("");
   const [sortBy, setSortBy] = useState<"recent" | "rating" | "year">("recent");
   const [isPending, startTransition] = useTransition();
+
+  // Vue courante : la collection reçue en prop, ou la watchlist (chargée à la demande)
+  const [view, setView] = useState<"default" | "watchlist">("default");
+  const [baseFilms, setBaseFilms] = useState<Film[]>(initialFilms);
+  const [wlFilms, setWlFilms] = useState<Film[] | null>(null); // null = pas encore chargée
+  const [wlTotal, setWlTotal] = useState(0);
+
+  const isWatchlist = view === "watchlist";
+  const films = isWatchlist ? (wlFilms ?? []) : baseFilms;
+  const currentTotal = isWatchlist ? wlTotal : total;
+  const currentType = isWatchlist ? "watchlist" : type;
 
   const years = useMemo(() => {
     const set = new Set(films.map((f) => f.year).filter(Boolean));
@@ -59,19 +72,42 @@ export default function CollectionClient({
   }, [films, minRating, maxRating, yearFilter, sortBy, ratingField]);
 
   const hasFilters = minRating !== null || maxRating !== null || yearFilter;
-  const remaining = total - films.length;
+  const remaining = currentTotal - films.length;
   const hasMore = remaining > 0;
+
+  function fetchPage(kind: string, skip: number) {
+    return fetch(
+      `/api/collection?type=${kind}&skip=${skip}&take=${PAGE_SIZE}` +
+        (userId ? `&userId=${userId}` : ""),
+    ).then((r) => (r.ok ? r.json() : null));
+  }
 
   function loadMore() {
     startTransition(async () => {
-      const res = await fetch(
-        `/api/collection?type=${type}&skip=${films.length}&take=${PAGE_SIZE}` +
-          (userId ? `&userId=${userId}` : ""),
-      );
-      if (!res.ok) return;
-      const data = await res.json();
-      setFilms((prev) => [...prev, ...(data.films as Film[])]);
+      const data = await fetchPage(currentType, films.length);
+      if (!data) return;
+      const more = data.films as Film[];
+      if (isWatchlist) setWlFilms((prev) => [...(prev ?? []), ...more]);
+      else setBaseFilms((prev) => [...prev, ...more]);
     });
+  }
+
+  function switchView(next: "default" | "watchlist") {
+    setView(next);
+    // on repart d'une vue propre : les filtres d'une liste n'ont pas de sens sur l'autre
+    setMinRating(null);
+    setMaxRating(null);
+    setYearFilter("");
+
+    // la watchlist n'est chargée qu'au premier affichage, puis gardée en mémoire
+    if (next === "watchlist" && wlFilms === null) {
+      startTransition(async () => {
+        const data = await fetchPage("watchlist", 0);
+        if (!data) return;
+        setWlFilms(data.films as Film[]);
+        setWlTotal(data.total as number);
+      });
+    }
   }
 
   return (
@@ -130,6 +166,19 @@ export default function CollectionClient({
               {s === "recent" ? "Récents" : s === "rating" ? "Notes" : "Année"}
             </button>
           ))}
+          {showWatchlist && (
+            <button
+              className={`${styles.sortBtn} ${styles.viewBtn} ${isWatchlist ? styles.sortOn : ""}`}
+              onClick={() => switchView(isWatchlist ? "default" : "watchlist")}
+              title={
+                isWatchlist
+                  ? "Revenir aux films notés"
+                  : "Afficher uniquement les films à voir"
+              }
+            >
+              Watchlist
+            </button>
+          )}
         </div>
       </div>
 
@@ -138,8 +187,16 @@ export default function CollectionClient({
       ) : (
         <FilmGrid
           films={filtered}
-          emptyTitle={emptyTitle ?? "Vous n'avez encore noté aucun film."}
-          emptyHint={emptyHint ?? 'Utilisez le bouton "+ Ajouter un film" pour commencer.'}
+          emptyTitle={
+            isWatchlist
+              ? "Aucun film dans la watchlist."
+              : (emptyTitle ?? "Vous n'avez encore noté aucun film.")
+          }
+          emptyHint={
+            isWatchlist
+              ? "Ajoutez des films à voir depuis leur fiche."
+              : (emptyHint ?? 'Utilisez le bouton "+ Ajouter un film" pour commencer.')
+          }
         />
       )}
 

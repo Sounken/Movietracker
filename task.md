@@ -105,12 +105,8 @@ Bouton manuel aujourd'hui ([CollectionClient.tsx:140-148](app/(app)/components/C
 
 ## E. Profil
 
-### E7. 🟡 « Ma collection » du profil = films notés + filtre Watchlist
-Le profil affiche tous les films « touchés » y compris la watchlist ([profile/page.tsx:79-81](app/(app)/profile/page.tsx#L79), `type="all"`).
-
-**À faire :**
-- Restreindre la collection du profil aux **films notés** (`rating !== null`), comme l'accueil.
-- Ajouter un **bouton « Watchlist »** à côté de `Récents / Notes / Année` ([CollectionClient.tsx:117-127](app/(app)/components/CollectionClient.tsx#L117)) pour n'afficher que les films en watchlist (l'API supporte déjà `type=watchlist`).
+### E7. ✅ « Ma collection » du profil = films notés + filtre Watchlist
+**Fait** : le profil n'affiche plus que les **films notés** (`type="rated"`), et `CollectionClient` a une nouvelle prop `showWatchlist` qui ajoute un bouton **Watchlist** à côté de `Récents / Notes / Année`. La watchlist est chargée à la demande (au premier clic) puis gardée en mémoire, avec sa propre pagination « charger plus ».
 
 ---
 
