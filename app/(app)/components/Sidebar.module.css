@@ -252,8 +252,8 @@
     width: 100%;
     flex-direction: row;
     align-items: center;
-    justify-content: space-around;
-    padding: 0 8px;
+    justify-content: space-between;
+    padding: 0 4px;
     z-index: 50;
     border-right: 0;
     border-top: 1px solid var(--line);
@@ -274,12 +274,15 @@
   .navItem {
     flex-direction: column;
     justify-content: center;
-    padding: 10px 14px;
+    align-items: center;
+    padding: 10px 2px;
     gap: 3px;
-    min-width: 52px;
     min-height: 48px;
     border-radius: 10px;
-    flex: 0 0 auto;
+    /* chaque entrée se partage la largeur : tout tient toujours à l'écran,
+       quel que soit le nombre d'onglets (8 une fois connecté) */
+    flex: 1 1 0;
+    min-width: 0;
     box-shadow: none;
     background: none;
   }
