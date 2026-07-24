@@ -8,6 +8,7 @@ import FilmTitleLogo from "./components/FilmTitleLogo";
 import PosterActions from "./components/PosterActions";
 import RatingWidget from "./components/RatingWidget";
 import CastGrid from "./components/CastGrid";
+import FriendReviews from "./components/FriendReviews";
 import styles from "./film.module.css";
 
 const LANG_NAMES: Record<string, string> = {
@@ -173,35 +174,16 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
           )}
 
           {friendFilms.length > 0 && (
-            <div className={styles.section}>
-              <div className={styles.sectionTitle}>Ce qu&apos;en pensent tes amis</div>
-              <div className={styles.friendReviews}>
-                {friendFilms.map((f) => (
-                  <div key={f.user.id} className={styles.friendReview}>
-                    <div className={styles.friendReviewHead}>
-                      <Link href={`/user/${f.user.id}`} className={styles.friendReviewUser}>
-                        {f.user.avatarUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={f.user.avatarUrl} alt={f.user.name ?? ""} className={styles.friendAvatar} />
-                        ) : (
-                          <div className={styles.friendAvatarFallback}>
-                            {f.user.name?.[0]?.toUpperCase()}
-                          </div>
-                        )}
-                        <span className={styles.friendName}>{f.user.name}</span>
-                      </Link>
-                      {f.rating != null && (
-                        <span className={styles.friendRating}>★ {f.rating}</span>
-                      )}
-                    </div>
-                    {f.review && <p className={styles.friendReviewText}>{f.review}</p>}
-                    <div className={styles.friendReviewDate}>
-                      {f.updatedAt.toLocaleDateString("fr-FR")}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <FriendReviews
+              reviews={friendFilms.map((f) => ({
+                userId: f.user.id,
+                name: f.user.name ?? "Utilisateur",
+                avatarUrl: f.user.avatarUrl,
+                rating: f.rating,
+                review: f.review,
+                date: f.updatedAt.toLocaleDateString("fr-FR"),
+              }))}
+            />
           )}
 
           <div className={styles.section}>
