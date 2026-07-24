@@ -60,7 +60,11 @@ Le thème clair manque de contraste, certains textes sont difficiles à lire.
 
 > ⏳ Reste éventuellement : passer en revue les autres `rgba(255,255,255,…)` codés en dur (~24 restants, surtout sur images sombres donc légitimes) et vérifier le rendu clair page par page.
 
-### H12. 🟡 Carrousel : afficher le **logo du film** au lieu du titre texte
+### H12. ✅ Carrousel : logo du film au lieu du titre texte
+**Fait** : `fetchFilmLogo()` dans [lib/tmdb.ts](lib/tmdb.ts) (endpoint `/movie/{id}/images`), priorité **fr → en → sans langue**, puis le mieux noté. Filtres : **PNG** + **ratio ≥ 1,2** (les logos hauts/étroits sont écartés). Affichage contraint (`max-height: 120px` desktop / 76px mobile, `max-width` limitée) avec **repli sur le titre texte** si aucun logo, format inadapté, ou erreur de chargement.
+⏳ Optionnel : stocker `logoUrl` dans la table `Film` pour survivre aux redéploiements (aujourd'hui cache `fetch` 24 h, ~7 requêtes par déploiement).
+
+<details><summary>Contexte initial (résolu)</summary>
 TMDB fournit les **logos officiels** des films (endpoint `/movie/{id}/images` → tableau `logos`, avec langue `iso_639_1`). Remplacer le titre stylisé du carrousel (`HeroCarousel … .title`) par le logo du film, qui contient déjà le titre.
 
 **À faire :**
@@ -69,6 +73,7 @@ TMDB fournit les **logos officiels** des films (endpoint `/movie/{id}/images` �
   - **`max-height` stricte** sur le logo (et `max-width`) pour qu'il ne déborde jamais.
   - **Fallback sur le titre texte** si : aucun logo, format/ratio inadapté (logo trop haut/étroit), ou image en erreur.
 - 💡 Synergie : stocker `logoUrl` dans la table cache `Film` (déjà créée en G1) pour éviter un appel TMDB par affichage.
+</details>
 
 ---
 

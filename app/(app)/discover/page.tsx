@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import { fetchDiscover, fetchNowPlaying } from "@/lib/tmdb";
+import { fetchDiscover, fetchNowPlaying, fetchFilmLogo } from "@/lib/tmdb";
 import Topbar from "../components/Topbar";
 import HeroCarousel from "../components/HeroCarousel";
 import DiscoverFilters from "./DiscoverFilters";
@@ -23,6 +23,15 @@ export default async function DiscoverPage({
     fetchDiscover(category, genreId),
     fetchNowPlaying(),
   ]);
+
+  // Logos officiels des films du carrousel (repli sur le titre texte si absent)
+  const heroLogos = Object.fromEntries(
+    (
+      await Promise.all(
+        nowPlaying.map(async (m) => [m.id, await fetchFilmLogo(m.id)] as const),
+      )
+    ).filter((entry): entry is readonly [number, string] => entry[1] !== null),
+  ) as Record<number, string>;
 
   // Films du carrousel déjà en watchlist (si connecté) → bouton synchronisé
   const heroWatchlistIds =
@@ -53,7 +62,11 @@ export default async function DiscoverPage({
             <h2 className={styles.sectionTitle}>Cette semaine en salles</h2>
           </div>
 
-          <HeroCarousel movies={nowPlaying} initialWatchlist={heroWatchlistIds} />
+          <HeroCarousel
+            movies={nowPlaying}
+            initialWatchlist={heroWatchlistIds}
+            logos={heroLogos}
+          />
         </>
       )}
 

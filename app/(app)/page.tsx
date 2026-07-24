@@ -1,7 +1,7 @@
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { fetchNowPlaying, type TmdbFilmCard } from "@/lib/tmdb";
+import { fetchNowPlaying, fetchFilmLogo, type TmdbFilmCard } from "@/lib/tmdb";
 import { getFilmCard } from "@/lib/films";
 import Topbar from "./components/Topbar";
 import HeroCarousel from "./components/HeroCarousel";
@@ -128,6 +128,15 @@ export default async function DashboardPage() {
 
   const totalMinutes = runtimeAgg._sum?.runtime ?? 0;
 
+  // Logos officiels des films du carrousel (repli sur le titre texte si absent)
+  const heroLogos = Object.fromEntries(
+    (
+      await Promise.all(
+        nowPlaying.map(async (m) => [m.id, await fetchFilmLogo(m.id)] as const),
+      )
+    ).filter((entry): entry is readonly [number, string] => entry[1] !== null),
+  ) as Record<number, string>;
+
   // Films du carrousel déjà présents dans la watchlist → pour synchroniser le bouton
   const heroWatchlistIds =
     session && nowPlaying.length > 0
@@ -195,7 +204,11 @@ export default async function DashboardPage() {
       </section>
 
       {nowPlaying.length > 0 ? (
-        <HeroCarousel movies={nowPlaying} initialWatchlist={heroWatchlistIds} />
+        <HeroCarousel
+          movies={nowPlaying}
+          initialWatchlist={heroWatchlistIds}
+          logos={heroLogos}
+        />
       ) : (
         <div className={styles.noTmdb}>
           Ajoutez <code>TMDB_API_KEY</code> dans <code>.env.local</code> pour voir les films en salle.

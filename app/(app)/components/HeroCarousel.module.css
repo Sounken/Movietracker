@@ -99,6 +99,21 @@
   color: var(--accent);
 }
 
+/* Logo officiel du film, à la place du titre texte.
+   Contraint en hauteur ET en largeur pour ne jamais déborder du bandeau. */
+.titleLogo {
+  display: block;
+  max-height: 120px;
+  max-width: min(440px, 100%);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  object-position: left center;
+  margin: 0 0 16px;
+  /* les logos sont souvent blancs : une ombre les décolle du fond */
+  filter: drop-shadow(0 2px 12px rgba(0, 0, 0, 0.55));
+}
+
 :global([data-theme="light"]) .title {
   color: #111;
 }
@@ -343,6 +358,11 @@
 
   .title {
     font-size: 34px;
+  }
+
+  .titleLogo {
+    max-height: 76px;
+    max-width: min(280px, 80%);
   }
 
   .synopsis {

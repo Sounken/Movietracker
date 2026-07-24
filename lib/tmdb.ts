@@ -161,6 +161,48 @@ export async function fetchNowPlaying(): Promise<TmdbMovie[]> {
   }
 }
 
+type TmdbLogo = {
+  file_path: string;
+  iso_639_1: string | null;
+  aspect_ratio: number;
+  vote_average: number;
+};
+
+// Logo officiel du film (le titre en image). Renvoie null s'il n'y en a pas
+// d'exploitable — l'appelant retombe alors sur le titre texte.
+export async function fetchFilmLogo(id: number): Promise<string | null> {
+  const key = process.env.TMDB_API_KEY;
+  if (!key) return null;
+  try {
+    const res = await fetch(
+      `${BASE}/movie/${id}/images?api_key=${key}&include_image_language=fr,en,null`,
+      { next: { revalidate: 86400 } },
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+
+    const logos = (data.logos ?? []) as TmdbLogo[];
+
+    // On ne garde que les logos nettement horizontaux (un logo haut/étroit
+    // rendrait mal dans le bandeau) et en PNG (fond transparent, taille gérable).
+    const usable = logos.filter(
+      (l) => l.aspect_ratio >= 1.2 && l.file_path.toLowerCase().endsWith(".png"),
+    );
+    if (usable.length === 0) return null;
+
+    // Priorité : français → anglais → sans langue ; puis le mieux noté.
+    const bestFor = (lang: string | null) =>
+      usable
+        .filter((l) => l.iso_639_1 === lang)
+        .sort((a, b) => b.vote_average - a.vote_average)[0];
+
+    const best = bestFor("fr") ?? bestFor("en") ?? bestFor(null) ?? usable[0];
+    return best ? `${IMG}/w500${best.file_path}` : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchFilmDetail(id: number): Promise<TmdbFilmDetail | null> {
   const key = process.env.TMDB_API_KEY;
   if (!key) return null;

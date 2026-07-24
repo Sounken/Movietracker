@@ -44,12 +44,17 @@ const DURATION = 6000;
 export default function HeroCarousel({
   movies,
   initialWatchlist = [],
+  logos = {},
 }: {
   movies: TmdbMovie[];
   initialWatchlist?: number[];
+  /** Logos officiels par tmdbId ; absent = on affiche le titre texte. */
+  logos?: Record<number, string>;
 }) {
   const [idx, setIdx] = useState(0);
   const [prog, setProg] = useState(0);
+  // Logos dont le chargement a échoué → repli sur le titre texte
+  const [brokenLogos, setBrokenLogos] = useState<Set<number>>(new Set());
   // État réel de la watchlist, initialisé depuis le serveur
   const [inWatchlist, setInWatchlist] = useState<Set<number>>(new Set(initialWatchlist));
   const [isPending, startTransition] = useTransition();
@@ -111,9 +116,19 @@ export default function HeroCarousel({
 
       <div className={styles.content}>
         <div className={styles.lab}>Sortie de la semaine</div>
-        <div className={styles.title}>
-          <em>{words[0]}</em>{words.length > 1 ? " " + words.slice(1).join(" ") : ""}
-        </div>
+        {logos[cur.id] && !brokenLogos.has(cur.id) ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={logos[cur.id]}
+            alt={cur.title}
+            className={styles.titleLogo}
+            onError={() => setBrokenLogos((prev) => new Set(prev).add(cur.id))}
+          />
+        ) : (
+          <div className={styles.title}>
+            <em>{words[0]}</em>{words.length > 1 ? " " + words.slice(1).join(" ") : ""}
+          </div>
+        )}
         <div className={styles.meta}>
           {cur.year && <span>{cur.year}</span>}
           {cur.year && genres.length > 0 && <span className={styles.sep} />}
