@@ -46,13 +46,19 @@ Sur mobile, la barre du bas ([Sidebar.tsx](app/(app)/components/Sidebar.tsx)) po
 - Vérifier les `authOnly` des items de nav ([Sidebar.tsx:66](app/(app)/components/Sidebar.tsx#L66)).
 </details>
 
-### H11. 🟡 Mode clair — contraste insuffisant
+### H11. ✅ Mode clair — contraste corrigé
+**Fait** dans [globals.css](app/globals.css) : `--ink-dim` 2,1:1 → **6:1**, `--ink-mute` 1,7:1 → **4,7:1**, ajout des overrides clairs pour `--accent` (3,2 → 4,6:1) et `--accent-soft` (2:1 → 5,9:1), bordures un peu plus marquées. Nouvelles variables `--hover` / `--hover-strong` / `--track` (voile sombre en thème clair au lieu d'un blanc invisible).
+
+<details><summary>Contexte initial (résolu)</summary>
 Le thème clair manque de contraste, certains textes sont difficiles à lire.
 
 **À faire :**
 - Auditer les variables de couleur du thème clair (fichiers CSS globaux / `*.module.css`).
 - Viser les ratios **WCAG AA** (≥ 4.5:1 pour le texte courant, ≥ 3:1 pour le texte large).
 - Vérifier en priorité : textes secondaires/atténués, libellés de stats, placeholders, bordures de cartes.
+</details>
+
+> ⏳ Reste éventuellement : passer en revue les autres `rgba(255,255,255,…)` codés en dur (~24 restants, surtout sur images sombres donc légitimes) et vérifier le rendu clair page par page.
 
 ### H12. 🟡 Carrousel : afficher le **logo du film** au lieu du titre texte
 TMDB fournit les **logos officiels** des films (endpoint `/movie/{id}/images` → tableau `logos`, avec langue `iso_639_1`). Remplacer le titre stylisé du carrousel (`HeroCarousel … .title`) par le logo du film, qui contient déjà le titre.

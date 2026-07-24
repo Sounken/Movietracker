@@ -12,18 +12,29 @@
   --red: #c2412c;
   --green: #6a8a5a;
   --radius: 14px;
+  /* Surfaces de survol / pistes : voile clair sur fond sombre */
+  --hover: rgba(255, 255, 255, 0.05);
+  --hover-strong: rgba(255, 255, 255, 0.09);
+  --track: rgba(255, 255, 255, 0.08);
 }
 
+/* Thème clair — contrastes vérifiés WCAG AA (≥ 4,5:1 pour le texte sur fond blanc) */
 :root[data-theme="light"] {
   --bg: #f5f4f2;
   --bg-2: #eeece8;
   --panel: #ffffff;
-  --line: #e0dbd4;
-  --ink: #111110;
-  --ink-dim: #b4b4b4;
-  --ink-mute: #c8c4bc;
+  --line: #d9d3ca; /* bordures un peu plus marquées pour délimiter les cartes */
+  --ink: #111110; /* ~19:1 */
+  --ink-dim: #6b6157; /* ~6:1  (était #b4b4b4 → 2,1:1, illisible) */
+  --ink-mute: #7d7266; /* ~4,7:1 (était #c8c4bc → 1,7:1, quasi invisible) */
+  --accent: #b85a28; /* ~4,6:1 (l'orange du thème sombre tombait à 3,2:1) */
+  --accent-soft: #9c4f22; /* ~5,9:1 (était #f0a978 → 2:1) */
   --gold: #a07030;
   --green: #3a6a2a;
+  /* en thème clair, le voile doit être sombre (un blanc translucide serait invisible) */
+  --hover: rgba(0, 0, 0, 0.05);
+  --hover-strong: rgba(0, 0, 0, 0.09);
+  --track: rgba(0, 0, 0, 0.1);
 }
 
 *,
