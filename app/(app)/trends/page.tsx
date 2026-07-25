@@ -1,9 +1,11 @@
+import { Suspense } from "react";
 import { unstable_cache } from "next/cache";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import { getFilmCard } from "@/lib/films";
+import { getFilmCards } from "@/lib/films";
 import Topbar from "../components/Topbar";
 import TrendsClient from "./TrendsClient";
+import styles from "./trends.module.css";
 
 export type Period = "week" | "month" | "year";
 
@@ -122,16 +124,8 @@ const getTrendsData = unstable_cache(
     ]),
   ];
 
-  // Batch TMDB fetches (8 per batch, 150ms between)
-  const tmdbMap = new Map<number, { title: string; posterUrl: string; year: string; genres: string[] }>();
-  for (let i = 0; i < allIds.length; i += 8) {
-    const batch = allIds.slice(i, i + 8);
-    const results = await Promise.all(batch.map((id) => getFilmCard(id)));
-    results.forEach((card, idx) => {
-      if (card) tmdbMap.set(batch[idx], card);
-    });
-    if (i + 8 < allIds.length) await new Promise((r) => setTimeout(r, 150));
-  }
+  // Batch TMDB lookups (cache local, une seule requête base)
+  const tmdbMap = await getFilmCards(allIds);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function buildRanking(items: any[]): FilmRanking[] {
@@ -231,6 +225,26 @@ const getTrendsData = unstable_cache(
   { revalidate: 600, tags: ["trends"] },
 );
 
+// Toutes les données de la page viennent d'une seule agrégation (cachée) :
+// un seul boundary Suspense pour tout le contenu, la Topbar reste immédiate.
+async function TrendsContent({ period }: { period: Period }) {
+  const data = await getTrendsData(period);
+
+  return (
+    <TrendsClient
+      period={period}
+      stats={data.stats}
+      topWatched={data.topWatched}
+      topLiked={data.topLiked}
+      topRated={data.topRated}
+      topWatchlisted={data.topWatchlisted}
+      genres={data.genres}
+      recentReviews={data.recentReviews}
+      activeUsers={data.activeUsers}
+    />
+  );
+}
+
 export default async function TrendsPage({
   searchParams,
 }: {
@@ -245,25 +259,22 @@ export default async function TrendsPage({
     ? (periodParam as Period)
     : "month";
 
-  const data = await getTrendsData(period);
-
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
 
   return (
     <div>
       <Topbar greeting={greeting} userName={session?.name ?? null} />
-      <TrendsClient
-        period={period}
-        stats={data.stats}
-        topWatched={data.topWatched}
-        topLiked={data.topLiked}
-        topRated={data.topRated}
-        topWatchlisted={data.topWatchlisted}
-        genres={data.genres}
-        recentReviews={data.recentReviews}
-        activeUsers={data.activeUsers}
-      />
+      <Suspense
+        fallback={
+          <div className={styles.page}>
+            <div className={`${styles.skeleton} ${styles.skeletonStats}`} />
+            <div className={`${styles.skeleton} ${styles.skeletonMain}`} />
+          </div>
+        }
+      >
+        <TrendsContent period={period} />
+      </Suspense>
     </div>
   );
 }

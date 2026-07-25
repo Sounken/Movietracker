@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { createList, deleteList, updateList } from "@/app/actions/lists";
 import styles from "./lists.module.css";
 
@@ -88,8 +89,15 @@ export default function ListsClient({ lists }: { lists: ListItem[] }) {
                     <div
                       key={i}
                       className={`${styles.lcPoster} ${i === 0 ? styles.lcPosterFirst : ""}`}
-                      style={{ backgroundImage: `url(${url})` }}
-                    />
+                    >
+                      <Image
+                        src={url}
+                        alt=""
+                        fill
+                        sizes="(max-width: 768px) 40vw, 180px"
+                        style={{ objectFit: "cover" }}
+                      />
+                    </div>
                   ))
                 ) : (
                   <div className={styles.lcEmpty}>

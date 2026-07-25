@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { Check } from "lucide-react";
 import { saveRating, deleteRating } from "@/app/actions/film";
 import styles from "./RatingWidget.module.css";
 
@@ -133,7 +134,7 @@ export default function RatingWidget({ tmdbId, initialRating, initialReview, fil
             className={styles.textarea}
           />
           <div className={styles.reviewActions}>
-            {saved && <span className={styles.savedMsg}>✓ Avis sauvegardé</span>}
+            {saved && <span className={styles.savedMsg}><Check size={13} /> Avis sauvegardé</span>}
             <button onClick={handleClearReview} disabled={isPending} className={styles.btnSecondary}>
               Effacer l&apos;avis
             </button>

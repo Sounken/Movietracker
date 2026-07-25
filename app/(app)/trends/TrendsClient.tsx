@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
+import { Eye, Star, PenLine, Clock, Users, type LucideIcon } from "lucide-react";
 import type { Period, FilmRanking, GenreStat, ActiveUser, RecentReview } from "./page";
 import styles from "./trends.module.css";
 
@@ -30,11 +32,12 @@ function timeAgo(iso: string) {
 function Avatar({ url, name, size = 36 }: { url: string | null; name: string; size?: number }) {
   if (url)
     return (
-      <img
+      <Image
         src={url}
         alt={name}
         className={styles.avatar}
-        style={{ width: size, height: size }}
+        width={size}
+        height={size}
       />
     );
   return (
@@ -121,11 +124,11 @@ export default function TrendsClient({
 
       {/* Stats bar */}
       <div className={styles.statsGrid}>
-        <StatCard value={stats.totalWatched} label="Films vus" icon="👁" />
-        <StatCard value={stats.totalRated} label="Notes données" icon="★" />
-        <StatCard value={stats.totalReviews} label="Avis rédigés" icon="✍" />
-        <StatCard value={stats.totalHours} label="Heures visionnées" icon="⏱" suffix="h" />
-        <StatCard value={stats.totalUsers} label="Utilisateurs" icon="👤" />
+        <StatCard value={stats.totalWatched} label="Films vus" icon={Eye} />
+        <StatCard value={stats.totalRated} label="Notes données" icon={Star} />
+        <StatCard value={stats.totalReviews} label="Avis rédigés" icon={PenLine} />
+        <StatCard value={stats.totalHours} label="Heures visionnées" icon={Clock} suffix="h" />
+        <StatCard value={stats.totalUsers} label="Utilisateurs" icon={Users} />
       </div>
 
       {/* Two-column layout */}
@@ -158,10 +161,12 @@ export default function TrendsClient({
                       {i + 1}
                     </span>
                     {film.posterUrl ? (
-                      <img
+                      <Image
                         src={film.posterUrl}
                         alt={film.title}
                         className={styles.rankPoster}
+                        width={36}
+                        height={54}
                       />
                     ) : (
                       <div className={styles.rankPosterFallback} />
@@ -208,7 +213,7 @@ export default function TrendsClient({
                   <div key={r.id} className={styles.reviewCard}>
                     {r.posterUrl && (
                       <Link href={`/film/${r.tmdbId}`}>
-                        <img src={r.posterUrl} alt={r.title} className={styles.reviewPoster} />
+                        <Image src={r.posterUrl} alt={r.title} className={styles.reviewPoster} width={48} height={72} />
                       </Link>
                     )}
                     <div className={styles.reviewBody}>
@@ -298,17 +303,17 @@ export default function TrendsClient({
 function StatCard({
   value,
   label,
-  icon,
+  icon: Icon,
   suffix = "",
 }: {
   value: number;
   label: string;
-  icon: string;
+  icon: LucideIcon;
   suffix?: string;
 }) {
   return (
     <div className={styles.statCard}>
-      <div className={styles.statIcon}>{icon}</div>
+      <div className={styles.statIcon}><Icon size={18} /></div>
       <div className={styles.statValue}>
         {value.toLocaleString("fr")}
         {suffix}

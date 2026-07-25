@@ -386,6 +386,9 @@
   font-family: var(--font-geist-mono), monospace;
   font-size: 11px;
   color: var(--green);
+  display: flex;
+  align-items: center;
+  gap: 3px;
 }
 
 .statSubNeg {
@@ -1019,6 +1022,10 @@
   font-weight: 500;
   cursor: pointer;
   transition: opacity 0.18s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 .saveBtn:hover:not(:disabled) { opacity: 0.85; }
@@ -1032,6 +1039,31 @@
   .favsGrid {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+/* ——— Skeletons (fallbacks Suspense) ——— */
+.skeleton {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  animation: skeletonPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes skeletonPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+.skeletonStats {
+  height: 130px;
+}
+
+.skeletonFavs {
+  height: 340px;
+}
+
+.skeletonGrid {
+  height: 480px;
 }
 
 @media (max-width: 768px) {

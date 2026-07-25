@@ -51,6 +51,9 @@
   padding: 0;
   margin-bottom: 20px;
   transition: color 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .backBtn:hover { color: var(--ink); }
@@ -303,6 +306,10 @@
   cursor: pointer;
   transition: opacity 0.15s;
   margin-top: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 .submitBtn:hover:not(:disabled) { opacity: 0.85; }

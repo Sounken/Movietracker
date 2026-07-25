@@ -3,7 +3,9 @@
 import { useState, useEffect, useCallback, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { followUser, unfollowUser } from "@/app/actions/friends";
+import { Check, Heart } from "lucide-react";
 import styles from "./friends.module.css";
 
 type FollowingUser = { id: string; name: string; avatarUrl: string | null; filmCount: number; avgRating: number | null };
@@ -27,7 +29,7 @@ function timeAgo(iso: string) {
 }
 
 function Avatar({ url, name, size = 38 }: { url: string | null; name: string; size?: number }) {
-  if (url) return <img src={url} alt={name} className={styles.avatar} style={{ width: size, height: size }} />;
+  if (url) return <Image src={url} alt={name} className={styles.avatar} width={size} height={size} />;
   return (
     <div className={styles.avatarFallback} style={{ width: size, height: size, fontSize: size * 0.4 }}>
       {name[0]?.toUpperCase()}
@@ -39,15 +41,13 @@ export default function FriendsClient({
   following: initialFollowing,
   followers,
   activity,
-  currentUserId,
 }: {
   following: FollowingUser[];
   followers: FollowerUser[];
   activity: ActivityItem[];
-  currentUserId: string;
 }) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
@@ -56,7 +56,7 @@ export default function FriendsClient({
 
   const search = useCallback((q: string) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (q.length < 2) { setResults([]); return; }
+    if (q.length < 2) return;
     debounceRef.current = setTimeout(async () => {
       setSearching(true);
       try {
@@ -96,7 +96,11 @@ export default function FriendsClient({
             className={styles.searchInput}
             placeholder="Rechercher par nom ou email…"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              const q = e.target.value;
+              setQuery(q);
+              if (q.length < 2) setResults([]);
+            }}
           />
           {searching && <div className={styles.searchSpinner} />}
         </div>
@@ -128,7 +132,7 @@ export default function FriendsClient({
                     onClick={() => toggle(u.id, isFollowing)}
                     disabled={pendingIds.has(u.id)}
                   >
-                    {pendingIds.has(u.id) ? "…" : isFollowing ? "Suivi ✓" : "+ Suivre"}
+                    {pendingIds.has(u.id) ? "…" : isFollowing ? <>Suivi <Check size={12} /></> : "+ Suivre"}
                   </button>
                 </div>
               );
@@ -167,7 +171,7 @@ export default function FriendsClient({
                       onClick={() => toggle(u.id, true)}
                       disabled={pendingIds.has(u.id)}
                     >
-                      {pendingIds.has(u.id) ? "…" : "Suivi ✓"}
+                      {pendingIds.has(u.id) ? "…" : <>Suivi <Check size={12} /></>}
                     </button>
                   </div>
                 ))}
@@ -240,15 +244,20 @@ export default function FriendsClient({
                         {item.rating != null && (
                           <span className={styles.feedRating}> ★ {item.rating}</span>
                         )}
-                        {item.liked && <span className={styles.feedLiked}> ❤️</span>}
+                        {item.liked && <span className={styles.feedLiked}> <Heart size={11} fill="currentColor" /></span>}
                       </div>
                       <div className={styles.feedTime}>{timeAgo(item.updatedAt)}</div>
                     </div>
                     {item.posterUrl && (
-                      <div
-                        className={styles.feedPoster}
-                        style={{ backgroundImage: `url(${item.posterUrl})` }}
-                      />
+                      <div className={styles.feedPoster}>
+                        <Image
+                          src={item.posterUrl}
+                          alt={item.title}
+                          fill
+                          sizes="30px"
+                          style={{ objectFit: "cover" }}
+                        />
+                      </div>
                     )}
                   </div>
                 ))}

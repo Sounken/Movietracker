@@ -2,7 +2,9 @@
 
 import { useState, useTransition, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { updateList, deleteList, addFilmToList, removeFilmFromList } from "@/app/actions/lists";
+import { Film, Check } from "lucide-react";
 import styles from "../lists.module.css";
 
 const EMOJIS = ["🎬", "❤️", "🏆", "🌍", "👻", "✨", "🎭", "🔥", "⭐", "🌙"];
@@ -49,7 +51,7 @@ export default function ListDetailClient({ list, films: initialFilms }: { list: 
 
   const search = useCallback((q: string) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (!q.trim()) { setResults([]); return; }
+    if (!q.trim()) return;
     debounceRef.current = setTimeout(async () => {
       const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
       if (res.ok) setResults(await res.json());
@@ -129,7 +131,7 @@ export default function ListDetailClient({ list, films: initialFilms }: { list: 
 
       {initialFilms.length === 0 ? (
         <div className={styles.listEmpty}>
-          <div className={styles.leEmoji}>🎞️</div>
+          <div className={styles.leEmoji}><Film size={44} /></div>
           <div className={styles.leTitle}>Aucun film pour l&apos;instant</div>
           <div className={styles.leSub}>Ajoute des films à cette liste</div>
           <button className={styles.btnAddFilm} onClick={() => setPickerOpen(true)}>
@@ -141,10 +143,16 @@ export default function ListDetailClient({ list, films: initialFilms }: { list: 
         <div className={styles.filmGrid}>
           {initialFilms.map((film) => (
             <div key={film.tmdbId} className={styles.filmCard}>
-              <div
-                className={styles.fcPoster}
-                style={film.posterUrl ? { backgroundImage: `url(${film.posterUrl})` } : {}}
-              >
+              <div className={styles.fcPoster}>
+                {film.posterUrl && (
+                  <Image
+                    src={film.posterUrl}
+                    alt=""
+                    fill
+                    sizes="(max-width: 768px) 50vw, 200px"
+                    style={{ objectFit: "cover" }}
+                  />
+                )}
                 <div className={styles.fcQuick}>
                   <button className={styles.fcQuickBtn} onClick={() => handleRemove(film.tmdbId)}>
                     Retirer
@@ -224,7 +232,11 @@ export default function ListDetailClient({ list, films: initialFilms }: { list: 
               <SearchIcon />
               <input
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => {
+                  const q = e.target.value;
+                  setQuery(q);
+                  if (!q.trim()) setResults([]);
+                }}
                 placeholder="Rechercher un film..."
                 autoFocus
               />
@@ -240,16 +252,24 @@ export default function ListDetailClient({ list, films: initialFilms }: { list: 
                 const already = addedIds.has(film.id);
                 return (
                   <div key={film.id} className={styles.fpickerItem}>
-                    <div
-                      className={styles.fpPoster}
-                      style={film.posterUrl ? { backgroundImage: `url(${film.posterUrl})` } : {}}
-                    />
+                    {film.posterUrl ? (
+                      <Image
+                        src={film.posterUrl}
+                        alt=""
+                        className={styles.fpPoster}
+                        width={38}
+                        height={57}
+                        style={{ objectFit: "cover" }}
+                      />
+                    ) : (
+                      <div className={styles.fpPoster} />
+                    )}
                     <div className={styles.fpInfo}>
                       <div className={styles.fpTitle}>{film.title}</div>
                       <div className={styles.fpMeta}>{film.year}</div>
                     </div>
                     {already ? (
-                      <span className={styles.fpAdded}>✓ Ajouté</span>
+                      <span className={styles.fpAdded}><Check size={11} /> Ajouté</span>
                     ) : (
                       <button className={styles.fpAddBtn} onClick={() => handleAdd(film.id)}>
                         <PlusIcon />

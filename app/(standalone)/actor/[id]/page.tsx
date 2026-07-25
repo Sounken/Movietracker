@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { fetchPersonDetail, fetchPersonCredits, fetchPersonPopularRank } from "@/lib/tmdb";
 import ActorTopbar from "./ActorTopbar";
@@ -50,10 +51,15 @@ export default async function ActorPage({ params }: { params: Promise<{ id: stri
   return (
     <>
       {backdropFilm?.posterUrl && (
-        <div
-          className={styles.backdrop}
-          style={{ backgroundImage: `url("${backdropFilm.posterUrl}")` }}
-        />
+        <div className={styles.backdrop}>
+          <Image
+            src={backdropFilm.posterUrl}
+            alt=""
+            fill
+            sizes="100vw"
+            style={{ objectFit: "cover", objectPosition: "center 20%" }}
+          />
+        </div>
       )}
       <div className={styles.backdropOverlay} />
 
@@ -63,8 +69,7 @@ export default async function ActorPage({ params }: { params: Promise<{ id: stri
         {/* Left column */}
         <div className={styles.posterCol}>
           {person.profileUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={person.profileUrl} alt={person.name} className={styles.photo} />
+            <Image src={person.profileUrl} alt={person.name} className={styles.photo} width={240} height={360} priority />
           ) : (
             <div className={styles.photoFallback}>
               {person.name[0]}
@@ -173,8 +178,14 @@ export default async function ActorPage({ params }: { params: Promise<{ id: stri
               <div className={styles.top4Grid}>
                 {top4.map((film) => (
                   <Link key={film.id} href={`/film/${film.id}`} className={styles.top4Card}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={film.posterUrl} alt={film.title} className={styles.top4Poster} />
+                    <Image
+                      src={film.posterUrl}
+                      alt={film.title}
+                      className={styles.top4Poster}
+                      width={300}
+                      height={450}
+                      sizes="(max-width: 768px) 50vw, 220px"
+                    />
                     <div className={styles.top4Info}>
                       <div className={styles.top4Title}>{film.title}</div>
                       <div className={styles.top4Meta}>

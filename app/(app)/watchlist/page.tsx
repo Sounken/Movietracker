@@ -2,7 +2,7 @@ import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { type TmdbFilmCard } from "@/lib/tmdb";
-import { getFilmCard } from "@/lib/films";
+import { getFilmCards } from "@/lib/films";
 import Topbar from "../components/Topbar";
 import CollectionClient from "../components/CollectionClient";
 import styles from "../collection.module.css";
@@ -31,15 +31,14 @@ export default async function WatchlistPage() {
       ])
     : [0, [], 0];
 
-  const films = (
-    await Promise.all(
-      entries.map(async (entry) => {
-        const card = await getFilmCard(entry.tmdbId);
-        if (!card) return null;
-        return { ...card, rating: entry.rating ?? null };
-      })
-    )
-  ).filter(Boolean) as Array<TmdbFilmCard & { rating: number | null }>;
+  const cards = await getFilmCards(entries.map((e) => e.tmdbId));
+  const films = entries
+    .map((entry) => {
+      const card = cards.get(entry.tmdbId);
+      if (!card) return null;
+      return { ...card, rating: entry.rating ?? null };
+    })
+    .filter(Boolean) as Array<TmdbFilmCard & { rating: number | null }>;
 
   return (
     <div className={styles.page}>

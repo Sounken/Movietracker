@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import JSZip from "jszip";
+import { Clapperboard, Star, PenLine, Heart, ClipboardList, Check, X, type LucideIcon } from "lucide-react";
 import styles from "./import.module.css";
 
 type Step = "idle" | "analyzing" | "ready" | "importing" | "done" | "error";
@@ -193,11 +194,11 @@ export default function ImportModal({ onClose, onDone }: { onClose: () => void; 
         {step === "ready" && preview && (
           <div className={styles.readySection}>
             <div className={styles.previewGrid}>
-              <PreviewStat icon="🎬" label="Films" value={preview.films} accent />
-              <PreviewStat icon="⭐" label="Notés" value={preview.rated} />
-              <PreviewStat icon="✍️" label="Reviews" value={preview.reviews} />
-              <PreviewStat icon="❤️" label="Likés" value={preview.liked} />
-              <PreviewStat icon="📋" label="Watchlist" value={preview.watchlist} />
+              <PreviewStat icon={Clapperboard} label="Films" value={preview.films} accent />
+              <PreviewStat icon={Star} label="Notés" value={preview.rated} />
+              <PreviewStat icon={PenLine} label="Reviews" value={preview.reviews} />
+              <PreviewStat icon={Heart} label="Likés" value={preview.liked} />
+              <PreviewStat icon={ClipboardList} label="Watchlist" value={preview.watchlist} />
             </div>
             <p className={styles.readyNote}>
               Les films déjà présents dans ta collection seront mis à jour. Les données existantes ne seront pas effacées.
@@ -226,7 +227,7 @@ export default function ImportModal({ onClose, onDone }: { onClose: () => void; 
         {/* ——— STEP: done */}
         {step === "done" && result && (
           <div className={styles.doneSection}>
-            <div className={styles.doneIcon}>✓</div>
+            <div className={styles.doneIcon}><Check size={24} /></div>
             <div className={styles.doneTitle}>{result.imported} films importés !</div>
             {result.skipped > 0 && (
               <div className={styles.doneNote}>
@@ -242,7 +243,7 @@ export default function ImportModal({ onClose, onDone }: { onClose: () => void; 
         {/* ——— STEP: error */}
         {step === "error" && (
           <div className={styles.errorSection}>
-            <div className={styles.errorIcon}>✕</div>
+            <div className={styles.errorIcon}><X size={22} /></div>
             <div className={styles.errorMsg}>{errorMsg}</div>
             <button className={styles.retryBtn} onClick={() => { setStep("idle"); setErrorMsg(""); }}>
               Réessayer
@@ -254,10 +255,10 @@ export default function ImportModal({ onClose, onDone }: { onClose: () => void; 
   );
 }
 
-function PreviewStat({ icon, label, value, accent }: { icon: string; label: string; value: number; accent?: boolean }) {
+function PreviewStat({ icon: Icon, label, value, accent }: { icon: LucideIcon; label: string; value: number; accent?: boolean }) {
   return (
     <div className={`${styles.previewStat} ${accent ? styles.previewStatAccent : ""}`}>
-      <div className={styles.previewStatIcon}>{icon}</div>
+      <div className={styles.previewStatIcon}><Icon size={18} /></div>
       <div className={styles.previewStatVal}>{value}</div>
       <div className={styles.previewStatLabel}>{label}</div>
     </div>

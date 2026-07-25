@@ -1,4 +1,6 @@
 import { notFound, redirect } from "next/navigation";
+import Image from "next/image";
+import { Clapperboard, Star, Clock, Heart, Sparkles } from "lucide-react";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { type TmdbFilmCard } from "@/lib/tmdb";
@@ -96,8 +98,7 @@ export default async function PublicProfilePage({
         <div className={styles.profileHeaderInner}>
           <div className={styles.avatarWrap}>
             {user.avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={user.avatarUrl} alt={displayName} className={styles.avatar} />
+              <Image src={user.avatarUrl} alt={displayName} className={styles.avatar} width={120} height={120} />
             ) : (
               <div className={styles.avatarFallback}>{initial}</div>
             )}
@@ -107,7 +108,7 @@ export default async function PublicProfilePage({
           <div className={styles.nameBlock}>
             <h1 className={styles.name}>{displayName}</h1>
             <div className={styles.metaRow}>
-              <span className={styles.profileBadge}>✦ {levelInfo.title}</span>
+              <span className={styles.profileBadge}><Sparkles size={11} /> {levelInfo.title}</span>
               <span className={styles.joinedDate}>Membre depuis {joinedYear}</span>
             </div>
             {user.bio && <p className={styles.bio}>{user.bio}</p>}
@@ -140,18 +141,18 @@ export default async function PublicProfilePage({
       <div className={styles.statsSection}>
         <div className={styles.statsGrid}>
           <div className={styles.statCard}>
-            <div className={styles.statDeco}>🎬</div>
+            <div className={styles.statDeco}><Clapperboard size={26} /></div>
             <div className={styles.statLabel}>Films vus</div>
             <div className={styles.statVal}>{watchedCount}</div>
           </div>
           <div className={styles.statCard}>
-            <div className={styles.statDeco}>⭐</div>
+            <div className={styles.statDeco}><Star size={26} /></div>
             <div className={styles.statLabel}>Note moyenne</div>
             <div className={styles.statVal}>{avgRating !== null ? avgRating.toFixed(1) : "—"}</div>
             <div className={styles.statSub}>sur {ratedCount} films notés</div>
           </div>
           <div className={styles.statCard}>
-            <div className={styles.statDeco}>⏱</div>
+            <div className={styles.statDeco}><Clock size={26} /></div>
             <div className={styles.statLabel}>Heures visionnées</div>
             <div className={styles.statVal}>
               {totalHours}
@@ -159,7 +160,7 @@ export default async function PublicProfilePage({
             </div>
           </div>
           <div className={styles.statCard}>
-            <div className={styles.statDeco}>❤️</div>
+            <div className={styles.statDeco}><Heart size={26} fill="currentColor" /></div>
             <div className={styles.statLabel}>Favoris</div>
             <div className={styles.statVal}>{likedCount}</div>
             <div className={styles.statSub}>films aimés</div>

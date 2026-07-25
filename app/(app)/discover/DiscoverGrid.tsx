@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import type { TmdbDiscoverFilm } from "@/lib/tmdb";
 import styles from "./discover.module.css";
 
@@ -78,10 +79,16 @@ export default function DiscoverGrid({
     <div className={styles.grid}>
       {films.map((film) => (
         <Link key={film.id} href={`/film/${film.id}`} className={styles.filmCard}>
-          <div
-            className={styles.poster}
-            style={film.posterUrl ? { backgroundImage: `url("${film.posterUrl}")` } : undefined}
-          >
+          <div className={styles.poster}>
+            {film.posterUrl && (
+              <Image
+                src={film.posterUrl}
+                alt=""
+                fill
+                sizes="(max-width: 768px) 50vw, 200px"
+                style={{ objectFit: "cover" }}
+              />
+            )}
             {film.voteAverage > 0 && (
               <div className={styles.score}>★ {film.voteAverage}</div>
             )}

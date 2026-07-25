@@ -146,6 +146,9 @@
   color: var(--accent);
   font-family: var(--font-geist-mono), monospace;
   margin-right: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .btnSecondary,

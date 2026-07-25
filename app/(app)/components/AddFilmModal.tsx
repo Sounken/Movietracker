@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef, useTransition } from "react";
+import Image from "next/image";
+import { X, ArrowLeft, Check } from "lucide-react";
 import { addFilm } from "@/app/actions/film";
 import styles from "./AddFilmModal.module.css";
 
@@ -48,7 +50,7 @@ export default function AddFilmModal({ onClose }: { onClose: () => void }) {
   useEffect(() => { inputRef.current?.focus(); }, []);
 
   useEffect(() => {
-    if (query.length < 2) { setResults([]); return; }
+    if (query.length < 2) return;
     const t = setTimeout(async () => {
       const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
       setResults(await res.json());
@@ -88,7 +90,7 @@ export default function AddFilmModal({ onClose }: { onClose: () => void }) {
   return (
     <div className={styles.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className={styles.modal}>
-        <button className={styles.closeBtn} onClick={onClose}>✕</button>
+        <button className={styles.closeBtn} onClick={onClose}><X size={16} /></button>
 
         {!selected ? (
           /* ——— Step 1: Search ——— */
@@ -103,7 +105,11 @@ export default function AddFilmModal({ onClose }: { onClose: () => void }) {
                 className={styles.searchInput}
                 placeholder="Titre du film…"
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => {
+                  const q = e.target.value;
+                  setQuery(q);
+                  if (q.length < 2) setResults([]);
+                }}
               />
             </div>
 
@@ -112,8 +118,7 @@ export default function AddFilmModal({ onClose }: { onClose: () => void }) {
                 {results.map((r) => (
                   <div key={r.id} className={styles.result} onClick={() => setSelected(r)}>
                     {r.posterUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={r.posterUrl} alt={r.title} className={styles.thumb} />
+                      <Image src={r.posterUrl} alt={r.title} className={styles.thumb} width={40} height={60} />
                     ) : (
                       <div className={`${styles.thumb} ${styles.thumbEmpty}`} />
                     )}
@@ -138,12 +143,11 @@ export default function AddFilmModal({ onClose }: { onClose: () => void }) {
         ) : (
           /* ——— Step 2: Form ——— */
           <>
-            <button className={styles.backBtn} onClick={() => setSelected(null)}>← Retour</button>
+            <button className={styles.backBtn} onClick={() => setSelected(null)}><ArrowLeft size={13} /> Retour</button>
 
             <div className={styles.filmHeader}>
               {selected.posterUrl && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={selected.posterUrl} alt={selected.title} className={styles.filmPoster} />
+                <Image src={selected.posterUrl} alt={selected.title} className={styles.filmPoster} width={56} height={84} />
               )}
               <div>
                 <div className={styles.filmTitle}>{selected.title}</div>
@@ -212,7 +216,7 @@ export default function AddFilmModal({ onClose }: { onClose: () => void }) {
               onClick={handleSubmit}
               disabled={isPending || done}
             >
-              {done ? "✓ Ajouté !" : isPending ? "Enregistrement…" : "Ajouter à ma collection"}
+              {done ? <><Check size={15} /> Ajouté !</> : isPending ? "Enregistrement…" : "Ajouter à ma collection"}
             </button>
           </>
         )}

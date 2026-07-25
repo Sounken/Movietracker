@@ -18,11 +18,6 @@ const FilmIcon = () => (
     <path d="M3 9h18M3 15h18M8 4v16M16 4v16" />
   </svg>
 );
-const StarIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round">
-    <path d="m12 2 3 7 7 .5-5.5 4.5L18 22l-6-4-6 4 1.5-8L2 9.5 9 9z" />
-  </svg>
-);
 const ListIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
     <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
@@ -174,8 +169,7 @@ export default function Sidebar({
             aria-label="Mon profil"
           >
             {avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={avatarUrl} alt="" className={styles.navAvatar} />
+              <Image src={avatarUrl} alt="" className={styles.navAvatar} width={24} height={24} />
             ) : (
               <UserIcon />
             )}
@@ -240,8 +234,7 @@ export default function Sidebar({
             <Link href="/profile" className={styles.footRow}>
               <div className={styles.avatar}>
                 {avatarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={avatarUrl} alt={userName ?? "Profil"} className={styles.avatarImg} />
+                  <Image src={avatarUrl} alt={userName ?? "Profil"} className={styles.avatarImg} width={36} height={36} />
                 ) : (
                   initial
                 )}

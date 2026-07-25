@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef, useTransition, useCallback } from "react";
-import Link from "next/link";
+import Image from "next/image";
+import { X, Pencil } from "lucide-react";
 import { setFavoriteFilm } from "@/app/actions/profile";
 import styles from "./profile.module.css";
 
@@ -74,10 +75,17 @@ export default function FavFilmsClient({ slots: initialSlots }: { slots: Slot[] 
         {slots.map(({ position, tmdbId, title, posterUrl, year }) =>
           tmdbId ? (
             <div key={position} className={styles.favSlot}>
-              <div
-                className={styles.favBg}
-                style={posterUrl ? { backgroundImage: `url("${posterUrl}")` } : undefined}
-              />
+              <div className={styles.favBg}>
+                {posterUrl && (
+                  <Image
+                    src={posterUrl}
+                    alt=""
+                    fill
+                    sizes="(max-width: 768px) 50vw, 280px"
+                    style={{ objectFit: "cover" }}
+                  />
+                )}
+              </div>
               <div className={styles.favOverlay} />
               <div className={styles.favNum}>{position}</div>
               <div className={styles.favInfo}>
@@ -91,7 +99,7 @@ export default function FavFilmsClient({ slots: initialSlots }: { slots: Slot[] 
                   onClick={() => setEditPos(position)}
                   disabled={isPending}
                 >
-                  ✎ Changer
+                  <Pencil size={12} /> Changer
                 </button>
                 <button
                   className={styles.favChangeBtnAlt}
@@ -121,7 +129,7 @@ export default function FavFilmsClient({ slots: initialSlots }: { slots: Slot[] 
           onClick={(e) => e.target === e.currentTarget && closeSearch()}
         >
           <div className={styles.pickerModal}>
-            <button className={styles.closeBtn} onClick={closeSearch}>✕</button>
+            <button className={styles.closeBtn} onClick={closeSearch}><X size={15} /></button>
             <div className={styles.pickerHead}>
               <h3 className={styles.pickerTitle}>Film préféré #{editPos}</h3>
             </div>
@@ -147,10 +155,18 @@ export default function FavFilmsClient({ slots: initialSlots }: { slots: Slot[] 
                     onClick={() => pickFilm(film)}
                     disabled={isPending}
                   >
-                    <div
-                      className={styles.pickerPoster}
-                      style={film.posterUrl ? { backgroundImage: `url("${film.posterUrl}")` } : undefined}
-                    />
+                    {film.posterUrl ? (
+                      <Image
+                        src={film.posterUrl}
+                        alt=""
+                        className={styles.pickerPoster}
+                        width={44}
+                        height={66}
+                        style={{ objectFit: "cover" }}
+                      />
+                    ) : (
+                      <div className={styles.pickerPoster} />
+                    )}
                     <div className={styles.pickerInfo}>
                       <div className={styles.pickerItemTitle}>{film.title}</div>
                       {film.year && <div className={styles.pickerItemMeta}>{film.year}</div>}

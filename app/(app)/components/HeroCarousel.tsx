@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useTransition } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type { TmdbMovie } from "@/lib/tmdb";
 import { genreLabels } from "@/lib/tmdb";
@@ -53,6 +54,13 @@ export default function HeroCarousel({
 }) {
   const [idx, setIdx] = useState(0);
   const [prog, setProg] = useState(0);
+  // Changement de slide → la progression repart à zéro, ajustée pendant le
+  // rendu (pattern React « ajuster l'état pendant le rendu ») plutôt que dans un effet.
+  const [prevIdx, setPrevIdx] = useState(0);
+  if (idx !== prevIdx) {
+    setPrevIdx(idx);
+    setProg(0);
+  }
   // Logos dont le chargement a échoué → repli sur le titre texte
   const [brokenLogos, setBrokenLogos] = useState<Set<number>>(new Set());
   // État réel de la watchlist, initialisé depuis le serveur
@@ -90,7 +98,6 @@ export default function HeroCarousel({
 
   useEffect(() => {
     if (!n) return;
-    setProg(0);
     const start = Date.now();
     const interval = setInterval(() => {
       const p = Math.min(((Date.now() - start) / DURATION) * 100, 100);
@@ -109,19 +116,28 @@ export default function HeroCarousel({
 
   return (
     <div className={styles.wrap}>
-      <div
-        className={styles.bg}
-        style={{ backgroundImage: cur.backdropUrl ? `url("${cur.backdropUrl}")` : undefined }}
-      />
+      <div className={styles.bg}>
+        {cur.backdropUrl && (
+          <Image
+            src={cur.backdropUrl}
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            style={{ objectFit: "cover" }}
+          />
+        )}
+      </div>
 
       <div className={styles.content}>
         <div className={styles.lab}>Sortie de la semaine</div>
         {logos[cur.id] && !brokenLogos.has(cur.id) ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={logos[cur.id]}
             alt={cur.title}
             className={styles.titleLogo}
+            width={440}
+            height={96}
             onError={() => setBrokenLogos((prev) => new Set(prev).add(cur.id))}
           />
         ) : (
@@ -168,10 +184,16 @@ export default function HeroCarousel({
       </div>
 
       {cur.posterUrl && (
-        <div
-          className={styles.poster}
-          style={{ backgroundImage: `url("${cur.posterUrl}")` }}
-        />
+        <div className={styles.poster}>
+          <Image
+            src={cur.posterUrl}
+            alt=""
+            fill
+            priority
+            sizes="210px"
+            style={{ objectFit: "cover" }}
+          />
+        </div>
       )}
 
       <div className={styles.rail}>
@@ -179,9 +201,18 @@ export default function HeroCarousel({
           <div
             key={m.id}
             className={`${styles.thumb} ${i === idx ? styles.thumbOn : ""}`}
-            style={{ backgroundImage: m.posterUrl ? `url("${m.posterUrl}")` : undefined }}
             onClick={() => setIdx(i)}
-          />
+          >
+            {m.posterUrl && (
+              <Image
+                src={m.posterUrl}
+                alt={m.title}
+                fill
+                sizes="52px"
+                style={{ objectFit: "cover" }}
+              />
+            )}
+          </div>
         ))}
         <div className={styles.arrows}>
           <button className={styles.arrow} onClick={() => go(-1)}>

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import styles from "./Topbar.module.css";
 
 const SearchIcon = () => (
@@ -30,33 +31,41 @@ const BellIcon = () => (
 type SearchResult = { id: number; title: string; year: string; posterUrl: string; voteAverage: number | null };
 type Props = { greeting: string; userName: string | null };
 
+// Le thème vit dans localStorage (système externe) : on s'y abonne via
+// useSyncExternalStore. Le snapshot serveur vaut `true` (sombre, le défaut),
+// ce qui évite tout mismatch d'hydration.
+const THEME_CHANGE_EVENT = "mt-theme-change";
+function subscribeTheme(onChange: () => void) {
+  window.addEventListener(THEME_CHANGE_EVENT, onChange);
+  return () => window.removeEventListener(THEME_CHANGE_EVENT, onChange);
+}
+
 export default function Topbar({ greeting, userName }: Props) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [open, setOpen] = useState(false);
-  const [isDark, setIsDark] = useState(true);
+  const isDark = useSyncExternalStore(
+    subscribeTheme,
+    () => localStorage.getItem("mt-theme") !== "light",
+    () => true,
+  );
   const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const stored = localStorage.getItem("mt-theme");
-    setIsDark(stored !== "light");
-  }, []);
 
   function toggleTheme() {
     const next = isDark ? "light" : "dark";
-    setIsDark(!isDark);
     localStorage.setItem("mt-theme", next);
     if (next === "light") {
       document.documentElement.setAttribute("data-theme", "light");
     } else {
       document.documentElement.removeAttribute("data-theme");
     }
+    window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
   }
 
   // Debounced search
   useEffect(() => {
-    if (query.length < 2) { setResults([]); setOpen(false); return; }
+    if (query.length < 2) return;
     const timer = setTimeout(async () => {
       try {
         const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
@@ -98,7 +107,7 @@ export default function Topbar({ greeting, userName }: Props) {
               {greeting}, <em>{userName}</em>.
             </>
           ) : (
-            "Bienvenue 👋"
+            "Bienvenue"
           )}
         </h1>
       </div>
@@ -108,7 +117,11 @@ export default function Topbar({ greeting, userName }: Props) {
           <SearchIcon />
           <input
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              const q = e.target.value;
+              setQuery(q);
+              if (q.length < 2) { setResults([]); setOpen(false); }
+            }}
             onFocus={() => results.length > 0 && setOpen(true)}
             placeholder="Chercher un film, un réalisateur…"
             className={styles.searchInput}
@@ -120,7 +133,14 @@ export default function Topbar({ greeting, userName }: Props) {
             {results.map((m) => (
               <div key={m.id} className={styles.result} onClick={() => navigate(m.id)}>
                 {m.posterUrl ? (
-                  <div className={styles.thumb} style={{ backgroundImage: `url("${m.posterUrl}")` }} />
+                  <Image
+                    src={m.posterUrl}
+                    alt=""
+                    className={styles.thumb}
+                    width={36}
+                    height={54}
+                    style={{ objectFit: "cover" }}
+                  />
                 ) : (
                   <div className={`${styles.thumb} ${styles.thumbEmpty}`} />
                 )}

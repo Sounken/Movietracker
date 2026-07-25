@@ -43,7 +43,8 @@ export default function CollectionClient({
   const [sortBy, setSortBy] = useState<SortKey>("recent");
   const [view, setView] = useState<"default" | "watchlist">("default");
 
-  const [loading, setLoading] = useState(false);
+  // true dès le mount : la première requête (métadonnées) part immédiatement
+  const [loading, setLoading] = useState(true);
   // true tant qu'on affiche encore les données rendues côté serveur
   const isInitial = useRef(true);
 
@@ -70,6 +71,15 @@ export default function CollectionClient({
     [currentType, sortBy, currentRatingField, userId, minRating, maxRating, yearFilter],
   );
 
+  // Quand tri/filtres changent, l'URL change → on repasse en chargement
+  // pendant le rendu (pattern React « ajuster l'état pendant le rendu »).
+  const currentUrl = buildUrl(0);
+  const [prevUrl, setPrevUrl] = useState(currentUrl);
+  if (currentUrl !== prevUrl) {
+    setPrevUrl(currentUrl);
+    setLoading(true);
+  }
+
   // ——— Tri / filtres : rechargés depuis le serveur, sur TOUTE la collection ———
   useEffect(() => {
     // au tout premier rendu on garde les données du serveur, mais on récupère
@@ -78,7 +88,6 @@ export default function CollectionClient({
     isInitial.current = false;
 
     let cancelled = false;
-    setLoading(true);
 
     fetch(metaOnly ? buildUrl(0).replace(`take=${PAGE_SIZE}`, "take=0") : buildUrl(0))
       .then((r) => (r.ok ? r.json() : null))

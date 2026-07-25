@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useRef, useTransition } from "react";
+import Image from "next/image";
+import { X, Camera, Check } from "lucide-react";
 import { updateProfile } from "@/app/actions/profile";
 import styles from "./profile.module.css";
 
@@ -61,7 +63,7 @@ export default function ProfileEditor({ name, bio, avatarUrl, bannerUrl }: Props
       {open && (
         <div className={styles.overlay} onClick={(e) => e.target === e.currentTarget && setOpen(false)}>
           <div className={styles.modal}>
-            <button className={styles.closeBtn} onClick={() => setOpen(false)}>✕</button>
+            <button className={styles.closeBtn} onClick={() => setOpen(false)}><X size={15} /></button>
             <div className={styles.modalTitle}>Modifier le profil</div>
 
             {/* Banner preview + upload */}
@@ -81,12 +83,11 @@ export default function ProfileEditor({ name, bio, avatarUrl, bannerUrl }: Props
                 onClick={() => avatarRef.current?.click()}
               >
                 {avatarPreview ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={avatarPreview} alt="" className={styles.avatarImg} />
+                  <Image src={avatarPreview} alt="" className={styles.avatarImg} width={72} height={72} unoptimized />
                 ) : (
                   <span className={styles.avatarInitial}>{nameVal[0]?.toUpperCase() ?? "?"}</span>
                 )}
-                <span className={styles.avatarOverlay}>📷</span>
+                <span className={styles.avatarOverlay}><Camera size={20} /></span>
                 <input ref={avatarRef} type="file" accept="image/*" hidden onChange={(e) => handleFileChange(e, "avatar")} />
               </div>
               <div className={styles.avatarEditInfo}>Cliquez pour changer la photo de profil</div>
@@ -114,7 +115,7 @@ export default function ProfileEditor({ name, bio, avatarUrl, bannerUrl }: Props
             </div>
 
             <button className={styles.saveBtn} onClick={handleSave} disabled={isPending || saved}>
-              {saved ? "✓ Sauvegardé !" : isPending ? "Enregistrement…" : "Sauvegarder"}
+              {saved ? <><Check size={15} /> Sauvegardé !</> : isPending ? "Enregistrement…" : "Sauvegarder"}
             </button>
           </div>
         </div>

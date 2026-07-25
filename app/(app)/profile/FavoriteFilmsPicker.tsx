@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useRef, useTransition, useCallback } from "react";
+import { useState, useRef, useTransition } from "react";
+import Image from "next/image";
+import { X, Pencil } from "lucide-react";
 import { setFavoriteFilm } from "@/app/actions/profile";
 import styles from "./profile.module.css";
 
@@ -15,14 +17,11 @@ export default function FavoriteFilmsPicker({ slots }: { slots: Slot[] }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isPending, startTransition] = useTransition();
+  // Position du dropdown de résultats, mesurée dans la callback de recherche
+  // (jamais en lisant la ref pendant le rendu).
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const getDropdownStyle = useCallback((): React.CSSProperties => {
-    if (!inputRef.current) return {};
-    const r = inputRef.current.getBoundingClientRect();
-    return { top: r.bottom + 4, left: r.left, width: r.width };
-  }, []);
 
   const search = (q: string) => {
     setQuery(q);
@@ -31,6 +30,10 @@ export default function FavoriteFilmsPicker({ slots }: { slots: Slot[] }) {
     debounceRef.current = setTimeout(async () => {
       const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
       const data = await res.json();
+      if (inputRef.current) {
+        const r = inputRef.current.getBoundingClientRect();
+        setDropdownStyle({ top: r.bottom + 4, left: r.left, width: r.width });
+      }
       setResults((data as SearchResult[]).slice(0, 6));
     }, 280);
   };
@@ -74,7 +77,7 @@ export default function FavoriteFilmsPicker({ slots }: { slots: Slot[] }) {
           onClick={(e) => e.target === e.currentTarget && setOpen(false)}
         >
           <div className={styles.modal}>
-            <button className={styles.closeBtn} onClick={() => setOpen(false)}>✕</button>
+            <button className={styles.closeBtn} onClick={() => setOpen(false)}><X size={15} /></button>
             <div className={styles.modalTitle}>Films préférés</div>
 
             <div className={styles.pickerSlots}>
@@ -98,7 +101,7 @@ export default function FavoriteFilmsPicker({ slots }: { slots: Slot[] }) {
                     disabled={isPending}
                     title={activePos === position ? "Annuler" : "Changer"}
                   >
-                    {activePos === position ? "✕" : "✎"}
+                    {activePos === position ? <X size={13} /> : <Pencil size={13} />}
                   </button>
                   {title && activePos !== position && (
                     <button
@@ -107,7 +110,7 @@ export default function FavoriteFilmsPicker({ slots }: { slots: Slot[] }) {
                       disabled={isPending}
                       title="Retirer"
                     >
-                      ×
+                      <X size={13} />
                     </button>
                   )}
                 </div>
@@ -129,7 +132,7 @@ export default function FavoriteFilmsPicker({ slots }: { slots: Slot[] }) {
                     autoFocus
                   />
                   {results.length > 0 && (
-                    <div className={styles.pickerResults} style={getDropdownStyle()}>
+                    <div className={styles.pickerResults} style={dropdownStyle}>
                       {results.map((film) => (
                         <button
                           key={film.id}
@@ -137,10 +140,16 @@ export default function FavoriteFilmsPicker({ slots }: { slots: Slot[] }) {
                           onClick={() => pickFilm(activePos, film)}
                           disabled={isPending}
                         >
-                          <div
-                            className={styles.pickerResultPoster}
-                            style={film.posterUrl ? { backgroundImage: `url("${film.posterUrl}")` } : undefined}
-                          />
+                          {film.posterUrl && (
+                            <Image
+                              src={film.posterUrl}
+                              alt=""
+                              className={styles.pickerResultPoster}
+                              width={40}
+                              height={60}
+                              style={{ objectFit: "cover" }}
+                            />
+                          )}
                           <span className={styles.pickerResultTitle}>{film.title}</span>
                           {film.year && (
                             <span className={styles.pickerResultYear}>{film.year}</span>

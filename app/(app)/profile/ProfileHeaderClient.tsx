@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useRef, useTransition } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { X, Camera, Check, Sparkles, Pencil } from "lucide-react";
 import { updateProfile } from "@/app/actions/profile";
 import type { LevelInfo } from "@/lib/xp";
 import styles from "./profile.module.css";
@@ -121,7 +123,7 @@ export default function ProfileHeaderClient({
       >
         <div className={styles.bannerGrain} />
         <div className={styles.bannerOverlay} />
-        <div className={styles.bannerHint}>✎ Modifier la bannière</div>
+        <div className={styles.bannerHint}><Pencil size={12} /> Modifier la bannière</div>
       </div>
 
       {/* Profile header */}
@@ -130,8 +132,7 @@ export default function ProfileHeaderClient({
           {/* Avatar */}
           <div className={styles.avatarWrap} onClick={() => setOpen(true)}>
             {avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={avatarUrl} alt={name} className={styles.avatar} />
+              <Image src={avatarUrl} alt={name} className={styles.avatar} width={120} height={120} />
             ) : (
               <div className={styles.avatarFallback}>
                 {initial}
@@ -146,7 +147,7 @@ export default function ProfileHeaderClient({
             <h1 className={styles.name}>{name || "Cinéphile"}</h1>
             <div className={styles.metaRow}>
               <span className={styles.profileBadge}>
-                ✦ {levelInfo.title}
+                <Sparkles size={11} /> {levelInfo.title}
               </span>
               <span className={styles.joinedDate}>Membre depuis {joinedYear}</span>
             </div>
@@ -183,7 +184,7 @@ export default function ProfileHeaderClient({
       {open && (
         <div className={styles.overlay} onClick={(e) => e.target === e.currentTarget && setOpen(false)}>
           <div className={styles.modal}>
-            <button className={styles.closeBtn} onClick={() => setOpen(false)}>✕</button>
+            <button className={styles.closeBtn} onClick={() => setOpen(false)}><X size={15} /></button>
             <div className={styles.modalTitle}>Modifier le profil</div>
 
             <div
@@ -209,12 +210,11 @@ export default function ProfileHeaderClient({
             <div className={styles.avatarEditRow}>
               <div className={styles.avatarPreview} onClick={() => avatarRef.current?.click()}>
                 {avatarPreview ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={avatarPreview} alt="" className={styles.avatarImg} />
+                  <Image src={avatarPreview} alt="" className={styles.avatarImg} width={72} height={72} unoptimized />
                 ) : (
                   <span className={styles.avatarInitial}>{nameVal[0]?.toUpperCase() ?? "?"}</span>
                 )}
-                <span className={styles.avatarOverlay}>📷</span>
+                <span className={styles.avatarOverlay}><Camera size={20} /></span>
                 {avatarPreview && (
                   <button
                     type="button"
@@ -256,7 +256,7 @@ export default function ProfileHeaderClient({
             {error && <div className={styles.modalError}>{error}</div>}
 
             <button className={styles.saveBtn} onClick={handleSave} disabled={isPending || saved}>
-              {saved ? "✓ Sauvegardé !" : isPending ? "Enregistrement…" : "Sauvegarder"}
+              {saved ? <><Check size={15} /> Sauvegardé !</> : isPending ? "Enregistrement…" : "Sauvegarder"}
             </button>
           </div>
         </div>

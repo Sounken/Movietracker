@@ -1,10 +1,9 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import { getFilmCard } from "@/lib/films";
+import { getFilmCards } from "@/lib/films";
 import Topbar from "../components/Topbar";
 import FriendsClient from "./FriendsClient";
-import styles from "../dashboard.module.css";
 
 export default async function FriendsPage() {
   const session = await getSession();
@@ -59,27 +58,26 @@ export default async function FriendsPage() {
   });
 
   // Fetch TMDB titles for activity items
-  const activityWithTitles = await Promise.all(
-    recentActivity.map(async (item) => {
-      const card = await getFilmCard(item.tmdbId);
-      return {
-        id: item.id,
-        tmdbId: item.tmdbId,
-        title: card?.title ?? "Film inconnu",
-        posterUrl: card?.posterUrl ?? null,
-        year: card?.year ?? "",
-        watched: item.watched,
-        liked: item.liked,
-        rating: item.rating,
-        updatedAt: item.updatedAt.toISOString(),
-        user: {
-          id: item.user.id,
-          name: item.user.name ?? item.user.email.split("@")[0],
-          avatarUrl: item.user.avatarUrl,
-        },
-      };
-    })
-  );
+  const activityCards = await getFilmCards(recentActivity.map((item) => item.tmdbId));
+  const activityWithTitles = recentActivity.map((item) => {
+    const card = activityCards.get(item.tmdbId);
+    return {
+      id: item.id,
+      tmdbId: item.tmdbId,
+      title: card?.title ?? "Film inconnu",
+      posterUrl: card?.posterUrl ?? null,
+      year: card?.year ?? "",
+      watched: item.watched,
+      liked: item.liked,
+      rating: item.rating,
+      updatedAt: item.updatedAt.toISOString(),
+      user: {
+        id: item.user.id,
+        name: item.user.name ?? item.user.email.split("@")[0],
+        avatarUrl: item.user.avatarUrl,
+      },
+    };
+  });
 
   const following = followingRaw.map((f) => {
     const ratings = f.following.films.map((film) => film.rating).filter(Boolean) as number[];
@@ -107,7 +105,6 @@ export default async function FriendsPage() {
         following={following}
         followers={followers}
         activity={activityWithTitles}
-        currentUserId={session.userId}
       />
     </div>
   );

@@ -82,6 +82,7 @@
 }
 .lcPoster {
   flex: 1;
+  position: relative;
   background-size: cover;
   background-position: center;
   filter: brightness(0.7);
@@ -334,7 +335,7 @@
   padding: 80px 40px;
   color: var(--ink-dim);
 }
-.leEmoji { font-size: 48px; margin-bottom: 16px; }
+.leEmoji { font-size: 48px; margin-bottom: 16px; color: var(--ink-mute); }
 .leTitle {
   font-family: var(--font-serif, 'Georgia', serif);
   font-size: 26px;
@@ -586,6 +587,9 @@
   border-radius: 4px;
   background: rgba(106, 138, 90, 0.12);
   border: 1px solid rgba(106, 138, 90, 0.2);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
 }
 .fpAddBtn {
   width: 26px;

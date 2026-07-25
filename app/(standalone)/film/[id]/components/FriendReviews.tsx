@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import styles from "../film.module.css";
 
 export type FriendReview = {
@@ -29,8 +30,7 @@ export default function FriendReviews({ reviews }: { reviews: FriendReview[] }) 
             <div className={styles.friendReviewHead}>
               <Link href={`/user/${f.userId}`} className={styles.friendReviewUser}>
                 {f.avatarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={f.avatarUrl} alt={f.name} className={styles.friendAvatar} />
+                  <Image src={f.avatarUrl} alt={f.name} className={styles.friendAvatar} width={34} height={34} />
                 ) : (
                   <div className={styles.friendAvatarFallback}>
                     {f.name?.[0]?.toUpperCase()}

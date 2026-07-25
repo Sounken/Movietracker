@@ -1,8 +1,10 @@
+import { Suspense } from "react";
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
+import { ArrowUp, ArrowDown } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { fetchNowPlaying, fetchFilmLogo, type TmdbFilmCard } from "@/lib/tmdb";
-import { getFilmCard } from "@/lib/films";
+import { getFilmCards } from "@/lib/films";
 import Topbar from "./components/Topbar";
 import HeroCarousel from "./components/HeroCarousel";
 import CollectionClient from "./components/CollectionClient";
@@ -44,7 +46,8 @@ function Delta({ value, suffix = "", decimals = 0 }: { value: number; suffix?: s
   const up = value > 0;
   return (
     <span className={up ? styles.deltaUp : styles.deltaDown}>
-      {up ? "↑ +" : "↓ "}{Math.abs(value).toFixed(decimals)}{suffix}
+      {up ? <ArrowUp size={11} /> : <ArrowDown size={11} />}
+      {up ? "+" : ""}{Math.abs(value).toFixed(decimals)}{suffix}
     </span>
   );
 }
@@ -80,46 +83,76 @@ function runtimeByWeek(entries: { updatedAt: Date; runtime: number | null }[], n
   }).reverse();
 }
 
-export default async function DashboardPage() {
-  const session = await getSession();
-  if (!session) redirect("/discover");
+// Section 01 — carrousel des sorties (requêtes TMDB + watchlist, streamé)
+async function HeroSection({ userId }: { userId: string }) {
+  const nowPlaying = await fetchNowPlaying();
 
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
+  // Logos officiels + présence en watchlist, en parallèle
+  const [logoEntries, watchlistEntries] = await Promise.all([
+    Promise.all(nowPlaying.map(async (m) => [m.id, await fetchFilmLogo(m.id)] as const)),
+    nowPlaying.length > 0
+      ? prisma.userFilm.findMany({
+          where: {
+            userId,
+            watchlist: true,
+            tmdbId: { in: nowPlaying.map((m) => m.id) },
+          },
+          select: { tmdbId: true },
+        })
+      : Promise.resolve([]),
+  ]);
 
+  const heroLogos = Object.fromEntries(
+    logoEntries.filter((entry): entry is readonly [number, string] => entry[1] !== null),
+  ) as Record<number, string>;
+  const heroWatchlistIds = watchlistEntries.map((e) => e.tmdbId);
+
+  if (nowPlaying.length === 0) {
+    return (
+      <div className={styles.noTmdb}>
+        Ajoutez <code>TMDB_API_KEY</code> dans <code>.env.local</code> pour voir les films en salle.
+      </div>
+    );
+  }
+
+  return (
+    <HeroCarousel
+      movies={nowPlaying}
+      initialWatchlist={heroWatchlistIds}
+      logos={heroLogos}
+    />
+  );
+}
+
+// Section 02 — stats + collection : partagent les mêmes requêtes Prisma,
+// donc un seul boundary Suspense pour ne pas dupliquer l'agrégation.
+async function CollectionSection({ userId }: { userId: string }) {
   const startOfMonth = new Date();
   startOfMonth.setDate(1);
   startOfMonth.setHours(0, 0, 0, 0);
 
-  const [nowPlaying, ratedEntries, runtimeAgg, totalRated] = await Promise.all([
-    fetchNowPlaying(),
-    session
-      ? prisma.userFilm.findMany({
-          where: { userId: session.userId, rating: { not: null } },
-          orderBy: { updatedAt: "desc" },
-        })
-      : Promise.resolve([]),
-    session
-      ? prisma.userFilm.aggregate({
-          where: { userId: session.userId, runtime: { not: null } },
-          _sum: { runtime: true },
-        })
-      : Promise.resolve({ _sum: { runtime: null } }),
-    session
-      ? prisma.userFilm.count({ where: { userId: session.userId, rating: { not: null } } })
-      : Promise.resolve(0),
+  const [ratedEntries, runtimeAgg, totalRated] = await Promise.all([
+    prisma.userFilm.findMany({
+      where: { userId, rating: { not: null } },
+      orderBy: { updatedAt: "desc" },
+    }),
+    prisma.userFilm.aggregate({
+      where: { userId, runtime: { not: null } },
+      _sum: { runtime: true },
+    }),
+    prisma.userFilm.count({ where: { userId, rating: { not: null } } }),
   ]);
 
   // Only fetch TMDB cards for the first 24 — rest loads on demand
-  const ratedFilms = (
-    await Promise.all(
-      ratedEntries.slice(0, 24).map(async (entry) => {
-        const card = await getFilmCard(entry.tmdbId);
-        if (!card) return null;
-        return { ...card, rating: entry.rating! };
-      }),
-    )
-  ).filter(Boolean) as Array<TmdbFilmCard & { rating: number }>;
+  const ratedSlice = ratedEntries.slice(0, 24);
+  const ratedCards = await getFilmCards(ratedSlice.map((e) => e.tmdbId));
+  const ratedFilms = ratedSlice
+    .map((entry) => {
+      const card = ratedCards.get(entry.tmdbId);
+      if (!card) return null;
+      return { ...card, rating: entry.rating! };
+    })
+    .filter(Boolean) as Array<TmdbFilmCard & { rating: number }>;
 
   const avgRating =
     ratedEntries.length > 0
@@ -127,30 +160,6 @@ export default async function DashboardPage() {
       : null;
 
   const totalMinutes = runtimeAgg._sum?.runtime ?? 0;
-
-  // Logos officiels des films du carrousel (repli sur le titre texte si absent)
-  const heroLogos = Object.fromEntries(
-    (
-      await Promise.all(
-        nowPlaying.map(async (m) => [m.id, await fetchFilmLogo(m.id)] as const),
-      )
-    ).filter((entry): entry is readonly [number, string] => entry[1] !== null),
-  ) as Record<number, string>;
-
-  // Films du carrousel déjà présents dans la watchlist → pour synchroniser le bouton
-  const heroWatchlistIds =
-    session && nowPlaying.length > 0
-      ? (
-          await prisma.userFilm.findMany({
-            where: {
-              userId: session.userId,
-              watchlist: true,
-              tmdbId: { in: nowPlaying.map((m) => m.id) },
-            },
-            select: { tmdbId: true },
-          })
-        ).map((e) => e.tmdbId)
-      : [];
 
   // ——— Sparkline data ———
   // Films notés : count par mois sur 6 mois
@@ -186,6 +195,52 @@ export default async function DashboardPage() {
   const filmsCeMois = ratedEntries.filter(e => new Date(e.updatedAt) >= startOfMonth).length;
 
   return (
+    <>
+      {ratedEntries.length > 0 && (
+        <div className={styles.stats}>
+          <div className={styles.stat}>
+            <div className={styles.statLab}>Films notés</div>
+            <div className={styles.statVal}>{ratedEntries.length}</div>
+            <Delta value={deltaFilms} suffix=" ce mois" />
+            <Sparkline points={filmsByMonth} />
+          </div>
+
+          <div className={styles.stat}>
+            <div className={styles.statLab}>Note moyenne</div>
+            <div className={styles.statVal}>{avgRating ? avgRating.toFixed(1) : "—"}/10</div>
+            <Delta value={Number(deltaRating.toFixed(1))} suffix="" decimals={1} />
+            <Sparkline points={last10ratings} />
+          </div>
+
+          <div className={styles.stat}>
+            <div className={styles.statLab}>Heures cumulées</div>
+            <div className={styles.statVal}>{totalMinutes > 0 ? formatHours(totalMinutes) : "—"}</div>
+            <Delta value={Number(deltaHours.toFixed(1))} suffix="h" decimals={1} />
+            <Sparkline points={hoursByWeek} />
+          </div>
+
+          <div className={styles.stat}>
+            <div className={styles.statLab}>Films ce mois</div>
+            <div className={styles.statVal}>{filmsCeMois}</div>
+            <Delta value={deltaWeeklyFilms} suffix=" cette sem." />
+            <Sparkline points={filmsByWeekDirect} />
+          </div>
+        </div>
+      )}
+
+      <CollectionClient films={ratedFilms} total={totalRated} />
+    </>
+  );
+}
+
+export default async function DashboardPage() {
+  const session = await getSession();
+  if (!session) redirect("/discover");
+
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
+
+  return (
     <div className={styles.page}>
       <Topbar greeting={greeting} userName={session?.name ?? null} />
 
@@ -203,17 +258,9 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      {nowPlaying.length > 0 ? (
-        <HeroCarousel
-          movies={nowPlaying}
-          initialWatchlist={heroWatchlistIds}
-          logos={heroLogos}
-        />
-      ) : (
-        <div className={styles.noTmdb}>
-          Ajoutez <code>TMDB_API_KEY</code> dans <code>.env.local</code> pour voir les films en salle.
-        </div>
-      )}
+      <Suspense fallback={<div className={`${styles.skeleton} ${styles.skeletonHero}`} />}>
+        <HeroSection userId={session.userId} />
+      </Suspense>
 
       <section>
         <div className={styles.sectionHead}>
@@ -226,39 +273,16 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {ratedEntries.length > 0 && (
-          <div className={styles.stats}>
-            <div className={styles.stat}>
-              <div className={styles.statLab}>Films notés</div>
-              <div className={styles.statVal}>{ratedEntries.length}</div>
-              <Delta value={deltaFilms} suffix=" ce mois" />
-              <Sparkline points={filmsByMonth} />
-            </div>
-
-            <div className={styles.stat}>
-              <div className={styles.statLab}>Note moyenne</div>
-              <div className={styles.statVal}>{avgRating ? avgRating.toFixed(1) : "—"}/10</div>
-              <Delta value={Number(deltaRating.toFixed(1))} suffix="" decimals={1} />
-              <Sparkline points={last10ratings} />
-            </div>
-
-            <div className={styles.stat}>
-              <div className={styles.statLab}>Heures cumulées</div>
-              <div className={styles.statVal}>{totalMinutes > 0 ? formatHours(totalMinutes) : "—"}</div>
-              <Delta value={Number(deltaHours.toFixed(1))} suffix="h" decimals={1} />
-              <Sparkline points={hoursByWeek} />
-            </div>
-
-            <div className={styles.stat}>
-              <div className={styles.statLab}>Films ce mois</div>
-              <div className={styles.statVal}>{filmsCeMois}</div>
-              <Delta value={deltaWeeklyFilms} suffix=" cette sem." />
-              <Sparkline points={filmsByWeekDirect} />
-            </div>
-          </div>
-        )}
-
-        <CollectionClient films={ratedFilms} total={totalRated} />
+        <Suspense
+          fallback={
+            <>
+              <div className={`${styles.skeleton} ${styles.skeletonStats}`} />
+              <div className={`${styles.skeleton} ${styles.skeletonGrid}`} />
+            </>
+          }
+        >
+          <CollectionSection userId={session.userId} />
+        </Suspense>
       </section>
     </div>
   );

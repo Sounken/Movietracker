@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import { getFilmCard } from "@/lib/films";
+import { getFilmCards } from "@/lib/films";
 import ListDetailClient from "./ListDetailClient";
 
 export default async function ListDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -16,15 +16,14 @@ export default async function ListDetailPage({ params }: { params: Promise<{ id:
 
   if (!list) notFound();
 
-  const films = (
-    await Promise.all(
-      list.films.map(async (f) => {
-        const card = await getFilmCard(f.tmdbId);
-        if (!card) return null;
-        return { id: card.id, title: card.title, posterUrl: card.posterUrl, year: card.year, tmdbId: f.tmdbId };
-      }),
-    )
-  ).filter(Boolean) as Array<{ id: number; title: string; posterUrl: string; year: string; tmdbId: number }>;
+  const cards = await getFilmCards(list.films.map((f) => f.tmdbId));
+  const films = list.films
+    .map((f) => {
+      const card = cards.get(f.tmdbId);
+      if (!card) return null;
+      return { id: card.id, title: card.title, posterUrl: card.posterUrl, year: card.year, tmdbId: f.tmdbId };
+    })
+    .filter(Boolean) as Array<{ id: number; title: string; posterUrl: string; year: string; tmdbId: number }>;
 
   return (
     <ListDetailClient

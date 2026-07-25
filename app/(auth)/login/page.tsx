@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState, useEffect } from "react";
+import { useActionState, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { login } from "@/app/actions/auth";
@@ -37,9 +37,10 @@ const PHRASES = [
 
 export default function LoginPage() {
   const [state, action, pending] = useActionState(login, undefined);
-  const [phrase, setPhrase] = useState(PHRASES[0]);
+  // Phrase d'accueil aléatoire, choisie une fois au mount (initialiseur lazy).
+  // Serveur et client tireront des phrases différentes : d'où suppressHydrationWarning.
+  const [phrase] = useState(() => PHRASES[Math.floor(Math.random() * PHRASES.length)]);
   const router = useRouter();
-  useEffect(() => { setPhrase(PHRASES[Math.floor(Math.random() * PHRASES.length)]); }, []);
 
   // Retour à la page précédente ; si on est arrivé directement ici, retour à l'accueil.
   function goBack() {
@@ -61,7 +62,7 @@ export default function LoginPage() {
         </Link>
 
         <h1 className={styles.title}>Connexion</h1>
-        <p className={styles.subtitle}>{phrase}</p>
+        <p className={styles.subtitle} suppressHydrationWarning>{phrase}</p>
 
         <form action={action} className={styles.form}>
           {state?.error && (

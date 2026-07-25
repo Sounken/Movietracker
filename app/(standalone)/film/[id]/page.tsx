@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
@@ -93,10 +94,18 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
       <div className={styles.hero}>
         {/* Colonne gauche : poster + actions */}
         <div className={styles.posterCol}>
-          <div
-            className={styles.poster}
-            style={film.posterUrl ? { backgroundImage: `url("${film.posterUrl}")` } : undefined}
-          />
+          <div className={styles.poster}>
+            {film.posterUrl && (
+              <Image
+                src={film.posterUrl}
+                alt={film.title}
+                fill
+                priority
+                sizes="280px"
+                style={{ objectFit: "cover" }}
+              />
+            )}
+          </div>
           <PosterActions
             tmdbId={id}
             initialRating={userFilm?.rating ?? 0}
@@ -303,8 +312,14 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
                 {similar.map((s) => (
                   <Link key={s.id} href={`/film/${s.id}`} className={styles.similarCard}>
                     {s.posterUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={s.posterUrl} alt={s.title} className={styles.similarPoster} />
+                      <Image
+                        src={s.posterUrl}
+                        alt={s.title}
+                        className={styles.similarPoster}
+                        width={300}
+                        height={450}
+                        sizes="(max-width: 768px) 33vw, 160px"
+                      />
                     ) : (
                       <div className={styles.similarPosterEmpty} />
                     )}

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import type { TmdbCastMember } from "@/lib/tmdb";
 import styles from "../film.module.css";
 
@@ -35,8 +36,14 @@ export default function CastGrid({ cast }: { cast: TmdbCastMember[] }) {
         {visible.map((c) => (
           <Link key={c.id} href={`/actor/${c.id}`} className={styles.castCard}>
             {c.profileUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={c.profileUrl} alt={c.name} className={styles.castPhoto} />
+              <Image
+                src={c.profileUrl}
+                alt={c.name}
+                className={styles.castPhoto}
+                width={300}
+                height={450}
+                sizes="(max-width: 768px) 33vw, 160px"
+              />
             ) : (
               <div className={styles.castAvatar} style={{ background: castColor(c.name) }}>
                 {c.name.split(" ").map((w) => w[0]).join("").slice(0, 2)}

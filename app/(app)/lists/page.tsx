@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import { getFilmCard } from "@/lib/films";
+import { getFilmCards } from "@/lib/films";
 import ListsClient from "./ListsClient";
 
 export default async function ListsPage() {
@@ -17,27 +17,19 @@ export default async function ListsPage() {
     },
   });
 
-  const listsWithPosters = await Promise.all(
-    lists.map(async (list) => {
-      const posters = (
-        await Promise.all(
-          list.films.map(async (f) => {
-            const card = await getFilmCard(f.tmdbId);
-            return card?.posterUrl ?? null;
-          }),
-        )
-      ).filter(Boolean) as string[];
-      return {
-        id: list.id,
-        name: list.name,
-        description: list.description,
-        emoji: list.emoji,
-        color: list.color,
-        filmCount: list._count.films,
-        posters,
-      };
-    }),
-  );
+  const cards = await getFilmCards(lists.flatMap((list) => list.films.map((f) => f.tmdbId)));
+
+  const listsWithPosters = lists.map((list) => ({
+    id: list.id,
+    name: list.name,
+    description: list.description,
+    emoji: list.emoji,
+    color: list.color,
+    filmCount: list._count.films,
+    posters: list.films
+      .map((f) => cards.get(f.tmdbId)?.posterUrl ?? null)
+      .filter(Boolean) as string[],
+  }));
 
   return <ListsClient lists={listsWithPosters} />;
 }

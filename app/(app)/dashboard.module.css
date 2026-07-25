@@ -115,7 +115,9 @@
   font-size: 11px;
   color: #7ab06a;
   margin-top: 6px;
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 2px;
 }
 
 .deltaDown {
@@ -123,7 +125,9 @@
   font-size: 11px;
   color: #c2412c;
   margin-top: 6px;
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 2px;
 }
 
 .deltaFlat {
@@ -171,6 +175,33 @@
   margin-top: 8px !important;
   font-size: 13px !important;
   color: var(--ink-mute) !important;
+}
+
+/* ——— Skeletons (fallbacks Suspense) ——— */
+.skeleton {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  animation: skeletonPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes skeletonPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+.skeletonHero {
+  height: 520px;
+  margin-bottom: 64px;
+}
+
+.skeletonStats {
+  height: 128px;
+  margin-bottom: 28px;
+}
+
+.skeletonGrid {
+  height: 420px;
 }
 
 /* ——— Responsive ——— */

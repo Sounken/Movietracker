@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Check } from "lucide-react";
 import { toggleWatchlist, toggleLiked } from "@/app/actions/film";
 import { addFilmToList, removeFilmFromList } from "@/app/actions/lists";
 import styles from "./PosterActions.module.css";
@@ -67,6 +68,14 @@ export default function PosterActions({
   const [, startTransition] = useTransition();
   const dropRef = useRef<HTMLDivElement>(null);
 
+  // Si la note initiale (props serveur) change, on resynchronise l'état local
+  // pendant le rendu (pattern React « ajuster l'état pendant le rendu »).
+  const [prevInitialRating, setPrevInitialRating] = useState(initialRating);
+  if (initialRating !== prevInitialRating) {
+    setPrevInitialRating(initialRating);
+    setRating(initialRating);
+  }
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (!dropRef.current?.contains(e.target as Node)) setDropdownOpen(false);
@@ -83,10 +92,6 @@ export default function PosterActions({
     window.addEventListener(RATING_CLEARED_EVENT, handler);
     return () => window.removeEventListener(RATING_CLEARED_EVENT, handler);
   }, [tmdbId]);
-
-  useEffect(() => {
-    setRating(initialRating);
-  }, [initialRating]);
 
   useEffect(() => {
     const handler = (event: Event) => {
@@ -147,7 +152,7 @@ export default function PosterActions({
         }}
       >
         <ClockIcon />
-        {watchlist ? "Dans ma watchlist ✓" : "Ajouter à la watchlist"}
+        {watchlist ? <>Dans ma watchlist <Check size={13} /></> : "Ajouter à la watchlist"}
       </button>
 
       {/* Add to list dropdown */}
@@ -197,7 +202,7 @@ export default function PosterActions({
         }}
       >
         <HeartIcon />
-        {liked ? "Dans vos favoris ✓" : "Ajouter aux favoris"}
+        {liked ? <>Dans vos favoris <Check size={13} /></> : "Ajouter aux favoris"}
       </button>
     </div>
   );

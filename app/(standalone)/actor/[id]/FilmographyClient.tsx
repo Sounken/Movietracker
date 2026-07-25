@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import type { TmdbPersonCredit } from "@/lib/tmdb";
 import styles from "./actor.module.css";
 
@@ -48,8 +49,14 @@ export default function FilmographyClient({
       <div className={styles.filmGrid}>
         {sorted.map((film) => (
           <Link key={`${film.id}-${film.character}`} href={`/film/${film.id}`} className={styles.filmCard}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={film.posterUrl} alt={film.title} className={styles.filmPoster} />
+            <Image
+              src={film.posterUrl}
+              alt={film.title}
+              className={styles.filmPoster}
+              width={300}
+              height={450}
+              sizes="(max-width: 768px) 33vw, 160px"
+            />
             {film.voteAverage > 0 && (
               <div className={styles.filmScore}>★ {film.voteAverage}</div>
             )}

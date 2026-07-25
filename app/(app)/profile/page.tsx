@@ -1,8 +1,11 @@
+import { Suspense } from "react";
 import { notFound, redirect } from "next/navigation";
+import { Clapperboard, Star, Clock, Heart, ClipboardList, ArrowUp } from "lucide-react";
+import type { UserFilm } from "@/app/generated/prisma/client";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { type TmdbFilmCard } from "@/lib/tmdb";
-import { getFilmCard } from "@/lib/films";
+import { getFilmCards } from "@/lib/films";
 import ProfileHeaderClient from "./ProfileHeaderClient";
 import FavFilmsClient from "./FavFilmsClient";
 import CollectionClient from "../components/CollectionClient";
@@ -11,33 +14,16 @@ import ImportButton from "./ImportButton";
 import { computeXP, getLevelInfo } from "@/lib/xp";
 import styles from "./profile.module.css";
 
-export default async function ProfilePage() {
-  const session = await getSession();
-  if (!session) redirect("/login");
-
-  const [user, filmEntries, favoriteEntries] = await Promise.all([
-    prisma.user.findUnique({ where: { id: session.userId } }),
-    prisma.userFilm.findMany({
-      where: { userId: session.userId },
-      orderBy: { updatedAt: "desc" },
-    }),
-    prisma.userFavoriteFilm.findMany({
-      where: { userId: session.userId },
-      orderBy: { position: "asc" },
-    }),
-  ]);
-
-  if (!user) notFound();
-
-  const levelInfo = getLevelInfo(computeXP(filmEntries));
-
+// Cartes de stats — compteurs/agrégations Prisma, streamées.
+// Réutilise filmEntries déjà chargé par la page (pas de requête dupliquée).
+async function StatsSection({ userId, filmEntries }: { userId: string; filmEntries: UserFilm[] }) {
   const [watchedCount, ratedCount, watchlistCount, likedCount, runtimeAgg] = await Promise.all([
-    prisma.userFilm.count({ where: { userId: session.userId, watched: true } }),
-    prisma.userFilm.count({ where: { userId: session.userId, rating: { not: null } } }),
-    prisma.userFilm.count({ where: { userId: session.userId, watchlist: true } }),
-    prisma.userFilm.count({ where: { userId: session.userId, liked: true } }),
+    prisma.userFilm.count({ where: { userId, watched: true } }),
+    prisma.userFilm.count({ where: { userId, rating: { not: null } } }),
+    prisma.userFilm.count({ where: { userId, watchlist: true } }),
+    prisma.userFilm.count({ where: { userId, liked: true } }),
     prisma.userFilm.aggregate({
-      where: { userId: session.userId, runtime: { not: null } },
+      where: { userId, runtime: { not: null } },
       _sum: { runtime: true },
     }),
   ]);
@@ -60,35 +46,114 @@ export default async function ProfilePage() {
           .reduce((s, e) => s + (e.rating ?? 0), 0) / ratedCount
       : null;
 
-  // 4 favorite films
-  const favoriteFilms = await Promise.all(
-    [1, 2, 3, 4].map(async (pos) => {
-      const entry = favoriteEntries.find((e) => e.position === pos);
-      if (!entry) return { position: pos, tmdbId: null, title: null, posterUrl: null, year: null };
-      const film = await getFilmCard(entry.tmdbId);
-      return {
-        position: pos,
-        tmdbId: entry.tmdbId,
-        title: film?.title ?? null,
-        posterUrl: film?.posterUrl ?? null,
-        year: film?.year ?? null,
-      };
-    }),
+  return (
+    <div className={styles.statsSection}>
+      <div className={styles.statsGrid}>
+        <div className={styles.statCard}>
+          <div className={styles.statDeco}><Clapperboard size={26} /></div>
+          <div className={styles.statLabel}>Films vus</div>
+          <div className={styles.statVal}>{watchedCount}</div>
+          <div className={styles.statSub}><ArrowUp size={12} /> +{watchedThisMonth} ce mois</div>
+        </div>
+        <div className={styles.statCard}>
+          <div className={styles.statDeco}><Star size={26} /></div>
+          <div className={styles.statLabel}>Note moyenne</div>
+          <div className={styles.statVal}>{avgRating !== null ? avgRating.toFixed(1) : "—"}</div>
+          <div className={styles.statSub}>sur {ratedCount} films notés</div>
+        </div>
+        <div className={styles.statCard}>
+          <div className={styles.statDeco}><Clock size={26} /></div>
+          <div className={styles.statLabel}>Heures visionnées</div>
+          <div className={styles.statVal}>{totalHours}<span style={{ fontSize: 20 }}>h</span></div>
+          <div className={styles.statSub}><ArrowUp size={12} /> +{hoursThisWeek.toFixed(1)}h cette semaine</div>
+        </div>
+        <div className={styles.statCard}>
+          <div className={styles.statDeco}><Heart size={26} fill="currentColor" /></div>
+          <div className={styles.statLabel}>Favoris</div>
+          <div className={styles.statVal}>{likedCount}</div>
+          <div className={styles.statSub}>films aimés</div>
+        </div>
+        <div className={styles.statCard}>
+          <div className={styles.statDeco}><ClipboardList size={26} /></div>
+          <div className={styles.statLabel}>À voir</div>
+          <div className={styles.statVal}>{watchlistCount}</div>
+          <div className={styles.statSub}>dans la watchlist</div>
+        </div>
+      </div>
+    </div>
   );
+}
 
-  // Collection — films notés uniquement (comme l'accueil) ; la watchlist a son
-  // propre bouton dans la barre d'outils. Première page seulement, la suite se charge à la demande.
+// 4 films préférés — requête Prisma + getFilmCards, streamés
+async function FavFilmsSection({ userId }: { userId: string }) {
+  const favoriteEntries = await prisma.userFavoriteFilm.findMany({
+    where: { userId },
+    orderBy: { position: "asc" },
+  });
+
+  const favoriteCards = await getFilmCards(favoriteEntries.map((e) => e.tmdbId));
+  const favoriteFilms = [1, 2, 3, 4].map((pos) => {
+    const entry = favoriteEntries.find((e) => e.position === pos);
+    if (!entry) return { position: pos, tmdbId: null, title: null, posterUrl: null, year: null };
+    const film = favoriteCards.get(entry.tmdbId);
+    return {
+      position: pos,
+      tmdbId: entry.tmdbId,
+      title: film?.title ?? null,
+      posterUrl: film?.posterUrl ?? null,
+      year: film?.year ?? null,
+    };
+  });
+
+  return (
+    <FavFilmsClient
+      slots={favoriteFilms.map((f) => ({ ...f, position: f.position as 1 | 2 | 3 | 4 }))}
+    />
+  );
+}
+
+// Collection — films notés uniquement (comme l'accueil) ; la watchlist a son
+// propre bouton dans la barre d'outils. Première page seulement, la suite se charge à la demande.
+// Réutilise filmEntries déjà chargé par la page (pas de requête dupliquée).
+async function CollectionSection({ filmEntries }: { filmEntries: UserFilm[] }) {
   const collectionEntries = filmEntries.filter((e) => e.rating !== null);
   const totalCollection = collectionEntries.length;
-  const collectionFilms = (
-    await Promise.all(
-      collectionEntries.slice(0, 24).map(async (entry) => {
-        const card = await getFilmCard(entry.tmdbId);
-        if (!card) return null;
-        return { ...card, rating: entry.rating ?? null };
-      }),
-    )
-  ).filter(Boolean) as Array<TmdbFilmCard & { rating: number | null }>;
+  const collectionSlice = collectionEntries.slice(0, 24);
+  const collectionCards = await getFilmCards(collectionSlice.map((e) => e.tmdbId));
+  const collectionFilms = collectionSlice
+    .map((entry) => {
+      const card = collectionCards.get(entry.tmdbId);
+      if (!card) return null;
+      return { ...card, rating: entry.rating ?? null };
+    })
+    .filter(Boolean) as Array<TmdbFilmCard & { rating: number | null }>;
+
+  return (
+    <CollectionClient
+      films={collectionFilms}
+      total={totalCollection}
+      type="rated"
+      showWatchlist
+    />
+  );
+}
+
+export default async function ProfilePage() {
+  const session = await getSession();
+  if (!session) redirect("/login");
+
+  // En-tête immédiat : user + entries (nécessaires à l'XP) — deux requêtes légères.
+  const [user, filmEntries] = await Promise.all([
+    prisma.user.findUnique({ where: { id: session.userId } }),
+    prisma.userFilm.findMany({
+      where: { userId: session.userId },
+      orderBy: { updatedAt: "desc" },
+    }),
+  ]);
+
+  if (!user) notFound();
+
+  const levelInfo = getLevelInfo(computeXP(filmEntries));
 
   const initial = (user.name ?? user.email)[0].toUpperCase();
   const joinedYear = new Date(user.createdAt).getFullYear();
@@ -111,41 +176,16 @@ export default async function ProfilePage() {
         <ImportButton />
       </div>
 
-      {/* Stats grid */}
-      <div className={styles.statsSection}>
-        <div className={styles.statsGrid}>
-          <div className={styles.statCard}>
-            <div className={styles.statDeco}>🎬</div>
-            <div className={styles.statLabel}>Films vus</div>
-            <div className={styles.statVal}>{watchedCount}</div>
-            <div className={styles.statSub}>↑ +{watchedThisMonth} ce mois</div>
+      {/* Stats grid — streamé */}
+      <Suspense
+        fallback={
+          <div className={styles.statsSection}>
+            <div className={`${styles.skeleton} ${styles.skeletonStats}`} />
           </div>
-          <div className={styles.statCard}>
-            <div className={styles.statDeco}>⭐</div>
-            <div className={styles.statLabel}>Note moyenne</div>
-            <div className={styles.statVal}>{avgRating !== null ? avgRating.toFixed(1) : "—"}</div>
-            <div className={styles.statSub}>sur {ratedCount} films notés</div>
-          </div>
-          <div className={styles.statCard}>
-            <div className={styles.statDeco}>⏱</div>
-            <div className={styles.statLabel}>Heures visionnées</div>
-            <div className={styles.statVal}>{totalHours}<span style={{ fontSize: 20 }}>h</span></div>
-            <div className={styles.statSub}>↑ +{hoursThisWeek.toFixed(1)}h cette semaine</div>
-          </div>
-          <div className={styles.statCard}>
-            <div className={styles.statDeco}>❤️</div>
-            <div className={styles.statLabel}>Favoris</div>
-            <div className={styles.statVal}>{likedCount}</div>
-            <div className={styles.statSub}>films aimés</div>
-          </div>
-          <div className={styles.statCard}>
-            <div className={styles.statDeco}>📋</div>
-            <div className={styles.statLabel}>À voir</div>
-            <div className={styles.statVal}>{watchlistCount}</div>
-            <div className={styles.statSub}>dans la watchlist</div>
-          </div>
-        </div>
-      </div>
+        }
+      >
+        <StatsSection userId={session.userId} filmEntries={filmEntries} />
+      </Suspense>
 
       <div className={styles.content}>
         {/* Favorite films */}
@@ -153,9 +193,9 @@ export default async function ProfilePage() {
           <div className={styles.sectionHead}>
             <h2 className={styles.sectionTitle}>Films préférés</h2>
           </div>
-          <FavFilmsClient
-            slots={favoriteFilms.map((f) => ({ ...f, position: f.position as 1 | 2 | 3 | 4 }))}
-          />
+          <Suspense fallback={<div className={`${styles.skeleton} ${styles.skeletonFavs}`} />}>
+            <FavFilmsSection userId={session.userId} />
+          </Suspense>
         </div>
 
         {/* Collection */}
@@ -164,12 +204,9 @@ export default async function ProfilePage() {
             <h2 className={styles.sectionTitle}>Ma collection</h2>
             <AddFilmButton />
           </div>
-          <CollectionClient
-            films={collectionFilms}
-            total={totalCollection}
-            type="rated"
-            showWatchlist
-          />
+          <Suspense fallback={<div className={`${styles.skeleton} ${styles.skeletonGrid}`} />}>
+            <CollectionSection filmEntries={filmEntries} />
+          </Suspense>
         </div>
       </div>
     </div>
