@@ -22,6 +22,12 @@ const instrumentSerif = Instrument_Serif({
 export const metadata: Metadata = {
   title: "MovieTracker",
   description: "Votre journal de cinéma personnel",
+  // Nom + comportement de l'app une fois ajoutée à l'écran d'accueil iOS
+  appleWebApp: {
+    capable: true,
+    title: "MovieTracker",
+    statusBarStyle: "black-translucent",
+  },
 };
 
 export const viewport: Viewport = {
