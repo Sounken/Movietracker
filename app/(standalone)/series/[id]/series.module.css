@@ -1,0 +1,247 @@
+/* ——— Actions série (sous le poster) ——— */
+.actions {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stars {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  flex-wrap: wrap;
+}
+
+.star {
+  background: none;
+  border: 0;
+  padding: 2px;
+  cursor: pointer;
+  color: var(--gold);
+  line-height: 0;
+}
+
+.starOn { color: var(--gold); }
+.starOff { color: var(--ink-mute); }
+
+.ratingVal {
+  margin-left: 8px;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 13px;
+  color: var(--ink-dim);
+}
+
+.actionRow {
+  display: flex;
+  gap: 8px;
+}
+
+.actionBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink-dim);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.actionBtn:hover { color: var(--ink); border-color: var(--accent); }
+.actionOn { background: rgba(217, 119, 66, 0.12); color: var(--accent); border-color: var(--accent); }
+.actionLiked { color: var(--red); border-color: var(--red); }
+
+.review {
+  width: 100%;
+  min-height: 80px;
+  resize: vertical;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+}
+
+.saveReview {
+  padding: 9px;
+  border-radius: 10px;
+  border: 0;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* ——— Progression globale ——— */
+.progressBox {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 28px;
+}
+
+.progressTop {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--ink-dim);
+  margin-bottom: 8px;
+}
+
+.progressTrack {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--track);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), #e8a060);
+  border-radius: 999px;
+}
+
+/* ——— Saisons / épisodes ——— */
+.seasons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.season {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--panel);
+}
+
+.seasonHead {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+}
+
+.chevron { transition: transform 0.2s; flex: 0 0 auto; color: var(--ink-mute); }
+.chevronOpen { transform: rotate(180deg); }
+
+.seasonName { font-size: 14px; font-weight: 500; flex: 1; min-width: 0; }
+
+.seasonProgress {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 12px;
+  color: var(--ink-mute);
+}
+
+.seasonBar {
+  width: 80px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--track);
+  overflow: hidden;
+  flex: 0 0 auto;
+}
+
+.seasonBarFill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+}
+
+.episodes {
+  border-top: 1px solid var(--line);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.episodeLoading,
+.markSeason {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 10px;
+  font-size: 13px;
+  color: var(--ink-dim);
+}
+
+.markSeason {
+  background: none;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font: inherit;
+  color: var(--accent);
+  width: 100%;
+  text-align: left;
+}
+
+.markSeason:hover { background: var(--hover); }
+
+.episode {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  color: var(--ink-dim);
+  text-align: left;
+  width: 100%;
+  transition: background 0.12s;
+}
+
+.episode:hover { background: var(--hover); }
+.episodeOn { color: var(--ink); }
+
+.check {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 1.5px solid var(--line);
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  color: #fff;
+}
+
+.checkOn { background: var(--accent); border-color: var(--accent); }
+
+.epNum {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 12px;
+  color: var(--ink-mute);
+  width: 22px;
+  flex: 0 0 auto;
+  text-align: right;
+}
+
+.epName { flex: 1; min-width: 0; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.epDate { font-size: 11px; color: var(--ink-mute); flex: 0 0 auto; }
+
+.spin { animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }

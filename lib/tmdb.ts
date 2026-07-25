@@ -241,6 +241,175 @@ export async function fetchFilmDetail(id: number): Promise<TmdbFilmDetail | null
   }
 }
 
+// ——————————————————————————————————————————————————————————————
+//  Séries TV (endpoints tv/*)
+// ——————————————————————————————————————————————————————————————
+
+export type TmdbSeriesCard = {
+  id: number;
+  name: string;
+  posterUrl: string;
+  year: string;
+  genres: string[];
+  voteAverage: number;
+};
+
+export type TmdbSeasonSummary = {
+  seasonNumber: number;
+  name: string;
+  episodeCount: number;
+  posterUrl: string;
+  year: string;
+};
+
+export type TmdbSeriesDetail = {
+  id: number;
+  name: string;
+  overview: string;
+  posterUrl: string;
+  backdropUrl: string;
+  year: string;
+  lastAirDate: string;
+  status: string;
+  numberOfSeasons: number;
+  numberOfEpisodes: number;
+  episodeRunTime: number | null;
+  voteAverage: number;
+  voteCount: number;
+  genres: string[];
+  networks: string[];
+  originalLanguage: string;
+  seasons: TmdbSeasonSummary[];
+};
+
+export type TmdbEpisode = {
+  episodeNumber: number;
+  name: string;
+  overview: string;
+  stillUrl: string;
+  airDate: string;
+  runtime: number | null;
+  voteAverage: number;
+};
+
+export async function fetchSeriesCard(id: number): Promise<TmdbSeriesCard | null> {
+  const key = process.env.TMDB_API_KEY;
+  if (!key) return null;
+  try {
+    const res = await fetch(`${BASE}/tv/${id}?api_key=${key}&language=fr-FR`, {
+      next: { revalidate: 86400 },
+    });
+    if (!res.ok) return null;
+    const m = await res.json();
+    return {
+      id: m.id,
+      name: m.name ?? "",
+      posterUrl: m.poster_path ? `${IMG}/w342${m.poster_path}` : "",
+      year: m.first_air_date?.slice(0, 4) ?? "",
+      genres: (m.genres ?? []).slice(0, 2).map((g: { name: string }) => g.name),
+      voteAverage: m.vote_average ? Math.round((m.vote_average as number) * 10) / 10 : 0,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchSeriesDetail(id: number): Promise<TmdbSeriesDetail | null> {
+  const key = process.env.TMDB_API_KEY;
+  if (!key) return null;
+  try {
+    const res = await fetch(`${BASE}/tv/${id}?api_key=${key}&language=fr-FR`, {
+      next: { revalidate: 3600 },
+    });
+    if (!res.ok) return null;
+    const m = await res.json();
+    const runTimes: number[] = m.episode_run_time ?? [];
+    return {
+      id: m.id,
+      name: m.name ?? "",
+      overview: m.overview ?? "",
+      posterUrl: m.poster_path ? `${IMG}/w500${m.poster_path}` : "",
+      backdropUrl: m.backdrop_path ? `${IMG}/original${m.backdrop_path}` : "",
+      year: m.first_air_date?.slice(0, 4) ?? "",
+      lastAirDate: m.last_air_date ?? "",
+      status: m.status ?? "",
+      numberOfSeasons: m.number_of_seasons ?? 0,
+      numberOfEpisodes: m.number_of_episodes ?? 0,
+      episodeRunTime: runTimes.length > 0 ? runTimes[0] : null,
+      voteAverage: Math.round((m.vote_average ?? 0) * 10) / 10,
+      voteCount: m.vote_count ?? 0,
+      genres: (m.genres ?? []).map((g: { name: string }) => g.name),
+      networks: (m.networks ?? []).slice(0, 4).map((n: { name: string }) => n.name),
+      originalLanguage: m.original_language ?? "",
+      // on garde les saisons ayant au moins un épisode (saison 0 = spéciaux inclus)
+      seasons: (m.seasons ?? [])
+        .filter((s: { episode_count: number }) => s.episode_count > 0)
+        .map((s: Record<string, unknown>) => ({
+          seasonNumber: s.season_number as number,
+          name: s.name as string,
+          episodeCount: s.episode_count as number,
+          posterUrl: s.poster_path ? `${IMG}/w185${s.poster_path}` : "",
+          year: typeof s.air_date === "string" ? s.air_date.slice(0, 4) : "",
+        })),
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchSeason(
+  seriesId: number,
+  seasonNumber: number,
+): Promise<TmdbEpisode[]> {
+  const key = process.env.TMDB_API_KEY;
+  if (!key) return [];
+  try {
+    const res = await fetch(
+      `${BASE}/tv/${seriesId}/season/${seasonNumber}?api_key=${key}&language=fr-FR`,
+      { next: { revalidate: 3600 } },
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return ((data.episodes ?? []) as Record<string, unknown>[]).map((e) => ({
+      episodeNumber: e.episode_number as number,
+      name: (e.name as string) ?? "",
+      overview: (e.overview as string) ?? "",
+      stillUrl: e.still_path ? `${IMG}/w300${e.still_path}` : "",
+      airDate: (e.air_date as string) ?? "",
+      runtime: (e.runtime as number) ?? null,
+      voteAverage: e.vote_average ? Math.round((e.vote_average as number) * 10) / 10 : 0,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchSeriesLogo(id: number): Promise<string | null> {
+  const key = process.env.TMDB_API_KEY;
+  if (!key) return null;
+  try {
+    const res = await fetch(
+      `${BASE}/tv/${id}/images?api_key=${key}&include_image_language=fr,en,null`,
+      { next: { revalidate: 86400 } },
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    const logos = (data.logos ?? []) as TmdbLogo[];
+    const usable = logos.filter(
+      (l) => l.aspect_ratio >= 1.2 && l.file_path.toLowerCase().endsWith(".png"),
+    );
+    if (usable.length === 0) return null;
+    const bestFor = (lang: string | null) =>
+      usable
+        .filter((l) => l.iso_639_1 === lang)
+        .sort((a, b) => b.vote_average - a.vote_average)[0];
+    const best = bestFor("fr") ?? bestFor("en") ?? bestFor(null) ?? usable[0];
+    return best ? `${IMG}/w500${best.file_path}` : null;
+  } catch {
+    return null;
+  }
+}
+
 export type TmdbDiscoverFilm = {
   id: number;
   title: string;

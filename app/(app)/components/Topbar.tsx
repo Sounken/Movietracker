@@ -28,7 +28,7 @@ const BellIcon = () => (
   </svg>
 );
 
-type SearchResult = { id: number; title: string; year: string; posterUrl: string; voteAverage: number | null };
+type SearchResult = { id: number; mediaType?: "movie" | "tv"; title: string; year: string; posterUrl: string; voteAverage: number | null };
 type Props = { greeting: string; userName: string | null };
 
 // Le thème vit dans localStorage (système externe) : on s'y abonne via
@@ -68,7 +68,7 @@ export default function Topbar({ greeting, userName }: Props) {
     if (query.length < 2) return;
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+        const res = await fetch(`/api/search?type=multi&q=${encodeURIComponent(query)}`);
         const data: SearchResult[] = await res.json();
         setResults(data);
         setOpen(data.length > 0);
@@ -88,10 +88,10 @@ export default function Topbar({ greeting, userName }: Props) {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const navigate = (id: number) => {
+  const navigate = (id: number, mediaType?: "movie" | "tv") => {
     setQuery("");
     setOpen(false);
-    router.push(`/film/${id}`);
+    router.push(mediaType === "tv" ? `/series/${id}` : `/film/${id}`);
   };
 
   return (
@@ -131,7 +131,7 @@ export default function Topbar({ greeting, userName }: Props) {
         {open && results.length > 0 && (
           <div className={styles.dropdown}>
             {results.map((m) => (
-              <div key={m.id} className={styles.result} onClick={() => navigate(m.id)}>
+              <div key={`${m.mediaType ?? "movie"}-${m.id}`} className={styles.result} onClick={() => navigate(m.id, m.mediaType)}>
                 {m.posterUrl ? (
                   <Image
                     src={m.posterUrl}
@@ -146,7 +146,9 @@ export default function Topbar({ greeting, userName }: Props) {
                 )}
                 <div className={styles.resultInfo}>
                   <div className={styles.resultTitle}>{m.title}</div>
-                  {m.year && <div className={styles.resultMeta}>{m.year}</div>}
+                  <div className={styles.resultMeta}>
+                    {m.mediaType === "tv" ? "Série" : "Film"}{m.year ? ` · ${m.year}` : ""}
+                  </div>
                 </div>
                 {m.voteAverage != null && m.voteAverage > 0 && (
                   <div className={styles.resultRating}>

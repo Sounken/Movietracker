@@ -21,6 +21,8 @@ model User {
   lists          UserList[]
   following      UserFollow[]        @relation("follower")
   followers      UserFollow[]        @relation("following")
+  series         UserSeries[]
+  episodes       UserEpisode[]
 }
 
 model UserFollow {
@@ -66,6 +68,55 @@ model UserListFilm {
   addedAt DateTime @default(now())
 
   @@unique([listId, tmdbId])
+}
+
+// Cache local des métadonnées TMDB des séries (équivalent de Film pour les séries TV).
+model Series {
+  tmdbId           Int      @id
+  name             String
+  posterUrl        String   @default("")
+  year             String   @default("")
+  genres           String[]
+  voteAverage      Float    @default(0)
+  numberOfSeasons  Int      @default(0)
+  numberOfEpisodes Int      @default(0)
+  updatedAt        DateTime @updatedAt
+}
+
+// Rapport d'un utilisateur à une série (note / avis / watchlist / like), au niveau série.
+model UserSeries {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tmdbId    Int
+  rating    Float?
+  review    String?
+  watchlist Boolean   @default(false)
+  liked     Boolean   @default(false)
+  watched   Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([userId, tmdbId])
+  @@index([userId, updatedAt])
+  @@index([userId, rating])
+  @@index([userId, watchlist])
+  @@index([tmdbId])
+}
+
+// Un épisode vu par un utilisateur (la présence de la ligne = épisode regardé).
+model UserEpisode {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  seriesId      Int // tmdbId de la série
+  seasonNumber  Int
+  episodeNumber Int
+  runtime       Int?
+  watchedAt     DateTime @default(now())
+
+  @@unique([userId, seriesId, seasonNumber, episodeNumber])
+  @@index([userId, seriesId])
 }
 
 // Cache local des métadonnées TMDB (évite un appel réseau par film à chaque rendu).
