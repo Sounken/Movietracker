@@ -185,12 +185,28 @@ Tout est pensé « film » (TMDB `movie`, `UserFilm`, `getFilmCard`…).
 - ✅ **Lecture groupée `getFilmCards()`** créée dans [lib/films.ts](lib/films.ts) — utilisée par `/api/collection` et le profil public.
 - ✅ **Basculée partout** : accueil [page.tsx](app/(app)/page.tsx), profil [profile/page.tsx](app/(app)/profile/page.tsx), [trends/page.tsx](app/(app)/trends/page.tsx) (batching manuel + `setTimeout` supprimés), watchlist, favoris, listes (+ détail), amis. 1 requête DB par page, ordre et fallbacks inchangés.
 
-### G8. 🟢 Mesurer
-- Base de mesure (Lighthouse + timings serveur) avant/après. À rapprocher de [[project_analytics]].
-- ⚠️ **Neon en veille** : palier gratuit → 1re requête ~1 s (cold start). Keep-alive/cron si gênant.
+### G8. ✅ Mesure — état de référence (2026-07-25)
+Mesures TTFB en prod (`curl`, page servie / page en cache) :
 
-### G2-bis. 🟡 Rendre le classement acteur durable (optionnel)
-Le cache actuel (`unstable_cache` 24 h) est **vidé à chaque redéploiement** → une visite « paie » alors les 250 requêtes. Version durable : table `PersonRank { tmdbId @id, rank, updatedAt }` remplie par un **cron 1×/jour**.
+| Page | 1er appel | En cache |
+|---|---|---|
+| /discover | 448 ms | **127 ms** |
+| /trends | 335 ms | 190 ms |
+| /film/[id] | 270 ms | 127 ms |
+| /actor/[id] (rang 250 req) | 287 ms | 121 ms |
+| /login (statique) | 94 ms | 94 ms |
+
+Bundles : **JS client ~1,3 Mo** non compressé (2 gros chunks = React + framework), **CSS 130 Ko**. → tout est bon, aucun point chaud.
+
+**Seul point structurel restant** — les caches en mémoire (`unstable_cache`, Data Cache `fetch`) sont **vidés à chaque redéploiement** ; comme on déploie souvent, la 1re visite post-deploy « repaie » les appels TMDB (le pire étant le rang acteur à 250 requêtes). Fix = **rendre les caches durables** (G2-bis + `logoUrl` en base). Non urgent (270 ms même à froid grâce au Data Cache disque tant qu'il n'est pas vidé), mais c'est le prochain gain perf logique.
+
+- ⚠️ **Neon en veille** : palier gratuit → 1re requête après inactivité ~500 ms-1 s (cold start), non capturé par les mesures ci-dessus (site actif). Un keep-alive consommerait trop d'heures compute sur le palier gratuit → à laisser tel quel pour l'instant.
+- 💡 À rapprocher de [[project_analytics]] pour des mesures côté vrais utilisateurs (Web Vitals).
+
+### G2-bis. 🟡 Rendre les caches durables (prochain gain perf)
+Les caches sont vidés à chaque déploiement. Deux tables à ajouter :
+- `PersonRank { tmdbId @id, rank, updatedAt }` remplie par un **cron 1×/jour** → le rang acteur ne repaie plus les 250 requêtes.
+- `logoUrl` sur la table `Film` (avec convention « pas encore vérifié » vs « vérifié, aucun logo ») → les logos de titre survivent aux redéploiements.
 
 ---
 
