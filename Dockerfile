@@ -34,6 +34,9 @@ COPY --from=build /app/public ./public
 COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/prisma.config.ts ./prisma.config.ts
 COPY --from=build /app/package.json ./package.json
+# Requis au runtime : `next start` recharge la config (images.remotePatterns…)
+# et retombe sur les valeurs par défaut si le fichier est absent.
+COPY --from=build /app/next.config.ts ./next.config.ts
 
 EXPOSE 3000
 # Applique les migrations Prisma (DATABASE_URL fourni par Coolify) puis démarre l'app.
