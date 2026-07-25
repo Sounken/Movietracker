@@ -14,6 +14,9 @@ const nextConfig: NextConfig = {
     localPatterns: [
       { pathname: "/api/profile-media/**" },
       { pathname: "/uploads/**" },
+      // Assets statiques de public/ (logo, etc.) — sinon 400 sur /_next/image
+      { pathname: "/*.png" },
+      { pathname: "/*.svg" },
     ],
   },
 };
