@@ -23,6 +23,12 @@ Légende : 🟢 simple · 🟡 moyen · 🔴 gros / à cadrer
 | **A1** | Films à l'affiche pour les visiteurs | Bandeau `01 — Sorties récentes` + carrousel sur `/discover`, Explorer renuméroté en `02` |
 | **P1** | **Profils publics des autres utilisateurs** | Nouvelle page `/user/[id]` (infos, niveau/XP, stats, films préférés, films notés, bouton S'abonner) + liens cliquables depuis Amis (abonnements, abonnés, recherche, activité) et Tendances (utilisateurs actifs, auteurs d'avis) |
 | — | **CI/CD** | GitHub Actions (typecheck + build, sans secret) + `prisma migrate deploy` au démarrage du conteneur |
+| **S13** | **Avis des amis sur la fiche film** | Section « Ce qu'en pensent tes amis » (avatar, nom cliquable → `/user/[id]`, note ★, avis, date), 2 avis max + bouton « Afficher plus d'avis », masquée si non connecté ou aucun avis d'ami |
+| **H14** | **Icônes lucide-react à la place des emojis** | Emojis décoratifs remplacés partout (cartes de stats, listes, fiche film, modales, amis) ; `UserList.emoji` et le ★ de notation conservés |
+| **G6** | **Images via `next/image`** | Tous les posters/avatars/carrousel/vignettes migrés, `priority` sur le LCP ; + 2 hotfixes prod (voir G6 ci-dessous) |
+| **G7** | **Lectures groupées `getFilmCards()`** | Accueil, profil, tendances, watchlist, favoris, listes et amis basculés — 1 requête DB par page au lieu d'une par film |
+| **G5** | **Streaming `<Suspense>`** | Accueil (carrousel + collection/stats), profil (stats, favoris, collection) et tendances streamés avec skeletons |
+| — | **Passe lint + gate CI** | 15 erreurs/warnings react-hooks et vars inutilisées corrigés, `npx eslint` à zéro, étape **Lint bloquante** réactivée dans `ci.yml` |
 
 ---
 
@@ -46,7 +52,10 @@ Sur mobile, la barre du bas ([Sidebar.tsx](app/(app)/components/Sidebar.tsx)) po
 - Vérifier les `authOnly` des items de nav ([Sidebar.tsx:66](app/(app)/components/Sidebar.tsx#L66)).
 </details>
 
-### H14. 🟡 Remplacer les emojis par une vraie librairie d'icônes
+### H14. ✅ Icônes lucide-react à la place des emojis
+**Fait** : `lucide-react` installé, tous les emojis décoratifs remplacés par des icônes (imports nommés, `currentColor` → suivent le thème) : cartes de stats du [profil](app/(app)/profile/page.tsx), du [profil public](app/(app)/user/[id]/page.tsx) et des [tendances](app/(app)/trends/TrendsClient.tsx) (`StatCard`/`PreviewStat` prennent désormais un composant icône), fiche film, modales (`✕`→`X`, `✎`→`Pencil`, `📷`→`Camera`, `✓`→`Check`, `✦`→`Sparkles`), amis (`❤️`→`Heart` plein). Conservés : l'**emoji des listes** (`UserList.emoji`, donnée utilisateur) et le `★` typographique des notes.
+
+<details><summary>Contexte initial (résolu)</summary>
 Aujourd'hui l'interface mélange **emojis** (🎬 ⭐ ⏱ ❤️ 📋 👁 ✍ 🕐 …) et **SVG maison** (les icônes de la sidebar, du carrousel…). Les emojis posent plusieurs problèmes : rendu **différent selon l'OS** (Apple / Windows / Android), alignement vertical hasardeux, taille et couleur non contrôlables, et style incohérent avec les SVG existants.
 
 **Repérage** : ~20 fichiers concernés, dont les cartes de stats du [profil](app/(app)/profile/page.tsx#L118) et du [profil public](app/(app)/user/[id]/page.tsx#L143), les [tendances](app/(app)/trends/TrendsClient.tsx), les [listes](app/(app)/lists/ListsClient.tsx), la [fiche film](app/(standalone)/film/[id]/page.tsx) et les modales.
@@ -57,6 +66,7 @@ Aujourd'hui l'interface mélange **emojis** (🎬 ⭐ ⏱ ❤️ 📋 👁 ✍ �
 - ⚠️ Cas à conserver : l'**emoji des listes utilisateur** (`UserList.emoji`, choisi par l'utilisateur) doit rester un emoji — c'est une donnée, pas une icône d'interface.
 
 **Bénéfices attendus** : cohérence visuelle, contrôle de la taille/couleur (`currentColor` → suit le thème clair/sombre), et meilleur alignement.
+</details>
 
 ---
 
@@ -93,7 +103,10 @@ TMDB fournit les **logos officiels** des films (endpoint `/movie/{id}/images` �
 
 ## S. Social & communauté
 
-### S13. 🟡 Afficher les avis de nos amis sur la fiche d'un film
+### S13. ✅ Afficher les avis de nos amis sur la fiche d'un film
+**Fait** : section « Ce qu'en pensent tes amis » sur [la fiche film](app/(standalone)/film/[id]/page.tsx) — `UserFilm` du film dont l'auteur est suivi (`UserFollow.followerId = session`), avec note et/ou avis (`review != ""`), triés par `updatedAt desc`. Affichage dans un composant client dédié [`FriendReviews.tsx`](app/(standalone)/film/[id]/components/FriendReviews.tsx) : avatar (ou initiale), nom cliquable → `/user/[id]`, note ★, texte, date `fr-FR`. **2 avis max** puis bouton « Afficher plus d'avis (N) » / « Réduire » (même pattern que `CastGrid`). Section masquée si non connecté ou aucun avis d'ami.
+
+<details><summary>Contexte initial (résolu)</summary>
 Sur la page d'un film ([app/(standalone)/film/[id]](app/(standalone)/film/[id]/page.tsx)), afficher les **notes et avis des personnes qu'on suit** pour ce film.
 
 **À faire :**
@@ -101,6 +114,7 @@ Sur la page d'un film ([app/(standalone)/film/[id]](app/(standalone)/film/[id]/p
 - Afficher : avatar + nom (cliquable → `/user/[id]`), note ★, texte de l'avis, date.
 - Section masquée si on n'est pas connecté ou si aucun ami n'a vu le film.
 - Penser à l'index : la requête filtre sur `tmdbId` + `userId IN (...)` — `@@index([tmdbId])` existe déjà.
+</details>
 
 ---
 
@@ -153,18 +167,23 @@ Tout est pensé « film » (TMDB `movie`, `UserFilm`, `getFilmCard`…).
 
 ---
 
-## G. ⚡ Performance — reste à faire
+## G. ⚡ Performance
 
-### G5. 🟡 Streaming avec `<Suspense>`
-Les pages attendent tous les fetch avant de rendre. Envelopper les sections lourdes (carrousel, collection, stats, classements) dans `<Suspense>` → affichage immédiat puis remplissage progressif.
+### G5. ✅ Streaming avec `<Suspense>`
+**Fait** : pages découpées en sous-composants async avec boundaries `<Suspense>` indépendants + fallbacks skeleton (pulse `--panel`). Accueil : carrousel (`HeroSection`) et collection+stats (`CollectionSection`) streament séparément. Profil : en-tête immédiat, puis stats / films favoris / collection en 3 boundaries (la requête `filmEntries` est partagée sans duplication). Tendances : un seul boundary (agrégations déjà cachées 10 min via `unstable_cache`). Les pages restent `ƒ (Dynamic)` au build.
 
-### G6. 🟢 Images via `next/image`
-`next.config.ts` autorise déjà `image.tmdb.org`. Remplacer les `<img>` / `background-image` bruts (posters, carrousel, avatars) par `next/image` → meilleur LCP, moins de bande passante. **Nettoie aussi une partie de la dette lint.**
+### G6. ✅ Images via `next/image`
+**Fait** : tous les `<img>` et `background-image` de contenu (posters, avatars, carrousel, vignettes, casting, similaires) migrés vers `next/image` — `fill` + `sizes` dans les conteneurs à aspect-ratio, `width`/`height` pour les tailles fixes, `priority` sur le slide courant du carrousel et le poster de fiche film (LCP), `unoptimized` pour les previews d'upload `blob:`. Restent en CSS : backdrops flous, bannières de profil, `FilmTitleLogo` (dimensions intrinsèques variables nécessaires au repli titre). **Dette lint `no-img-element` soldée.**
 
-### G7. 🟢 Divers
+**Hotfixes prod associés** (400 sur `/_next/image`) :
+- `next.config.ts` n'était **pas copié** dans l'image runner du `Dockerfile` → `next start` retombait sur la config par défaut (`remotePatterns` vide). Corrigé côté Dockerfile.
+- Next 16 rejette les images locales avec query string → `images.localPatterns` ajouté pour `/api/profile-media/**` et `/uploads/**` (le `?v=` des avatars).
+- L'attribut `height` émis par `next/image` écrasait l'`aspect-ratio` CSS des cartes (casting, similaires, acteur) → `style={{ height: "auto" }}` sur les posters concernés.
+
+### G7. ✅ Lectures groupées `getFilmCards()`
 - Ne plus appeler `fetchFilmDetail` juste pour le `runtime` si l'info est en base (table `Film`).
-- ✅ **Lecture groupée `getFilmCards()`** créée dans [lib/films.ts](lib/films.ts) — déjà utilisée par `/api/collection` et le profil public.
-- ⏳ **Reste à basculer sur `getFilmCards()`** (aujourd'hui encore 1 requête par film) : accueil [page.tsx](app/(app)/page.tsx), profil [profile/page.tsx](app/(app)/profile/page.tsx), [trends/page.tsx](app/(app)/trends/page.tsx), watchlist, favoris, listes, amis.
+- ✅ **Lecture groupée `getFilmCards()`** créée dans [lib/films.ts](lib/films.ts) — utilisée par `/api/collection` et le profil public.
+- ✅ **Basculée partout** : accueil [page.tsx](app/(app)/page.tsx), profil [profile/page.tsx](app/(app)/profile/page.tsx), [trends/page.tsx](app/(app)/trends/page.tsx) (batching manuel + `setTimeout` supprimés), watchlist, favoris, listes (+ détail), amis. 1 requête DB par page, ordre et fallbacks inchangés.
 
 ### G8. 🟢 Mesurer
 - Base de mesure (Lighthouse + timings serveur) avant/après. À rapprocher de [[project_analytics]].
@@ -176,7 +195,7 @@ Le cache actuel (`unstable_cache` 24 h) est **vidé à chaque redéploiement** �
 ---
 
 ## Dette technique
-- **Lint désactivé en CI** : le code a des erreurs/warnings pré-existants (`<img>`, imports non utilisés, patterns React). Faire une **passe de nettoyage**, puis **réactiver le lint** dans [.github/workflows/ci.yml](.github/workflows/ci.yml). G6 en règle une partie.
+- ~~**Lint désactivé en CI**~~ ✅ **Résolu** : passe de nettoyage complète (erreurs `react-hooks` — setState dans les effets, ref lu pendant le rendu — et imports/vars inutilisés), `npx eslint` à **zéro erreur/warning**, étape **Lint bloquante** réactivée dans [.github/workflows/ci.yml](.github/workflows/ci.yml) (avant typecheck + build).
 
 ## Notes techniques transverses
 - Après chaque tâche : `npx tsc --noEmit` + `npx next build` en local, puis `git push`.
@@ -188,5 +207,5 @@ Le cache actuel (`unstable_cache` 24 h) est **vidé à chaque redéploiement** �
 2. **H12** (logos de films dans le carrousel) — 🟡 effet « waouh »
 3. **E7** (collection profil) — 🟡
 4. **B2 → B3** (tri serveur + scroll infini) — 🔴 le morceau technique
-5. **G5 / G6** (Suspense, next/image) + passe lint — 🟡
+5. ~~**G5 / G6** (Suspense, next/image) + passe lint~~ ✅ fait
 6. **F8** (Séries) — 🔴 après brainstorm
