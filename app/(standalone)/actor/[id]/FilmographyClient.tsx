@@ -56,6 +56,8 @@ export default function FilmographyClient({
               width={300}
               height={450}
               sizes="(max-width: 768px) 33vw, 160px"
+              // height:auto neutralise l'attribut height (sinon il écrase l'aspect-ratio CSS)
+              style={{ height: "auto" }}
             />
             {film.voteAverage > 0 && (
               <div className={styles.filmScore}>★ {film.voteAverage}</div>

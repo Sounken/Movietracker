@@ -185,6 +185,8 @@ export default async function ActorPage({ params }: { params: Promise<{ id: stri
                       width={300}
                       height={450}
                       sizes="(max-width: 768px) 50vw, 220px"
+                      // height:auto neutralise l'attribut height (sinon il écrase l'aspect-ratio CSS)
+                      style={{ height: "auto" }}
                     />
                     <div className={styles.top4Info}>
                       <div className={styles.top4Title}>{film.title}</div>

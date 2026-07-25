@@ -43,6 +43,8 @@ export default function CastGrid({ cast }: { cast: TmdbCastMember[] }) {
                 width={300}
                 height={450}
                 sizes="(max-width: 768px) 33vw, 160px"
+                // height:auto neutralise l'attribut height (sinon il écrase l'aspect-ratio CSS)
+                style={{ height: "auto" }}
               />
             ) : (
               <div className={styles.castAvatar} style={{ background: castColor(c.name) }}>
