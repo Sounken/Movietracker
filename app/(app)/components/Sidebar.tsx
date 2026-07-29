@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ComponentType } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -47,6 +47,12 @@ const TrendIcon = () => (
     <path d="M14 7h7v7" />
   </svg>
 );
+const TvIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="7" width="20" height="14" rx="2" />
+    <path d="m17 2-5 5-5-5" />
+  </svg>
+);
 const LogoutIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
@@ -54,8 +60,15 @@ const LogoutIcon = () => (
 );
 
 type Counts = { watchlist: number; liked: number };
+type NavItem = {
+  href: string;
+  label: string;
+  icon: ComponentType;
+  countKey?: keyof Counts;
+  authOnly: boolean;
+};
 
-const mainNav = [
+const filmNav: NavItem[] = [
   { href: "/films", label: "Accueil", icon: HomeIcon, authOnly: true },
   { href: "/films/discover", label: "Découvrir", icon: FilmIcon, authOnly: false },
   { href: "/films/lists", label: "Mes listes", icon: ListIcon, authOnly: true },
@@ -63,9 +76,18 @@ const mainNav = [
   { href: "/films/favorites", label: "Favoris", icon: HeartIcon, countKey: "liked" as keyof Counts, authOnly: true },
 ];
 
-const socialNav = [
+// Monde Séries (les pages listes/favoris/tendances arriveront au lot suivant)
+const seriesNav: NavItem[] = [
+  { href: "/series", label: "Accueil", icon: HomeIcon, authOnly: true },
+  { href: "/series/discover", label: "Découvrir", icon: TvIcon, authOnly: false },
+];
+
+const filmSocial: NavItem[] = [
   { href: "/friends", label: "Amis", icon: UsersIcon, authOnly: true },
   { href: "/films/trends", label: "Tendances", icon: TrendIcon, authOnly: false },
+];
+const seriesSocial: NavItem[] = [
+  { href: "/friends", label: "Amis", icon: UsersIcon, authOnly: true },
 ];
 
 const LoginIcon = () => (
@@ -108,8 +130,20 @@ export default function Sidebar({
   const initial = (userName ?? "?")[0].toUpperCase();
   const [menuOpen, setMenuOpen] = useState(false);
 
+  // Section courante : monde Films (défaut) ou Séries
+  const isSeries = pathname === "/series" || pathname.startsWith("/series/");
+  const mainNav = isSeries ? seriesNav : filmNav;
+  const socialNav = isSeries ? seriesSocial : filmSocial;
+  const sectionHome = isSeries ? "/series" : "/films";
+  // Le profil séries arrive au lot suivant : on pointe vers le profil films en attendant
+  const profileHref = "/films/profile";
+
   // Onglets visibles dans la barre du bas mobile ; le reste va dans le menu.
-  const primaryHrefs = isAuthenticated ? MOBILE_PRIMARY_AUTH : MOBILE_PRIMARY_GUEST;
+  const primaryHrefs = isSeries
+    ? ["/series", "/series/discover"]
+    : isAuthenticated
+      ? MOBILE_PRIMARY_AUTH
+      : MOBILE_PRIMARY_GUEST;
   const isPrimary = (href: string) => primaryHrefs.includes(href);
 
   const visibleNav = [...mainNav, ...socialNav].filter(
@@ -120,7 +154,7 @@ export default function Sidebar({
 
   return (
     <aside className={styles.nav}>
-      <Link href="/films" className={styles.brand} aria-label="Retour à l'accueil">
+      <Link href={sectionHome} className={styles.brand} aria-label="Accueil">
         <div className={styles.brandMark}>
           <Image src="/logo.png" alt="Movietracker" width={34} height={31} priority />
         </div>
@@ -128,6 +162,24 @@ export default function Sidebar({
           Movie<em>tracker</em>
         </div>
       </Link>
+
+      {/* Switch Films / Séries — deux mondes distincts */}
+      <div className={styles.sectionSwitch}>
+        <Link
+          href="/films"
+          className={`${styles.switchBtn} ${!isSeries ? styles.switchOn : ""}`}
+        >
+          <FilmIcon />
+          <span>Films</span>
+        </Link>
+        <Link
+          href="/series"
+          className={`${styles.switchBtn} ${isSeries ? styles.switchOn : ""}`}
+        >
+          <TvIcon />
+          <span>Séries</span>
+        </Link>
+      </div>
 
       <div className={styles.navSection}>
         <div className={styles.navLabel}>Bibliothèque</div>
@@ -164,8 +216,8 @@ export default function Sidebar({
       <div className={styles.mobileOnly}>
         {isAuthenticated ? (
           <Link
-            href="/films/profile"
-            className={`${styles.navItem} ${pathname === "/films/profile" ? styles.active : ""}`}
+            href={profileHref}
+            className={`${styles.navItem} ${pathname === profileHref ? styles.active : ""}`}
             aria-label="Mon profil"
           >
             {avatarUrl ? (
@@ -205,6 +257,23 @@ export default function Sidebar({
         <div className={styles.sheetBackdrop} onClick={() => setMenuOpen(false)}>
           <div className={styles.sheet} onClick={(e) => e.stopPropagation()}>
             <div className={styles.sheetHandle} />
+            {/* Switch Films / Séries (mobile) */}
+            <div className={styles.sectionSwitchSheet}>
+              <Link
+                href="/films"
+                className={`${styles.switchBtn} ${!isSeries ? styles.switchOn : ""}`}
+                onClick={() => setMenuOpen(false)}
+              >
+                <FilmIcon /> <span>Films</span>
+              </Link>
+              <Link
+                href="/series"
+                className={`${styles.switchBtn} ${isSeries ? styles.switchOn : ""}`}
+                onClick={() => setMenuOpen(false)}
+              >
+                <TvIcon /> <span>Séries</span>
+              </Link>
+            </div>
             {menuItems.map(({ href, label, icon: Icon }) => (
               <Link
                 key={href}
@@ -231,7 +300,7 @@ export default function Sidebar({
       <div className={styles.navFoot}>
         {isAuthenticated ? (
           <>
-            <Link href="/films/profile" className={styles.footRow}>
+            <Link href={profileHref} className={styles.footRow}>
               <div className={styles.avatar}>
                 {avatarUrl ? (
                   <Image src={avatarUrl} alt={userName ?? "Profil"} className={styles.avatarImg} width={36} height={36} />

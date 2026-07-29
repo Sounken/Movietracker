@@ -458,6 +458,58 @@ export async function fetchDiscover(
   }
 }
 
+export type TmdbDiscoverSeries = {
+  id: number;
+  name: string;
+  year: string;
+  posterUrl: string;
+  voteAverage: number;
+};
+
+export async function fetchDiscoverSeries(
+  category: string,
+  genreId: number | null,
+  page: number = 1,
+  anime: boolean = false,
+): Promise<TmdbDiscoverSeries[]> {
+  const key = process.env.TMDB_API_KEY;
+  if (!key) return [];
+  try {
+    const today = new Date().toISOString().split("T")[0];
+    const past60 = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+
+    let extra = "";
+    if (category === "top_rated") {
+      extra = "&sort_by=vote_average.desc&vote_count.gte=200";
+    } else if (category === "on_the_air") {
+      extra = `&sort_by=popularity.desc&air_date.gte=${past60}&air_date.lte=${today}`;
+    } else {
+      extra = "&sort_by=popularity.desc";
+    }
+
+    // Genres : l'anime = Animation (16) + langue japonaise
+    const genres: string[] = [];
+    if (anime) genres.push("16");
+    if (genreId) genres.push(String(genreId));
+    if (genres.length) extra += `&with_genres=${genres.join(",")}`;
+    if (anime) extra += "&with_original_language=ja";
+
+    const url = `${BASE}/discover/tv?api_key=${key}&language=fr-FR&page=${page}${extra}`;
+    const res = await fetch(url, { next: { revalidate: 3600 } });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.results ?? []).map((m: Record<string, unknown>) => ({
+      id: m.id,
+      name: m.name,
+      year: typeof m.first_air_date === "string" ? m.first_air_date.slice(0, 4) : "",
+      posterUrl: m.poster_path ? `${IMG}/w342${m.poster_path}` : "",
+      voteAverage: m.vote_average ? Math.round((m.vote_average as number) * 10) / 10 : 0,
+    }));
+  } catch {
+    return [];
+  }
+}
+
 export async function fetchFilmCredits(id: number): Promise<TmdbCredits> {
   const key = process.env.TMDB_API_KEY;
   if (!key) return { cast: [], directors: [], writers: [] };
