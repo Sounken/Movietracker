@@ -23,6 +23,7 @@ model User {
   followers      UserFollow[]        @relation("following")
   series         UserSeries[]
   episodes       UserEpisode[]
+  favoriteSeries UserFavoriteSeries[]
 }
 
 model UserFollow {
@@ -68,6 +69,18 @@ model UserListFilm {
   addedAt DateTime @default(now())
 
   @@unique([listId, tmdbId])
+}
+
+// 4 séries préférées épinglées sur le profil (équivalent de UserFavoriteFilm).
+model UserFavoriteSeries {
+  id       String @id @default(cuid())
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tmdbId   Int
+  position Int
+
+  @@unique([userId, position])
+  @@unique([userId, tmdbId])
 }
 
 // Cache local des métadonnées TMDB des séries (équivalent de Film pour les séries TV).

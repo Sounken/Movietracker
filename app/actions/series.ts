@@ -81,6 +81,31 @@ export async function deleteSeriesRating(tmdbId: number) {
   revalidatePath(`/series/${tmdbId}`);
 }
 
+// ——— Séries préférées (4 emplacements épinglés sur le profil) ———
+
+export async function setFavoriteSeries(position: 1 | 2 | 3 | 4, tmdbId: number | null) {
+  const session = await getSession();
+  if (!session) throw new Error("Non authentifié");
+
+  if (tmdbId === null) {
+    await prisma.userFavoriteSeries.deleteMany({
+      where: { userId: session.userId, position },
+    });
+  } else {
+    // Retire la série d'un autre emplacement d'abord (contrainte @@unique tmdbId)
+    await prisma.userFavoriteSeries.deleteMany({
+      where: { userId: session.userId, tmdbId, NOT: { position } },
+    });
+    await prisma.userFavoriteSeries.upsert({
+      where: { userId_position: { userId: session.userId, position } },
+      update: { tmdbId },
+      create: { userId: session.userId, tmdbId, position },
+    });
+  }
+
+  revalidatePath("/series/profile");
+}
+
 // ——— Niveau épisode ———
 
 // S'assure qu'une ligne UserSeries existe (regarder un épisode = commencer la série).

@@ -15,8 +15,28 @@ type Slot = {
 };
 
 type SearchResult = { id: number; title: string; year: string | null; posterUrl: string };
+type SaveFn = (position: 1 | 2 | 3 | 4, tmdbId: number | null) => Promise<void>;
 
-export default function FavFilmsClient({ slots: initialSlots }: { slots: Slot[] }) {
+export default function FavFilmsClient({
+  slots: initialSlots,
+  save = setFavoriteFilm,
+  searchType,
+  noun = "film",
+  nounF = false,
+}: {
+  slots: Slot[];
+  /** Action de sauvegarde (films par défaut, ou séries) */
+  save?: SaveFn;
+  /** "tv" pour rechercher des séries ; sinon films */
+  searchType?: "tv";
+  /** nom affiché ("film" / "série") */
+  noun?: string;
+  /** féminin (pour les accords) */
+  nounF?: boolean;
+}) {
+  const article = nounF ? "la" : "le";
+  const un = nounF ? "une" : "un";
+  const ee = nounF ? "e" : "";
   const [slots, setSlots] = useState<Slot[]>(initialSlots);
   const [editPos, setEditPos] = useState<1 | 2 | 3 | 4 | null>(null);
   const [query, setQuery] = useState("");
@@ -30,7 +50,9 @@ export default function FavFilmsClient({ slots: initialSlots }: { slots: Slot[] 
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (!q.trim()) { setResults([]); return; }
     debounceRef.current = setTimeout(async () => {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+      const res = await fetch(
+        `/api/search?q=${encodeURIComponent(q)}${searchType === "tv" ? "&type=tv" : ""}`,
+      );
       const data = await res.json();
       setResults((data as SearchResult[]).slice(0, 6));
     }, 280);
@@ -40,7 +62,7 @@ export default function FavFilmsClient({ slots: initialSlots }: { slots: Slot[] 
     if (editPos === null) return;
     const pos = editPos;
     startTransition(async () => {
-      await setFavoriteFilm(pos, film.id);
+      await save(pos, film.id);
       setSlots((prev) =>
         prev.map((s) =>
           s.position === pos
@@ -56,7 +78,7 @@ export default function FavFilmsClient({ slots: initialSlots }: { slots: Slot[] 
 
   const removeFilm = (pos: 1 | 2 | 3 | 4) => {
     startTransition(async () => {
-      await setFavoriteFilm(pos, null);
+      await save(pos, null);
       setSlots((prev) =>
         prev.map((s) => (s.position === pos ? { ...s, tmdbId: null, title: null, posterUrl: null, year: null } : s))
       );
@@ -93,7 +115,7 @@ export default function FavFilmsClient({ slots: initialSlots }: { slots: Slot[] 
                 {year && <div className={styles.favMeta}>{year}</div>}
               </div>
               <div className={styles.favChange}>
-                <span className={styles.favChangeLabel}>Modifier le film</span>
+                <span className={styles.favChangeLabel}>Modifier {article} {noun}</span>
                 <button
                   className={styles.favChangeBtn}
                   onClick={() => setEditPos(position)}
@@ -113,7 +135,7 @@ export default function FavFilmsClient({ slots: initialSlots }: { slots: Slot[] 
           ) : (
             <div key={position} className={styles.favEmptySlot} onClick={() => setEditPos(position)}>
               <div className={styles.favEmptyNum}>{position}</div>
-              <div className={styles.favEmptyLabel}>Aucun film</div>
+              <div className={styles.favEmptyLabel}>Aucun{ee} {noun}</div>
               <button className={styles.favEmptyBtn} disabled={isPending}>
                 + Choisir
               </button>
@@ -131,7 +153,9 @@ export default function FavFilmsClient({ slots: initialSlots }: { slots: Slot[] 
           <div className={styles.pickerModal}>
             <button className={styles.closeBtn} onClick={closeSearch}><X size={15} /></button>
             <div className={styles.pickerHead}>
-              <h3 className={styles.pickerTitle}>Film préféré #{editPos}</h3>
+              <h3 className={styles.pickerTitle}>
+                {noun.charAt(0).toUpperCase() + noun.slice(1)} préféré{ee} #{editPos}
+              </h3>
             </div>
             <div className={styles.pickerSearchWrap}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" width="15" height="15" style={{ color: "var(--ink-mute)", flexShrink: 0 }}>
@@ -140,7 +164,7 @@ export default function FavFilmsClient({ slots: initialSlots }: { slots: Slot[] 
               <input
                 ref={inputRef}
                 className={styles.pickerSearchInput}
-                placeholder="Rechercher un film…"
+                placeholder={`Rechercher ${un} ${noun}…`}
                 value={query}
                 onChange={(e) => search(e.target.value)}
                 autoFocus

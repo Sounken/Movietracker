@@ -13,6 +13,24 @@ export async function GET(request: NextRequest) {
   const url = (kind: string) =>
     `https://api.themoviedb.org/3/search/${kind}?api_key=${key}&query=${encodeURIComponent(q)}&language=fr-FR`;
 
+  // ——— Recherche séries uniquement (picker séries préférées) ———
+  if (type === "tv") {
+    const res = await fetch(url("tv"), { next: { revalidate: 300 } });
+    if (!res.ok) return NextResponse.json([]);
+    const data = await res.json();
+    const results = ((data.results ?? []) as Record<string, unknown>[])
+      .sort((a, b) => (b.popularity as number) - (a.popularity as number))
+      .slice(0, 6)
+      .map((m) => ({
+        id: m.id,
+        title: m.name,
+        year: typeof m.first_air_date === "string" ? m.first_air_date.slice(0, 4) : "",
+        posterUrl: m.poster_path ? `${IMG}${m.poster_path}` : "",
+        voteAverage: m.vote_average ? Math.round((m.vote_average as number) * 10) / 10 : null,
+      }));
+    return NextResponse.json(results);
+  }
+
   // ——— Recherche films uniquement (comportement historique) ———
   if (type !== "multi") {
     const res = await fetch(url("movie"), { next: { revalidate: 300 } });
