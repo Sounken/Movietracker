@@ -3,8 +3,8 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { type TmdbFilmCard } from "@/lib/tmdb";
 import { getFilmCards } from "@/lib/films";
-import Topbar from "../components/Topbar";
-import FilmGridInfinite from "../components/FilmGridInfinite";
+import Topbar from "../../components/Topbar";
+import FilmGridInfinite from "../../components/FilmGridInfinite";
 import styles from "../collection.module.css";
 
 const PAGE_SIZE = 24;

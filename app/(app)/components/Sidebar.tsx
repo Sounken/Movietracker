@@ -56,16 +56,16 @@ const LogoutIcon = () => (
 type Counts = { watchlist: number; liked: number };
 
 const mainNav = [
-  { href: "/", label: "Accueil", icon: HomeIcon, authOnly: true },
-  { href: "/discover", label: "Découvrir", icon: FilmIcon, authOnly: false },
-  { href: "/lists", label: "Mes listes", icon: ListIcon, authOnly: true },
-  { href: "/watchlist", label: "À voir", icon: ClockIcon, countKey: "watchlist" as keyof Counts, authOnly: true },
-  { href: "/favorites", label: "Favoris", icon: HeartIcon, countKey: "liked" as keyof Counts, authOnly: true },
+  { href: "/films", label: "Accueil", icon: HomeIcon, authOnly: true },
+  { href: "/films/discover", label: "Découvrir", icon: FilmIcon, authOnly: false },
+  { href: "/films/lists", label: "Mes listes", icon: ListIcon, authOnly: true },
+  { href: "/films/watchlist", label: "À voir", icon: ClockIcon, countKey: "watchlist" as keyof Counts, authOnly: true },
+  { href: "/films/favorites", label: "Favoris", icon: HeartIcon, countKey: "liked" as keyof Counts, authOnly: true },
 ];
 
 const socialNav = [
   { href: "/friends", label: "Amis", icon: UsersIcon, authOnly: true },
-  { href: "/trends", label: "Tendances", icon: TrendIcon, authOnly: false },
+  { href: "/films/trends", label: "Tendances", icon: TrendIcon, authOnly: false },
 ];
 
 const LoginIcon = () => (
@@ -88,8 +88,8 @@ const MenuIcon = () => (
 );
 
 // Onglets gardés dans la barre du bas sur mobile (les autres passent dans le menu).
-const MOBILE_PRIMARY_AUTH = ["/", "/discover", "/watchlist"];
-const MOBILE_PRIMARY_GUEST = ["/discover", "/trends"];
+const MOBILE_PRIMARY_AUTH = ["/films", "/films/discover", "/films/watchlist"];
+const MOBILE_PRIMARY_GUEST = ["/films/discover", "/films/trends"];
 
 export default function Sidebar({
   isAuthenticated,
@@ -120,7 +120,7 @@ export default function Sidebar({
 
   return (
     <aside className={styles.nav}>
-      <Link href="/" className={styles.brand} aria-label="Retour à l'accueil">
+      <Link href="/films" className={styles.brand} aria-label="Retour à l'accueil">
         <div className={styles.brandMark}>
           <Image src="/logo.png" alt="Movietracker" width={34} height={31} priority />
         </div>
@@ -164,8 +164,8 @@ export default function Sidebar({
       <div className={styles.mobileOnly}>
         {isAuthenticated ? (
           <Link
-            href="/profile"
-            className={`${styles.navItem} ${pathname === "/profile" ? styles.active : ""}`}
+            href="/films/profile"
+            className={`${styles.navItem} ${pathname === "/films/profile" ? styles.active : ""}`}
             aria-label="Mon profil"
           >
             {avatarUrl ? (
@@ -231,7 +231,7 @@ export default function Sidebar({
       <div className={styles.navFoot}>
         {isAuthenticated ? (
           <>
-            <Link href="/profile" className={styles.footRow}>
+            <Link href="/films/profile" className={styles.footRow}>
               <div className={styles.avatar}>
                 {avatarUrl ? (
                   <Image src={avatarUrl} alt={userName ?? "Profil"} className={styles.avatarImg} width={36} height={36} />

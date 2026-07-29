@@ -7,7 +7,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "MovieTracker",
     short_name: "MovieTracker",
     description: "Votre journal de cinéma personnel",
-    start_url: "/",
+    start_url: "/films",
     display: "standalone",
     background_color: "#0d0b0a",
     theme_color: "#0d0b0a",

@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { decrypt } from "@/lib/session";
 
-const privateRoutes = ["/", "/lists", "/watchlist", "/favorites", "/friends", "/profile"];
+// Routes nécessitant une connexion. /films et /series (accueils) + discover/trends
+// restent publics ; seules les pages perso sont protégées.
+const privateRoutes = [
+  "/films/lists", "/films/watchlist", "/films/favorites", "/films/profile",
+  "/series/lists", "/series/watchlist", "/series/favorites", "/series/profile",
+  "/friends",
+];
 const authRoutes = ["/login", "/register"];
 
 function isPrivateRoute(path: string): boolean {
@@ -15,11 +21,11 @@ export default async function proxy(request: NextRequest) {
   const payload = await decrypt(session);
 
   if (isPrivateRoute(path) && !payload) {
-    return NextResponse.redirect(new URL("/discover", request.nextUrl));
+    return NextResponse.redirect(new URL("/films/discover", request.nextUrl));
   }
 
   if (authRoutes.includes(path) && payload) {
-    return NextResponse.redirect(new URL("/", request.nextUrl));
+    return NextResponse.redirect(new URL("/films", request.nextUrl));
   }
 
   return NextResponse.next();

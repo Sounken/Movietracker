@@ -81,7 +81,7 @@ export default function ListsClient({ lists }: { lists: ListItem[] }) {
 
       <div className={styles.listsGrid}>
         {lists.map((list) => (
-          <Link key={list.id} href={`/lists/${list.id}`} className={styles.listCard}>
+          <Link key={list.id} href={`/films/lists/${list.id}`} className={styles.listCard}>
             <div className={styles.lcCover}>
               <div className={styles.lcMosaic}>
                 {list.posters.length > 0 ? (

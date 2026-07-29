@@ -56,7 +56,7 @@ export default function NotFound() {
             </svg>
             Retour à l&apos;accueil
           </Link>
-          <Link href="/profile" className={styles.btnGhost}>
+          <Link href="/films/profile" className={styles.btnGhost}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
               <circle cx="12" cy="8" r="4" />
               <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
@@ -67,8 +67,8 @@ export default function NotFound() {
 
         <div className={styles.suggestions}>
           <Link href="/" className={styles.sugPill}><span className={styles.sugDot} />Accueil</Link>
-          <Link href="/lists" className={styles.sugPill}><span className={styles.sugDot} />Mes listes</Link>
-          <Link href="/profile" className={styles.sugPill}><span className={styles.sugDot} />Profil</Link>
+          <Link href="/films/lists" className={styles.sugPill}><span className={styles.sugDot} />Mes listes</Link>
+          <Link href="/films/profile" className={styles.sugPill}><span className={styles.sugDot} />Profil</Link>
         </div>
       </div>
 

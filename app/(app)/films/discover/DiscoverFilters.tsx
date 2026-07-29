@@ -40,7 +40,7 @@ export default function DiscoverFilters({
     const params = new URLSearchParams(searchParams.toString());
     if (value) params.set(key, value);
     else params.delete(key);
-    router.push(`/discover?${params.toString()}`);
+    router.push(`/films/discover?${params.toString()}`);
   };
 
   return (

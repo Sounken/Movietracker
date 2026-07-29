@@ -5,10 +5,10 @@ import { ArrowUp, ArrowDown } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { fetchNowPlaying, fetchFilmLogo, type TmdbFilmCard } from "@/lib/tmdb";
 import { getFilmCards } from "@/lib/films";
-import Topbar from "./components/Topbar";
-import HeroCarousel from "./components/HeroCarousel";
-import CollectionClient from "./components/CollectionClient";
-import AddFilmButton from "./components/AddFilmButton";
+import Topbar from "../components/Topbar";
+import HeroCarousel from "../components/HeroCarousel";
+import CollectionClient from "../components/CollectionClient";
+import AddFilmButton from "../components/AddFilmButton";
 import styles from "./dashboard.module.css";
 
 function formatHours(totalMinutes: number): string {
@@ -235,7 +235,7 @@ async function CollectionSection({ userId }: { userId: string }) {
 
 export default async function DashboardPage() {
   const session = await getSession();
-  if (!session) redirect("/discover");
+  if (!session) redirect("/films/discover");
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";

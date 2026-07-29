@@ -73,7 +73,7 @@ export default function ListDetailClient({ list, films: initialFilms }: { list: 
     if (!confirm("Supprimer cette liste définitivement ?")) return;
     startTransition(async () => {
       await deleteList(list.id);
-      router.push("/lists");
+      router.push("/films/lists");
     });
   }
 
@@ -92,7 +92,7 @@ export default function ListDetailClient({ list, films: initialFilms }: { list: 
 
   return (
     <>
-      <button className={styles.detailBack} onClick={() => router.push("/lists")}>
+      <button className={styles.detailBack} onClick={() => router.push("/films/lists")}>
         <ChevronIcon />
         Mes listes
       </button>

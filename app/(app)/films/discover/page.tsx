@@ -1,8 +1,8 @@
 import { Suspense } from "react";
 import { getSession } from "@/lib/session";
 import { fetchDiscover, fetchNowPlaying, fetchFilmLogo } from "@/lib/tmdb";
-import Topbar from "../components/Topbar";
-import HeroCarousel from "../components/HeroCarousel";
+import Topbar from "../../components/Topbar";
+import HeroCarousel from "../../components/HeroCarousel";
 import DiscoverFilters from "./DiscoverFilters";
 import DiscoverGrid from "./DiscoverGrid";
 import styles from "./discover.module.css";

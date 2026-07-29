@@ -9,7 +9,7 @@ import FilmGrid from "../../components/FilmGrid";
 import CollectionClient from "../../components/CollectionClient";
 import FollowButton from "./FollowButton";
 import { computeXP, getLevelInfo } from "@/lib/xp";
-import styles from "../../profile/profile.module.css";
+import styles from "../../films/profile/profile.module.css";
 
 const COLLECTION_LIMIT = 24;
 
@@ -21,7 +21,7 @@ export default async function PublicProfilePage({
   const [{ id }, session] = await Promise.all([params, getSession()]);
 
   // Son propre profil → on renvoie vers la page profil éditable
-  if (session?.userId === id) redirect("/profile");
+  if (session?.userId === id) redirect("/films/profile");
 
   const user = await prisma.user.findUnique({ where: { id } });
   if (!user) notFound();

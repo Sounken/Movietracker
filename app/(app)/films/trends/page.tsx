@@ -3,7 +3,7 @@ import { unstable_cache } from "next/cache";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { getFilmCards } from "@/lib/films";
-import Topbar from "../components/Topbar";
+import Topbar from "../../components/Topbar";
 import TrendsClient from "./TrendsClient";
 import styles from "./trends.module.css";
 

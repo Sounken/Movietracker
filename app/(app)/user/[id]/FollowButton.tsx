@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { followUser, unfollowUser } from "@/app/actions/friends";
-import styles from "../../profile/profile.module.css";
+import styles from "../../films/profile/profile.module.css";
 
 export default function FollowButton({
   targetId,

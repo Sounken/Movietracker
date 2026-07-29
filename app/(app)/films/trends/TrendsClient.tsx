@@ -98,7 +98,7 @@ export default function TrendsClient({
   const maxCount = currentList[0]?.count ?? 1;
 
   function setPeriod(p: Period) {
-    router.push(`/trends?period=${p}`);
+    router.push(`/films/trends?period=${p}`);
   }
 
   return (
