@@ -76,10 +76,12 @@ const filmNav: NavItem[] = [
   { href: "/films/favorites", label: "Favoris", icon: HeartIcon, countKey: "liked" as keyof Counts, authOnly: true },
 ];
 
-// Monde Séries (les pages listes/favoris/tendances arriveront au lot suivant)
+// Monde Séries (les listes séries arriveront dans un lot dédié)
 const seriesNav: NavItem[] = [
   { href: "/series", label: "Accueil", icon: HomeIcon, authOnly: true },
   { href: "/series/discover", label: "Découvrir", icon: TvIcon, authOnly: false },
+  { href: "/series/watchlist", label: "À voir", icon: ClockIcon, countKey: "watchlist", authOnly: true },
+  { href: "/series/favorites", label: "Favoris", icon: HeartIcon, countKey: "liked", authOnly: true },
 ];
 
 const filmSocial: NavItem[] = [
@@ -88,6 +90,7 @@ const filmSocial: NavItem[] = [
 ];
 const seriesSocial: NavItem[] = [
   { href: "/friends", label: "Amis", icon: UsersIcon, authOnly: true },
+  { href: "/series/trends", label: "Tendances", icon: TrendIcon, authOnly: false },
 ];
 
 const LoginIcon = () => (
@@ -118,13 +121,17 @@ export default function Sidebar({
   userName,
   avatarUrl,
   counts,
+  seriesCounts,
   levelInfo,
+  seriesLevel,
 }: {
   isAuthenticated: boolean;
   userName: string | null;
   avatarUrl: string | null;
   counts: Counts;
+  seriesCounts: Counts;
   levelInfo: LevelInfo;
+  seriesLevel: LevelInfo;
 }) {
   const pathname = usePathname();
   const initial = (userName ?? "?")[0].toUpperCase();
@@ -135,8 +142,10 @@ export default function Sidebar({
   const mainNav = isSeries ? seriesNav : filmNav;
   const socialNav = isSeries ? seriesSocial : filmSocial;
   const sectionHome = isSeries ? "/series" : "/films";
-  // Le profil séries arrive au lot suivant : on pointe vers le profil films en attendant
-  const profileHref = "/films/profile";
+  const profileHref = isSeries ? "/series/profile" : "/films/profile";
+  // Compteurs et niveau du monde courant
+  const activeCounts = isSeries ? seriesCounts : counts;
+  const activeLevel = isSeries ? seriesLevel : levelInfo;
 
   // Onglets visibles dans la barre du bas mobile ; le reste va dans le menu.
   const primaryHrefs = isSeries
@@ -191,8 +200,8 @@ export default function Sidebar({
           >
             <Icon />
             <span>{label}</span>
-            {countKey && counts[countKey] > 0 && (
-              <span className={styles.count}>{counts[countKey]}</span>
+            {countKey && activeCounts[countKey] > 0 && (
+              <span className={styles.count}>{activeCounts[countKey]}</span>
             )}
           </Link>
         ))}
@@ -311,10 +320,10 @@ export default function Sidebar({
               <div className={styles.footInfo}>
                 <div className={styles.footName}>{userName ?? "Cinéphile"}</div>
                 <div className={styles.footSub}>
-                  {levelInfo.title} · niv. {levelInfo.level}
+                  {activeLevel.title} · niv. {activeLevel.level}
                 </div>
-                <div className={styles.xpBarWrap} title={`${levelInfo.currentXP} / ${levelInfo.nextLevelXP} XP`}>
-                  <div className={styles.xpBar} style={{ width: `${levelInfo.percent}%` }} />
+                <div className={styles.xpBarWrap} title={`${activeLevel.currentXP} / ${activeLevel.nextLevelXP} XP`}>
+                  <div className={styles.xpBar} style={{ width: `${activeLevel.percent}%` }} />
                 </div>
               </div>
             </Link>

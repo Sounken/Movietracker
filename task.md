@@ -156,7 +156,11 @@ Dans [CollectionClient.tsx](app/(app)/components/CollectionClient.tsx), le tri/f
 
 ## F. Grande fonctionnalité — Séries 📺 (à cadrer ensemble)
 
-### F8. 🔴 Développer la partie Séries — **brainstorm requis**
+### F8. 🟡 Séries — monde dédié /series/* (en cours)
+**Fait** : architecture « tout séparé » (Films sous /films/*, Séries sous /series/*, switch dans la sidebar). Modèles Series/UserSeries/UserEpisode, fiche série + suivi par épisode, recherche films+séries, accueil séries (En cours/notées/populaires), découverte + filtre Anime, watchlist/favoris/profil/tendances séries, XP + compteurs section-aware.
+**Reste** : listes séries (nouveau modèle UserSeriesList), avis des amis sur les séries, intégration anime plus poussée si besoin.
+
+<details><summary>Brainstorm initial</summary>
 Tout est pensé « film » (TMDB `movie`, `UserFilm`, `getFilmCard`…).
 
 **Questions à trancher avant de coder :**

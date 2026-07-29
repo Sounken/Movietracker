@@ -11,11 +11,21 @@ export default async function AppLayout({
 }) {
   const session = await getSession();
 
-  const [watchlist, liked, filmEntries, user] = session
+  const [
+    watchlist, liked, filmEntries,
+    sWatchlist, sLiked, seriesEntries,
+    user,
+  ] = session
     ? await Promise.all([
         prisma.userFilm.count({ where: { userId: session.userId, watchlist: true } }),
         prisma.userFilm.count({ where: { userId: session.userId, liked: true } }),
         prisma.userFilm.findMany({
+          where: { userId: session.userId },
+          select: { rating: true, review: true, liked: true, watched: true },
+        }),
+        prisma.userSeries.count({ where: { userId: session.userId, watchlist: true } }),
+        prisma.userSeries.count({ where: { userId: session.userId, liked: true } }),
+        prisma.userSeries.findMany({
           where: { userId: session.userId },
           select: { rating: true, review: true, liked: true, watched: true },
         }),
@@ -24,9 +34,11 @@ export default async function AppLayout({
           select: { avatarUrl: true },
         }),
       ])
-    : [0, 0, [], null];
+    : [0, 0, [], 0, 0, [], null];
 
-  const levelInfo = getLevelInfo(computeXP(filmEntries as { rating: number | null; review: string | null; liked: boolean; watched: boolean }[]));
+  type XpEntry = { rating: number | null; review: string | null; liked: boolean; watched: boolean };
+  const filmLevel = getLevelInfo(computeXP(filmEntries as XpEntry[]));
+  const seriesLevel = getLevelInfo(computeXP(seriesEntries as XpEntry[]));
 
   return (
     <div className={styles.app}>
@@ -35,7 +47,9 @@ export default async function AppLayout({
         userName={session?.name ?? null}
         avatarUrl={user?.avatarUrl ?? null}
         counts={{ watchlist: watchlist as number, liked: liked as number }}
-        levelInfo={levelInfo}
+        seriesCounts={{ watchlist: sWatchlist as number, liked: sLiked as number }}
+        levelInfo={filmLevel}
+        seriesLevel={seriesLevel}
       />
       <main className={styles.main}>{children}</main>
     </div>
