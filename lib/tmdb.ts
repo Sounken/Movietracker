@@ -203,6 +203,36 @@ export async function fetchFilmLogo(id: number): Promise<string | null> {
   }
 }
 
+// Séries à l'affiche pour le carrousel de l'accueil séries (même forme que
+// fetchNowPlaying pour réutiliser le HeroCarousel : title = nom de la série).
+export async function fetchOnTheAirSeries(): Promise<TmdbMovie[]> {
+  const key = process.env.TMDB_API_KEY;
+  if (!key) return [];
+  try {
+    const res = await fetch(
+      `${BASE}/tv/on_the_air?api_key=${key}&language=fr-FR`,
+      { next: { revalidate: 3600 } },
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.results ?? [])
+      .filter((m: Record<string, unknown>) => m.backdrop_path)
+      .slice(0, 7)
+      .map((m: Record<string, unknown>) => ({
+        id: m.id,
+        title: m.name,
+        overview: m.overview,
+        posterUrl: m.poster_path ? `${IMG}/w500${m.poster_path}` : "",
+        backdropUrl: m.backdrop_path ? `${IMG}/original${m.backdrop_path}` : "",
+        year: typeof m.first_air_date === "string" ? m.first_air_date.slice(0, 4) : "",
+        voteAverage: Math.round((m.vote_average as number) * 10) / 10,
+        genreIds: (m.genre_ids as number[]) ?? [],
+      }));
+  } catch {
+    return [];
+  }
+}
+
 export async function fetchFilmDetail(id: number): Promise<TmdbFilmDetail | null> {
   const key = process.env.TMDB_API_KEY;
   if (!key) return null;

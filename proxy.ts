@@ -6,7 +6,7 @@ import { decrypt } from "@/lib/session";
 const privateRoutes = [
   "/films/lists", "/films/watchlist", "/films/favorites", "/films/profile",
   "/series/lists", "/series/watchlist", "/series/favorites", "/series/profile",
-  "/friends",
+  "/friends", "/series/friends",
 ];
 const authRoutes = ["/login", "/register"];
 

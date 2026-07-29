@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import type { TmdbMovie } from "@/lib/tmdb";
 import { genreLabels } from "@/lib/tmdb";
 import { toggleWatchlist } from "@/app/actions/film";
+import { toggleSeriesWatchlist } from "@/app/actions/series";
 import styles from "./HeroCarousel.module.css";
 
 const StarIcon = () => (
@@ -46,12 +47,16 @@ export default function HeroCarousel({
   movies,
   initialWatchlist = [],
   logos = {},
+  kind = "film",
 }: {
   movies: TmdbMovie[];
   initialWatchlist?: number[];
   /** Logos officiels par tmdbId ; absent = on affiche le titre texte. */
   logos?: Record<number, string>;
+  /** « film » (défaut) → /film/[id] + watchlist films ; « series » → /series/[id] + watchlist séries. */
+  kind?: "film" | "series";
 }) {
+  const detailBase = kind === "series" ? "/series" : "/film";
   const [idx, setIdx] = useState(0);
   const [prog, setProg] = useState(0);
   // Changement de slide → la progression repart à zéro, ajustée pendant le
@@ -82,7 +87,7 @@ export default function HeroCarousel({
 
     startTransition(async () => {
       try {
-        await toggleWatchlist(id);
+        await (kind === "series" ? toggleSeriesWatchlist : toggleWatchlist)(id);
       } catch {
         // Échec (ex. non connecté) → on annule l'affichage optimiste
         setInWatchlist((prev) => {
@@ -130,7 +135,7 @@ export default function HeroCarousel({
       </div>
 
       <div className={styles.content}>
-        <div className={styles.lab}>Sortie de la semaine</div>
+        <div className={styles.lab}>{kind === "series" ? "Série du moment" : "Sortie de la semaine"}</div>
         {logos[cur.id] && !brokenLogos.has(cur.id) ? (
           <Image
             src={logos[cur.id]}
@@ -157,7 +162,7 @@ export default function HeroCarousel({
         </div>
         {cur.overview && <p className={styles.synopsis}>{cur.overview}</p>}
         <div className={styles.actions}>
-          <Link href={`/film/${cur.id}`} className={styles.btnPrimary}>
+          <Link href={`${detailBase}/${cur.id}`} className={styles.btnPrimary}>
             <ExternalIcon /> Voir la fiche
           </Link>
           <button

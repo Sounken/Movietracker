@@ -41,10 +41,16 @@ export default function FriendsClient({
   following: initialFollowing,
   followers,
   activity,
+  mediaBase = "/film",
+  countNoun = "film",
 }: {
   following: FollowingUser[];
   followers: FollowerUser[];
   activity: ActivityItem[];
+  /** « /film » (défaut) ou « /series » — base des liens d'activité */
+  mediaBase?: string;
+  /** « film » (défaut) ou « série » — nom pour les compteurs */
+  countNoun?: string;
 }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -124,7 +130,7 @@ export default function FriendsClient({
                     <Avatar url={u.avatarUrl} name={u.name} />
                     <div className={styles.userInfo}>
                       <div className={styles.userName}>{u.name}</div>
-                      <div className={styles.userMeta}>{u.filmCount} film{u.filmCount !== 1 ? "s" : ""} dans la collection</div>
+                      <div className={styles.userMeta}>{u.filmCount} {countNoun}{u.filmCount !== 1 ? "s" : ""} dans la collection</div>
                     </div>
                   </Link>
                   <button
@@ -161,7 +167,7 @@ export default function FriendsClient({
                       <div className={styles.userInfo}>
                         <div className={styles.userName}>{u.name}</div>
                         <div className={styles.userMeta}>
-                          {u.filmCount} film{u.filmCount !== 1 ? "s" : ""}
+                          {u.filmCount} {countNoun}{u.filmCount !== 1 ? "s" : ""}
                           {u.avgRating != null && <> · ★ {u.avgRating.toFixed(1)}</>}
                         </div>
                       </div>
@@ -238,7 +244,7 @@ export default function FriendsClient({
                         {item.liked && !item.rating && " a aimé "}
                         {item.watched && !item.rating && !item.liked && " a regardé "}
                         {item.rating != null && " a noté "}
-                        <Link href={`/film/${item.tmdbId}`} className={styles.feedFilm}>
+                        <Link href={`${mediaBase}/${item.tmdbId}`} className={styles.feedFilm}>
                           {item.title}
                         </Link>
                         {item.rating != null && (

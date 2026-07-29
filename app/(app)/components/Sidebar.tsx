@@ -89,7 +89,7 @@ const filmSocial: NavItem[] = [
   { href: "/films/trends", label: "Tendances", icon: TrendIcon, authOnly: false },
 ];
 const seriesSocial: NavItem[] = [
-  { href: "/friends", label: "Amis", icon: UsersIcon, authOnly: true },
+  { href: "/series/friends", label: "Amis", icon: UsersIcon, authOnly: true },
   { href: "/series/trends", label: "Tendances", icon: TrendIcon, authOnly: false },
 ];
 

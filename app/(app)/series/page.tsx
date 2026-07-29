@@ -1,8 +1,9 @@
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import { fetchDiscoverSeries } from "@/lib/tmdb";
+import { fetchDiscoverSeries, fetchOnTheAirSeries, fetchSeriesLogo } from "@/lib/tmdb";
 import { getSeriesCards } from "@/lib/series";
 import Topbar from "../components/Topbar";
+import HeroCarousel from "../components/HeroCarousel";
 import SeriesGrid, { type SeriesGridItem } from "../components/SeriesGrid";
 import discover from "../films/discover/discover.module.css";
 
@@ -11,6 +12,27 @@ export default async function SeriesHomePage() {
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
+
+  // Carrousel « à l'affiche » (comme l'accueil films)
+  const onAir = await fetchOnTheAirSeries();
+  const heroLogos = Object.fromEntries(
+    (
+      await Promise.all(onAir.map(async (m) => [m.id, await fetchSeriesLogo(m.id)] as const))
+    ).filter((e): e is readonly [number, string] => e[1] !== null),
+  ) as Record<number, string>;
+  const heroWatchlistIds =
+    session && onAir.length > 0
+      ? (
+          await prisma.userSeries.findMany({
+            where: {
+              userId: session.userId,
+              watchlist: true,
+              tmdbId: { in: onAir.map((m) => m.id) },
+            },
+            select: { tmdbId: true },
+          })
+        ).map((e) => e.tmdbId)
+      : [];
 
   // Découverte (toujours affichée)
   const popular = await fetchDiscoverSeries("popular", null, 1, false);
@@ -92,6 +114,21 @@ export default async function SeriesHomePage() {
   return (
     <div className={discover.page}>
       <Topbar greeting={greeting} userName={session?.name ?? null} />
+
+      {onAir.length > 0 && (
+        <>
+          <div className={discover.header}>
+            <div className={discover.sectionSub}>À l&apos;affiche</div>
+            <h2 className={discover.sectionTitle}>Séries du moment</h2>
+          </div>
+          <HeroCarousel
+            movies={onAir}
+            logos={heroLogos}
+            initialWatchlist={heroWatchlistIds}
+            kind="series"
+          />
+        </>
+      )}
 
       {inProgress.length > 0 && (
         <section>
