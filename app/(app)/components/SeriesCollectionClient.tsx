@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import SeriesGrid, { type SeriesGridItem } from "./SeriesGrid";
-import styles from "../films/collection.module.css";
+import styles from "./CollectionClient.module.css";
 import loadMoreStyles from "./FilmGridInfinite.module.css";
 
 type ApiItem = {
