@@ -6,62 +6,7 @@
   gap: 12px;
 }
 
-/* Zones cliquables jointives : un gap laisse des pixels morts entre deux
-   étoiles, où le clic et le survol se perdent. */
-.stars {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  flex-wrap: wrap;
-}
-
-.star {
-  background: none;
-  border: 0;
-  padding: 4px 3px;
-  cursor: pointer;
-  color: var(--gold);
-  line-height: 0;
-}
-
-.starOn { color: var(--gold); }
-.starOff { color: var(--ink-mute); }
-
-.ratingVal {
-  margin-left: 8px;
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 13px;
-  color: var(--ink-dim);
-  display: inline-flex;
-  align-items: center;
-  gap: 1px;
-}
-
-/* Saisie exacte de la note sur 100 */
-.ratingInput {
-  width: 3.2ch;
-  background: transparent;
-  border: 0;
-  border-bottom: 1px dashed var(--line);
-  color: var(--gold);
-  font-family: inherit;
-  font-size: inherit;
-  text-align: right;
-  padding: 0;
-  outline: none;
-  appearance: textfield;
-  -moz-appearance: textfield;
-}
-
-.ratingInput:focus {
-  border-bottom-color: var(--accent);
-}
-
-.ratingInput::-webkit-outer-spin-button,
-.ratingInput::-webkit-inner-spin-button {
-  appearance: none;
-  margin: 0;
-}
+/* Les étoiles (note série et note de saison) sont rendues par StarRating. */
 
 .actionRow {
   display: flex;
@@ -229,6 +174,69 @@
 }
 
 .markSeason:hover { background: var(--hover); }
+
+/* ——— Barre d'outils d'une saison dépliée ——— */
+.seasonToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-right: 6px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 4px;
+}
+
+.seasonToolbar .markSeason {
+  width: auto;
+  flex: 0 1 auto;
+}
+
+.seasonRating {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.seasonRatingLabel {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  white-space: nowrap;
+}
+
+/* Note de la saison, rappelée dans l'en-tête replié */
+.seasonScore {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 12px;
+  color: var(--gold);
+  background: rgba(217, 119, 66, 0.12);
+  border: 1px solid rgba(217, 119, 66, 0.22);
+  border-radius: 999px;
+  padding: 2px 8px;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+:global([data-theme="light"]) .seasonScore {
+  color: var(--accent);
+}
+
+@media (max-width: 768px) {
+  .seasonToolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+  }
+
+  .seasonRating {
+    justify-content: space-between;
+    padding: 0 10px 8px;
+  }
+}
 
 .episode {
   display: flex;

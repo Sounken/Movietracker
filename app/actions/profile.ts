@@ -31,11 +31,10 @@ export async function updateProfile(data: {
     data: updateData,
   });
 
-  revalidatePath("/films/profile");
-  revalidatePath("/series/profile");
-  // L'échelle de notation change l'affichage de TOUTES les pages qui montrent
-  // une note : on invalide l'arbre entier plutôt que page par page.
-  if (data.ratingScale !== undefined) revalidatePath("/", "layout");
+  // Le nom et l'avatar sont affichés par la sidebar, donc par le LAYOUT, sur
+  // toutes les pages : revalider seulement les pages profil laissait l'ancien
+  // avatar partout ailleurs. Idem pour l'échelle de notation.
+  revalidatePath("/", "layout");
 }
 
 export async function setFavoriteFilm(position: 1 | 2 | 3 | 4, tmdbId: number | null) {

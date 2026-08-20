@@ -11,12 +11,12 @@ export async function GET(
   const seriesId = parseInt(id);
   const seasonNumber = parseInt(season);
   if (isNaN(seriesId) || isNaN(seasonNumber)) {
-    return NextResponse.json({ episodes: [], watched: [] }, { status: 400 });
+    return NextResponse.json({ episodes: [], watched: [], rating: null }, { status: 400 });
   }
 
   const session = await getSession();
 
-  const [episodes, watchedRows] = await Promise.all([
+  const [episodes, watchedRows, seasonRow] = await Promise.all([
     fetchSeason(seriesId, seasonNumber),
     session
       ? prisma.userEpisode.findMany({
@@ -24,10 +24,19 @@ export async function GET(
           select: { episodeNumber: true },
         })
       : Promise.resolve([]),
+    session
+      ? prisma.userSeason.findUnique({
+          where: {
+            userId_seriesId_seasonNumber: { userId: session.userId, seriesId, seasonNumber },
+          },
+          select: { rating: true },
+        })
+      : Promise.resolve(null),
   ]);
 
   return NextResponse.json({
     episodes,
     watched: watchedRows.map((r) => r.episodeNumber),
+    rating: seasonRow?.rating ?? null,
   });
 }

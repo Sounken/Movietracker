@@ -32,55 +32,8 @@
   background: var(--line);
 }
 
-/* Aucun gap : les zones cliquables doivent se toucher, sinon un pixel « mort »
-   entre deux étoiles avale le clic ou fait perdre le survol. L'espacement
-   visuel vient du padding, qui fait partie de la zone cliquable. */
-.stars {
-  display: flex;
-  gap: 0;
-}
-
-.starBtn {
-  background: none;
-  border: 0;
-  cursor: pointer;
-  padding: 4px 3px;
-  color: var(--ink-mute);
-  transition: filter 0.12s;
-  display: inline-flex;
-  align-items: center;
-}
-
-/* Pas de scale au survol : l'étoile agrandie déborde sur sa voisine, l'étoile
-   vue sous le curseur n'est alors plus celle qui reçoit le clic. */
-.starBtn:hover {
-  filter: brightness(1.25);
-}
-
-/* Half star layout */
-.halfWrap {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-}
-
-.halfFill {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 50%;
-  overflow: hidden;
-  color: var(--gold);
-}
-
-:global([data-theme="light"]) .halfFill {
-  color: var(--accent);
-}
-
-/* Full star inherits color from parent .starBtn — override when active */
-.stars .starBtn svg[fill="currentColor"] {
-  color: var(--gold);
-}
+/* Les étoiles sont désormais rendues par StarRating (composant partagé
+   films / séries / saisons) : leurs styles vivent dans StarRating.module.css. */
 
 .note {
   font-family: var(--font-geist-mono), monospace;
@@ -243,20 +196,6 @@
 
   .divider {
     display: none;
-  }
-
-  .stars {
-    gap: 0;
-    min-width: 0;
-  }
-
-  .starBtn {
-    padding: 3px 2px;
-  }
-
-  .starBtn svg {
-    width: 18px;
-    height: 18px;
   }
 
   .note {

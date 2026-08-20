@@ -7,6 +7,8 @@ import FilmTopbar from "../../film/[id]/components/FilmTopbar";
 import FilmTitleLogo from "../../film/[id]/components/FilmTitleLogo";
 import SeriesActions from "./SeriesActions";
 import SeasonTracker from "./SeasonTracker";
+import RatingWidget from "../../film/[id]/components/RatingWidget";
+import { saveSeriesRating, deleteSeriesRating } from "@/app/actions/series";
 import filmStyles from "../../film/[id]/film.module.css";
 import styles from "./series.module.css";
 import { Rating } from "@/lib/rating-scale";
@@ -32,7 +34,7 @@ export default async function SeriesPage({ params }: { params: Promise<{ id: str
 
   if (!series) notFound();
 
-  const [userSeries, watchedEpisodes] = session
+  const [userSeries, watchedEpisodes, seasonRatings] = session
     ? await Promise.all([
         prisma.userSeries.findUnique({
           where: { userId_tmdbId: { userId: session.userId, tmdbId: id } },
@@ -41,14 +43,24 @@ export default async function SeriesPage({ params }: { params: Promise<{ id: str
           where: { userId: session.userId, seriesId: id },
           select: { seasonNumber: true },
         }),
+        prisma.userSeason.findMany({
+          where: { userId: session.userId, seriesId: id, rating: { not: null } },
+          select: { seasonNumber: true, rating: true },
+        }),
       ])
-    : [null, []];
+    : [null, [], []];
 
   // Progression : nb d'épisodes vus par saison + total
   const watchedBySeason: Record<number, number> = {};
   for (const e of watchedEpisodes) {
     watchedBySeason[e.seasonNumber] = (watchedBySeason[e.seasonNumber] ?? 0) + 1;
   }
+  // Notes de saison, pour les afficher sans avoir à déplier la saison.
+  const ratingBySeason: Record<number, number> = {};
+  for (const r of seasonRatings) {
+    if (r.rating != null) ratingBySeason[r.seasonNumber] = r.rating;
+  }
+
   const totalWatched = watchedEpisodes.length;
   const globalPct =
     series.numberOfEpisodes > 0
@@ -76,8 +88,6 @@ export default async function SeriesPage({ params }: { params: Promise<{ id: str
           </div>
           <SeriesActions
             tmdbId={id}
-            initialRating={userSeries?.rating ?? 0}
-            initialReview={userSeries?.review ?? ""}
             initialWatchlist={userSeries?.watchlist ?? false}
             initialLiked={userSeries?.liked ?? false}
             isAuthenticated={!!session}
@@ -122,6 +132,17 @@ export default async function SeriesPage({ params }: { params: Promise<{ id: str
             )}
           </div>
 
+          {/* Note + avis — même bloc que la fiche film */}
+          <RatingWidget
+            tmdbId={id}
+            initialRating={userSeries?.rating ?? 0}
+            initialReview={userSeries?.review ?? ""}
+            title={series.name}
+            isAuthenticated={!!session}
+            saveAction={saveSeriesRating}
+            deleteAction={deleteSeriesRating}
+          />
+
           {/* Progression globale de visionnage */}
           {session && totalWatched > 0 && (
             <div className={styles.progressBox}>
@@ -150,6 +171,7 @@ export default async function SeriesPage({ params }: { params: Promise<{ id: str
                 seriesId={id}
                 seasons={series.seasons}
                 watchedBySeason={watchedBySeason}
+                ratingBySeason={ratingBySeason}
                 isAuthenticated={!!session}
               />
             </div>

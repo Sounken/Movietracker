@@ -1,0 +1,77 @@
+.wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* Aucun gap : les zones cliquables doivent se toucher, sinon un pixel « mort »
+   entre deux étoiles avale le clic ou fait perdre le survol. L'espacement
+   visuel vient du padding, qui fait partie de la zone cliquable. */
+.stars {
+  display: flex;
+  gap: 0;
+}
+
+.disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.starBtn {
+  background: none;
+  border: 0;
+  cursor: pointer;
+  padding: 4px 3px;
+  display: inline-flex;
+  align-items: center;
+  color: inherit;
+  transition: filter 0.12s;
+}
+
+/* Pas de scale au survol : l'étoile agrandie déborde sur sa voisine, l'étoile
+   vue sous le curseur n'est alors plus celle qui reçoit le clic. */
+.starBtn:hover {
+  filter: brightness(1.25);
+}
+
+.starBtn:disabled {
+  cursor: default;
+}
+
+.on { color: var(--gold); }
+.off { color: var(--ink-mute); }
+
+:global([data-theme="light"]) .on { color: var(--accent); }
+
+/* Demi-étoile : moitié pleine superposée au contour */
+.halfWrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  color: var(--ink-mute);
+}
+
+.halfFill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 50%;
+  overflow: hidden;
+  color: var(--gold);
+}
+
+:global([data-theme="light"]) .halfFill {
+  color: var(--accent);
+}
+
+.value {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 13px;
+  color: var(--gold);
+  white-space: nowrap;
+}
+
+:global([data-theme="light"]) .value {
+  color: var(--accent);
+}

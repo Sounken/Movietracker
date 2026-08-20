@@ -3,74 +3,50 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
-import { saveRating, deleteRating } from "@/app/actions/film";
+import StarRating from "@/app/(app)/components/StarRating";
 import { useRatingScale } from "@/lib/rating-scale";
 import { toDisplayRating, toStoredRating, formatRating } from "@/lib/rating";
 import styles from "./RatingWidget.module.css";
 
-// Full star
-const StarFilled = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-    <path d="m12 2 3 7 7 .5-5.5 4.5L18 22l-6-4-6 4 1.5-8L2 9.5 9 9z" />
-  </svg>
-);
+type Props = {
+  tmdbId: number;
+  initialRating: number;
+  initialReview: string;
+  /** Titre de l'œuvre, utilisé dans le placeholder de l'avis. */
+  title: string;
+  isAuthenticated: boolean;
+  /** Server Actions injectées : le même widget sert aux films et aux séries. */
+  saveAction: (tmdbId: number, rating: number, review: string) => Promise<void>;
+  deleteAction: (tmdbId: number) => Promise<void>;
+};
 
-// Outline star
-const StarOutline = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" width="24" height="24">
-    <path d="m12 2 3 7 7 .5-5.5 4.5L18 22l-6-4-6 4 1.5-8L2 9.5 9 9z" />
-  </svg>
-);
-
-// Half star: filled left half over an outline
-function StarHalf() {
-  return (
-    <span className={styles.halfWrap}>
-      <span className={styles.halfFill}><StarFilled /></span>
-      <StarOutline />
-    </span>
-  );
-}
-
-const GOLD = "var(--gold)";
-const MUTED = "var(--ink-mute)";
-
-function StarIcon({ value, position }: { value: number; position: number }) {
-  if (value >= position) return <span style={{ color: GOLD }}><StarFilled /></span>;
-  if (value >= position - 0.5) return <StarHalf />;
-  return <span style={{ color: MUTED }}><StarOutline /></span>;
-}
-
-type Props = { tmdbId: number; initialRating: number; initialReview: string; filmTitle: string; isAuthenticated: boolean };
-
-export default function RatingWidget({ tmdbId, initialRating, initialReview, filmTitle, isAuthenticated }: Props) {
+export default function RatingWidget({
+  tmdbId,
+  initialRating,
+  initialReview,
+  title,
+  isAuthenticated,
+  saveAction,
+  deleteAction,
+}: Props) {
   const router = useRouter();
   const scale = useRatingScale();
   const [rating, setRating] = useState(initialRating);
-  // null = le curseur n'est pas sur les étoiles → on affiche la note enregistrée.
-  const [hover, setHover] = useState<number | null>(null);
   const [review, setReview] = useState(initialReview);
   const [saved, setSaved] = useState(false);
   const [isPending, startTransition] = useTransition();
   // Saisie libre sur 100 : texte tant qu'on tape, converti au blur/Entrée.
   const [draft, setDraft] = useState<string | null>(null);
 
-  const displayed = hover ?? rating;
-
-  const getHoverValue = (e: React.MouseEvent<HTMLButtonElement>, n: number) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    return e.clientX - rect.left < rect.width / 2 ? n - 0.5 : n;
-  };
+  // Le survol vit désormais dans StarRating ; ici on n'affiche que l'enregistré.
+  const displayed = rating;
 
   const handleRate = (value: number) => {
     if (!isAuthenticated) { router.push("/login"); return; }
     setRating(value);
-    // On repasse sur la note enregistrée immédiatement : sans ça, le survol
-    // resté « collé » sur une autre étoile laissait croire à une autre note.
-    setHover(null);
     setSaved(false);
     startTransition(async () => {
-      await saveRating(tmdbId, value, review);
+      await saveAction(tmdbId, value, review);
       router.refresh();
     });
   };
@@ -91,7 +67,7 @@ export default function RatingWidget({ tmdbId, initialRating, initialReview, fil
 
   const handleSave = () => {
     startTransition(async () => {
-      await saveRating(tmdbId, rating, review);
+      await saveAction(tmdbId, rating, review);
       setSaved(true);
       router.refresh();
     });
@@ -99,11 +75,10 @@ export default function RatingWidget({ tmdbId, initialRating, initialReview, fil
 
   const handleClearRating = () => {
     setRating(0);
-    setHover(null);
     setReview("");
     setSaved(false);
     startTransition(async () => {
-      await deleteRating(tmdbId);
+      await deleteAction(tmdbId);
       router.refresh();
     });
   };
@@ -116,22 +91,12 @@ export default function RatingWidget({ tmdbId, initialRating, initialReview, fil
           {scale === 100 ? "Cliquez ou saisissez une valeur" : "Cliquez pour noter"}
         </div>
         <div className={styles.divider} />
-        {/* Le mouseleave est sur le conteneur, pas sur chaque étoile : sortir
-            de la rangée réinitialise le survol de façon fiable, même en
-            passant entre deux étoiles ou en sortant très vite. */}
-        <div className={styles.stars} onMouseLeave={() => setHover(null)}>
-          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-            <button
-              key={n}
-              className={styles.starBtn}
-              aria-label={`Noter ${toDisplayRating(n, scale)}/${scale}`}
-              onMouseMove={(e) => setHover(getHoverValue(e, n))}
-              onClick={(e) => handleRate(getHoverValue(e, n))}
-            >
-              <StarIcon value={displayed} position={n} />
-            </button>
-          ))}
-        </div>
+        <StarRating
+          value={rating}
+          onRate={handleRate}
+          onClear={handleClearRating}
+          showValue={false}
+        />
 
         {/* Sur 100, les étoiles ne donnent que des multiples de 5 : le champ
             permet la valeur exacte (87, 93…). Sur 10, simple affichage. */}
@@ -165,7 +130,7 @@ export default function RatingWidget({ tmdbId, initialRating, initialReview, fil
           <textarea
             value={review}
             onChange={(e) => { setReview(e.target.value); setSaved(false); }}
-            placeholder={`Qu'avez-vous pensé de "${filmTitle}" ? Partagez votre ressenti…`}
+            placeholder={`Qu'avez-vous pensé de "${title}" ? Partagez votre ressenti…`}
             className={styles.textarea}
           />
           <div className={styles.reviewActions}>

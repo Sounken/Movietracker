@@ -42,7 +42,10 @@ export async function GET(
     return new NextResponse(result.stream, {
       headers: {
         "Content-Type": result.blob.contentType,
-        "Cache-Control": "private, max-age=3600",
+        // Depuis que chaque envoi crée un chemin unique, une URL désigne
+        // toujours la même image : on peut la mettre en cache définitivement.
+        // Changer de photo produit une nouvelle URL, donc plus d'image périmée.
+        "Cache-Control": "private, max-age=31536000, immutable",
         ETag: result.blob.etag,
       },
     });

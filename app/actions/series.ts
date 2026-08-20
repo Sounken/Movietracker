@@ -184,3 +184,38 @@ export async function setSeasonWatched(
 
   revalidateSeriesPages(seriesId);
 }
+
+// ——— Note par saison ———
+
+/**
+ * Enregistre la note d'une saison (sur 10, demi-points compris).
+ * `rating` à null retire la note.
+ */
+export async function saveSeasonRating(
+  seriesId: number,
+  seasonNumber: number,
+  rating: number | null,
+) {
+  const session = await getSession();
+  if (!session) throw new Error("Non authentifié");
+
+  if (rating === null) {
+    await prisma.userSeason.deleteMany({
+      where: { userId: session.userId, seriesId, seasonNumber },
+    });
+  } else {
+    // Borné côté serveur : le client ne doit pas pouvoir enregistrer 42/10.
+    const bounded = Math.min(10, Math.max(0.5, rating));
+    await prisma.userSeason.upsert({
+      where: {
+        userId_seriesId_seasonNumber: { userId: session.userId, seriesId, seasonNumber },
+      },
+      update: { rating: bounded },
+      create: { userId: session.userId, seriesId, seasonNumber, rating: bounded },
+    });
+    // Noter une saison, c'est suivre la série.
+    await ensureUserSeries(session.userId, seriesId);
+  }
+
+  revalidateSeriesPages(seriesId);
+}

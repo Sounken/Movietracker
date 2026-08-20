@@ -26,6 +26,7 @@ model User {
   followers      UserFollow[]        @relation("following")
   series         UserSeries[]
   episodes       UserEpisode[]
+  seasons        UserSeason[]
   favoriteSeries UserFavoriteSeries[]
 }
 
@@ -132,6 +133,23 @@ model UserEpisode {
   watchedAt     DateTime @default(now())
 
   @@unique([userId, seriesId, seasonNumber, episodeNumber])
+  @@index([userId, seriesId])
+}
+
+// Note attribuée à une saison précise (indépendante de la note de la série).
+// Comme partout, la note est stockée sur 10 ; l'échelle d'affichage est un
+// réglage utilisateur.
+model UserSeason {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  seriesId     Int // tmdbId de la série
+  seasonNumber Int
+  rating       Float?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, seriesId, seasonNumber])
   @@index([userId, seriesId])
 }
 

@@ -4,7 +4,9 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Check, ChevronDown, Loader2 } from "lucide-react";
 import type { TmdbSeasonSummary, TmdbEpisode } from "@/lib/tmdb";
-import { toggleEpisode, setSeasonWatched } from "@/app/actions/series";
+import { toggleEpisode, setSeasonWatched, saveSeasonRating } from "@/app/actions/series";
+import StarRating from "@/app/(app)/components/StarRating";
+import { Rating } from "@/lib/rating-scale";
 import styles from "./series.module.css";
 
 type SeasonState = {
@@ -38,17 +40,21 @@ export default function SeasonTracker({
   seriesId,
   seasons,
   watchedBySeason,
+  ratingBySeason,
   isAuthenticated,
 }: {
   seriesId: number;
   seasons: TmdbSeasonSummary[];
   watchedBySeason: Record<number, number>;
+  /** Notes déjà attribuées, sur 10, par numéro de saison. */
+  ratingBySeason: Record<number, number>;
   isAuthenticated: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState<number | null>(null);
   const [state, setState] = useState<Record<number, SeasonState>>({});
   const [counts, setCounts] = useState<Record<number, number>>(watchedBySeason);
+  const [ratings, setRatings] = useState<Record<number, number>>(ratingBySeason);
   const [, startTransition] = useTransition();
   const [loadingSeason, setLoadingSeason] = useState<number | null>(null);
 
@@ -61,7 +67,7 @@ export default function SeasonTracker({
     if (!state[seasonNumber]?.loaded) {
       setLoadingSeason(seasonNumber);
       const res = await fetch(`/api/series/${seriesId}/season/${seasonNumber}`);
-      const data = res.ok ? await res.json() : { episodes: [], watched: [] };
+      const data = res.ok ? await res.json() : { episodes: [], watched: [], rating: null };
       setState((prev) => ({
         ...prev,
         [seasonNumber]: {
@@ -70,6 +76,8 @@ export default function SeasonTracker({
           loaded: true,
         },
       }));
+      // Resynchronise la note au cas où elle aurait changé ailleurs.
+      setRatings((r) => ({ ...r, [seasonNumber]: data.rating ?? 0 }));
       setLoadingSeason(null);
     }
   }
@@ -143,6 +151,18 @@ export default function SeasonTracker({
     });
   }
 
+  function onRateSeason(seasonNumber: number, rating: number | null) {
+    if (!requireAuth()) return;
+    setRatings((r) => ({ ...r, [seasonNumber]: rating ?? 0 }));
+    startTransition(async () => {
+      try {
+        await saveSeasonRating(seriesId, seasonNumber, rating);
+      } catch {
+        router.refresh();
+      }
+    });
+  }
+
   return (
     <div className={styles.seasons}>
       {seasons.map((season) => {
@@ -163,6 +183,11 @@ export default function SeasonTracker({
                 className={`${styles.chevron} ${isOpen ? styles.chevronOpen : ""}`}
               />
               <span className={styles.seasonName}>{season.name}</span>
+              {(ratings[season.seasonNumber] ?? 0) > 0 && (
+                <span className={styles.seasonScore}>
+                  ★ <Rating value={ratings[season.seasonNumber]} />
+                </span>
+              )}
               <span className={styles.seasonProgress}>
                 {watched}/{season.episodeCount}
               </span>
@@ -179,12 +204,26 @@ export default function SeasonTracker({
                   </div>
                 ) : (
                   <>
-                    <button
-                      className={styles.markSeason}
-                      onClick={() => onToggleSeason(season.seasonNumber, !allWatched)}
-                    >
-                      {allWatched ? "Tout démarquer" : "Marquer la saison comme vue"}
-                    </button>
+                    <div className={styles.seasonToolbar}>
+                      <button
+                        className={styles.markSeason}
+                        onClick={() => onToggleSeason(season.seasonNumber, !allWatched)}
+                      >
+                        {allWatched ? "Tout démarquer" : "Marquer la saison comme vue"}
+                      </button>
+                      {/* Note propre à la saison, indépendante de celle de la
+                          série. Recliquer la même valeur la retire. */}
+                      <div className={styles.seasonRating}>
+                        <span className={styles.seasonRatingLabel}>Ma note</span>
+                        <StarRating
+                          value={ratings[season.seasonNumber] ?? 0}
+                          size={16}
+                          label={season.name}
+                          onRate={(v) => onRateSeason(season.seasonNumber, v)}
+                          onClear={() => onRateSeason(season.seasonNumber, null)}
+                        />
+                      </div>
+                    </div>
                     {s?.episodes.map((ep) => {
                       const isWatched = s.watched.has(ep.episodeNumber);
                       const released = isReleased(ep);

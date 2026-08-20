@@ -3,6 +3,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
+import { saveRating, deleteRating } from "@/app/actions/film";
 import { fetchFilmDetail, fetchFilmCredits, fetchSimilarFilms, fetchFilmKeywords, fetchFilmLogo, fetchFilmCollection, formatMoney, formatRuntime } from "@/lib/tmdb";
 import FilmTopbar from "./components/FilmTopbar";
 import FilmTitleLogo from "./components/FilmTitleLogo";
@@ -182,8 +183,10 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
             tmdbId={id}
             initialRating={userFilm?.rating ?? 0}
             initialReview={userFilm?.review ?? ""}
-            filmTitle={film.title}
+            title={film.title}
             isAuthenticated={!!session}
+            saveAction={saveRating}
+            deleteAction={deleteRating}
           />
 
           {film.overview && (
