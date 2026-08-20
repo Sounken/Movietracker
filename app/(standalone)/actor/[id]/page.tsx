@@ -50,6 +50,17 @@ export default async function ActorPage({ params }: { params: Promise<{ id: stri
   const filmography = credits;
   const deptLabel = DEPT_LABELS[person.knownForDepartment] ?? person.knownForDepartment;
 
+  // Sur la fiche d'un réalisateur ou d'un scénariste, on ouvre la filmographie
+  // sur son métier plutôt que sur « Tout » : c'est ce qu'on vient y chercher.
+  const DEFAULT_FILTER = {
+    Directing: "directing",
+    Writing: "writing",
+    Production: "production",
+    Acting: "acting",
+  } as const;
+  const defaultFilter =
+    DEFAULT_FILTER[person.knownForDepartment as keyof typeof DEFAULT_FILTER] ?? "all";
+
   const backdropFilm = credits[0];
 
   return (
@@ -208,7 +219,7 @@ export default async function ActorPage({ params }: { params: Promise<{ id: stri
             </div>
           )}
 
-          {filmography.length > 0 && <FilmographyClient credits={filmography} />}
+          {filmography.length > 0 && <FilmographyClient credits={filmography} defaultFilter={defaultFilter} />}
         </div>
       </div>
     </>

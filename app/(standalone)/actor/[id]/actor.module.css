@@ -246,6 +246,14 @@
 }
 
 /* ——— Sort pills ——— */
+/* Compteur discret dans les pastilles de filtre */
+.pillCount {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10px;
+  opacity: 0.6;
+  margin-left: 2px;
+}
+
 .sortPills {
   display: flex;
   gap: 8px;

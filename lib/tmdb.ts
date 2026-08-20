@@ -55,6 +55,9 @@ export type TmdbPerson = {
   alsoKnownAs: string[];
 };
 
+/** Grande famille de métier, pour filtrer la filmographie. */
+export type CreditDepartment = "directing" | "writing" | "production" | "acting" | "other";
+
 export type TmdbPersonCredit = {
   id: number;
   title: string;
@@ -64,6 +67,7 @@ export type TmdbPersonCredit = {
   voteAverage: number;
   voteCount: number;
   popularity: number;
+  department: CreditDepartment;
 };
 
 export type TmdbCrewMember = { id: number; name: string };
@@ -715,18 +719,26 @@ export async function fetchPersonDetail(id: number): Promise<TmdbPerson | null> 
 // Postes d'équipe qui définissent vraiment une filmographie, du plus
 // significatif au moins. Un même film peut cumuler plusieurs postes
 // (Nolan est réalisateur ET scénariste) : on retient le plus haut.
-const CREW_JOBS: Record<string, { label: string; rank: number }> = {
-  Director: { label: "Réalisateur", rank: 0 },
-  Writer: { label: "Scénariste", rank: 1 },
-  Screenplay: { label: "Scénariste", rank: 2 },
-  Story: { label: "Histoire", rank: 3 },
+const CREW_JOBS: Record<string, { label: string; rank: number; dept: CreditDepartment }> = {
+  Director: { label: "Réalisateur", rank: 0, dept: "directing" },
+  Writer: { label: "Scénariste", rank: 1, dept: "writing" },
+  Screenplay: { label: "Scénariste", rank: 2, dept: "writing" },
+  Story: { label: "Histoire", rank: 3, dept: "writing" },
   // rang 4 : réservé au rôle d'acteur (ACTING_RANK)
-  Producer: { label: "Producteur", rank: 5 },
-  "Executive Producer": { label: "Producteur exécutif", rank: 6 },
-  "Original Music Composer": { label: "Musique", rank: 7 },
-  "Director of Photography": { label: "Chef opérateur", rank: 8 },
-  Editor: { label: "Montage", rank: 9 },
+  Producer: { label: "Producteur", rank: 5, dept: "production" },
+  "Executive Producer": { label: "Producteur exécutif", rank: 6, dept: "production" },
+  "Original Music Composer": { label: "Musique", rank: 7, dept: "other" },
+  "Director of Photography": { label: "Chef opérateur", rank: 8, dept: "other" },
+  Editor: { label: "Montage", rank: 9, dept: "other" },
 };
+
+/**
+ * Apparitions « dans son propre rôle » : ce sont les making-of, documentaires
+ * et émissions qui polluaient les fiches. Chez Nolan, 30 de ses 31 crédits
+ * d'acteur sont de ce type. On les écarte — sans toucher aux vrais rôles,
+ * Tarantino jouant réellement dans une trentaine de films.
+ */
+const SELF_ROLE = /\b(self|himself|herself|themselves|lui-m[êe]me|elle-m[êe]me)\b/i;
 
 // Le jeu d'acteur passe après la réalisation et le scénario, mais AVANT la
 // production : DiCaprio est producteur du Loup de Wall Street, on veut
@@ -749,14 +761,20 @@ export async function fetchPersonCredits(id: number): Promise<TmdbPersonCredit[]
     // d'acteur ne sont que des apparitions « Self » dans des documentaires,
     // et ses vrais films (Inception, Interstellar…) sont dans `crew`.
     // On fusionne les deux et on dédoublonne par film.
-    const byFilm = new Map<number, { raw: Record<string, unknown>; role: string; rank: number }>();
+    const byFilm = new Map<
+      number,
+      { raw: Record<string, unknown>; role: string; rank: number; dept: CreditDepartment }
+    >();
 
     for (const m of (data.cast ?? []) as Record<string, unknown>[]) {
       if (!m.poster_path) continue;
+      const character = (m.character as string) ?? "";
+      if (SELF_ROLE.test(character)) continue;
       byFilm.set(m.id as number, {
         raw: m,
-        role: (m.character as string) ?? "",
+        role: character,
         rank: ACTING_RANK,
+        dept: "acting",
       });
     }
 
@@ -768,13 +786,13 @@ export async function fetchPersonCredits(id: number): Promise<TmdbPersonCredit[]
       if (!job) continue;
       const existing = byFilm.get(m.id as number);
       if (!existing || job.rank < existing.rank) {
-        byFilm.set(m.id as number, { raw: m, role: job.label, rank: job.rank });
+        byFilm.set(m.id as number, { raw: m, role: job.label, rank: job.rank, dept: job.dept });
       }
     }
 
     return [...byFilm.values()]
       .sort((a, b) => ((b.raw.vote_count as number) ?? 0) - ((a.raw.vote_count as number) ?? 0))
-      .map(({ raw: m, role }) => ({
+      .map(({ raw: m, role, dept }) => ({
         id: m.id as number,
         title: (m.title as string) ?? "",
         character: role,
@@ -783,6 +801,7 @@ export async function fetchPersonCredits(id: number): Promise<TmdbPersonCredit[]
         voteAverage: m.vote_average ? Math.round((m.vote_average as number) * 10) / 10 : 0,
         voteCount: (m.vote_count as number) ?? 0,
         popularity: typeof m.popularity === "number" ? Math.round(m.popularity * 10) / 10 : 0,
+        department: dept,
       }));
   } catch {
     return [];
