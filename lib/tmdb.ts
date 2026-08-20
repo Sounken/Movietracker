@@ -236,16 +236,43 @@ export async function fetchOnTheAirSeries(): Promise<TmdbMovie[]> {
   }
 }
 
-export async function fetchFilmDetail(id: number): Promise<TmdbFilmDetail | null> {
+/**
+ * Récupère une fiche TMDB en distinguant deux cas que le code confondait :
+ *  - un vrai 404 → la fiche n'existe pas → `null` → l'appelant fait notFound()
+ *  - une panne passagère (429, 5xx, timeout) → on réessaie une fois, puis on
+ *    lève l'erreur.
+ *
+ * Avant, `if (!res.ok) return null` renvoyait `null` dans les deux cas : une
+ * hoquet de TMDB affichait donc une page 404 définitive pour un film qui
+ * existe. Une erreur levée donne au contraire un écran réessayable et se voit
+ * dans les logs.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- payload TMDB brut, typé par l'appelant
+async function fetchTmdbDetail(path: string): Promise<any | null> {
   const key = process.env.TMDB_API_KEY;
-  if (!key) return null;
-  try {
-    const res = await fetch(
-      `${BASE}/movie/${id}?api_key=${key}&language=fr-FR`,
-      { next: { revalidate: 3600 } }
-    );
-    if (!res.ok) return null;
-    const m = await res.json();
+  if (!key) throw new Error("TMDB_API_KEY manquante");
+
+  const url = `${BASE}${path}?api_key=${key}&language=fr-FR`;
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetch(url, { next: { revalidate: 3600 } });
+      if (res.status === 404) return null;
+      if (res.ok) return await res.json();
+      lastError = new Error(`TMDB a répondu ${res.status} sur ${path}`);
+    } catch (err) {
+      lastError = err;
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error(`TMDB injoignable sur ${path}`);
+}
+
+export async function fetchFilmDetail(id: number): Promise<TmdbFilmDetail | null> {
+  const m = await fetchTmdbDetail(`/movie/${id}`);
+  if (!m) return null;
+  {
     return {
       id: m.id,
       title: m.title ?? "",
@@ -271,8 +298,6 @@ export async function fetchFilmDetail(id: number): Promise<TmdbFilmDetail | null
       spokenLanguages: (m.spoken_languages ?? []).map((l: { name: string }) => l.name),
       productionCountries: (m.production_countries ?? []).map((c: { name: string }) => c.name),
     };
-  } catch {
-    return null;
   }
 }
 
@@ -350,14 +375,10 @@ export async function fetchSeriesCard(id: number): Promise<TmdbSeriesCard | null
 }
 
 export async function fetchSeriesDetail(id: number): Promise<TmdbSeriesDetail | null> {
-  const key = process.env.TMDB_API_KEY;
-  if (!key) return null;
-  try {
-    const res = await fetch(`${BASE}/tv/${id}?api_key=${key}&language=fr-FR`, {
-      next: { revalidate: 3600 },
-    });
-    if (!res.ok) return null;
-    const m = await res.json();
+  // Même distinction 404 / panne passagère que pour les films.
+  const m = await fetchTmdbDetail(`/tv/${id}`);
+  if (!m) return null;
+  {
     const runTimes: number[] = m.episode_run_time ?? [];
     return {
       id: m.id,
@@ -387,8 +408,6 @@ export async function fetchSeriesDetail(id: number): Promise<TmdbSeriesDetail | 
           year: typeof s.air_date === "string" ? s.air_date.slice(0, 4) : "",
         })),
     };
-  } catch {
-    return null;
   }
 }
 

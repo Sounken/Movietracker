@@ -36,11 +36,20 @@
   border-color: var(--accent);
 }
 
+/* Lien vers l'accueil : on neutralise le style de lien par défaut. */
 .brand {
   font-family: var(--font-serif), serif;
   font-size: 20px;
   margin-left: 4px;
   color: var(--ink-dim);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s;
+  white-space: nowrap;
+}
+
+.brand:hover {
+  color: var(--ink);
 }
 
 .brand em {

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import styles from "./actor.module.css";
 
@@ -16,7 +17,10 @@ export default function ActorTopbar() {
       <button className={styles.backBtn} onClick={() => router.back()}>
         <BackIcon /> <span>Retour</span>
       </button>
-      <div className={styles.brand}>Movie<em>tracker</em></div>
+      {/* Logo cliquable : retour à l'accueil films. */}
+      <Link href="/films" className={styles.brand} aria-label="Retour à l'accueil">
+        Movie<em>tracker</em>
+      </Link>
     </div>
   );
 }
