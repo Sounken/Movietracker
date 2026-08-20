@@ -10,6 +10,7 @@ import FilmTitleLogo from "./components/FilmTitleLogo";
 import PosterActions from "./components/PosterActions";
 import RatingWidget from "./components/RatingWidget";
 import CastGrid from "./components/CastGrid";
+import SimilarFilms from "./components/SimilarFilms";
 import FriendReviews from "./components/FriendReviews";
 import styles from "./film.module.css";
 import { Rating } from "@/lib/rating-scale";
@@ -320,63 +321,15 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
           )}
 
           {sagaFilms.length > 0 && (
-            <div className={styles.section}>
-              <div className={styles.sectionTitle}>
-                {film.collectionName || "La saga"}
-              </div>
-              <div className={styles.sagaSub}>
-                {sagaFilms.length + 1} films · dans l&apos;ordre de sortie
-              </div>
-              <div className={styles.similarGrid}>
-                {sagaFilms.map((s) => (
-                  <Link key={s.id} href={`/film/${s.id}`} className={styles.similarCard}>
-                    {s.posterUrl ? (
-                      <Image
-                        src={s.posterUrl}
-                        alt={s.title}
-                        className={styles.similarPoster}
-                        width={300}
-                        height={450}
-                        sizes="(max-width: 768px) 33vw, 160px"
-                        style={{ height: "auto" }}
-                      />
-                    ) : (
-                      <div className={styles.similarPosterEmpty} />
-                    )}
-                    <div className={styles.similarTitle}>{s.title}</div>
-                    {s.year && <div className={styles.similarYear}>{s.year}</div>}
-                  </Link>
-                ))}
-              </div>
-            </div>
+            <SimilarFilms
+              films={sagaFilms}
+              title={film.collectionName || "La saga"}
+              subtitle={`${sagaFilms.length + 1} films · dans l'ordre de sortie`}
+            />
           )}
 
           {similarFilms.length > 0 && (
-            <div className={styles.section}>
-              <div className={styles.sectionTitle}>Films similaires</div>
-              <div className={styles.similarGrid}>
-                {similarFilms.map((s) => (
-                  <Link key={s.id} href={`/film/${s.id}`} className={styles.similarCard}>
-                    {s.posterUrl ? (
-                      <Image
-                        src={s.posterUrl}
-                        alt={s.title}
-                        className={styles.similarPoster}
-                        width={300}
-                        height={450}
-                        sizes="(max-width: 768px) 33vw, 160px"
-                        // height:auto neutralise l'attribut height (sinon il écrase l'aspect-ratio CSS)
-                        style={{ height: "auto" }}
-                      />
-                    ) : (
-                      <div className={styles.similarPosterEmpty} />
-                    )}
-                    <div className={styles.similarTitle}>{s.title}</div>
-                    {s.year && <div className={styles.similarYear}>{s.year}</div>}
-                  </Link>
-                ))}
-              </div>
-            </div>
+            <SimilarFilms films={similarFilms} title="Films similaires" />
           )}
         </div>
       </div>

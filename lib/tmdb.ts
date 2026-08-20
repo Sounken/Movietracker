@@ -598,19 +598,34 @@ export async function fetchSimilarFilms(id: number): Promise<TmdbFilmCard[]> {
   const key = process.env.TMDB_API_KEY;
   if (!key) return [];
   try {
-    const res = await fetch(
-      `${BASE}/movie/${id}/recommendations?api_key=${key}&language=fr-FR&page=1`,
-      { next: { revalidate: 86400 } }
+    // Deux pages (TMDB en renvoie 20 par page) : la fiche n'en affiche que 8
+    // au départ, mais le bouton « de plus » doit avoir de quoi dérouler.
+    const [p1, p2] = await Promise.all(
+      [1, 2].map((page) =>
+        fetch(
+          `${BASE}/movie/${id}/recommendations?api_key=${key}&language=fr-FR&page=${page}`,
+          { next: { revalidate: 86400 } },
+        ).then((r) => (r.ok ? r.json() : { results: [] }))
+         .catch(() => ({ results: [] })),
+      ),
     );
-    if (!res.ok) return [];
-    const data = await res.json();
-    return (data.results ?? []).slice(0, 8).map((m: Record<string, unknown>) => ({
-      id: m.id,
-      title: m.title,
-      posterUrl: m.poster_path ? `${IMG}/w342${m.poster_path}` : "",
-      year: typeof m.release_date === "string" ? m.release_date.slice(0, 4) : "",
-      genres: ((m.genre_ids as number[]) ?? []).slice(0, 2).map((gid) => GENRES[gid]).filter(Boolean),
-    }));
+
+    const seen = new Set<number>();
+    return [...(p1.results ?? []), ...(p2.results ?? [])]
+      .filter((m: Record<string, unknown>) => {
+        const filmId = m.id as number;
+        if (!m.poster_path || seen.has(filmId)) return false;
+        seen.add(filmId);
+        return true;
+      })
+      .map((m: Record<string, unknown>) => ({
+        id: m.id as number,
+        title: (m.title as string) ?? "",
+        posterUrl: m.poster_path ? `${IMG}/w342${m.poster_path}` : "",
+        year: typeof m.release_date === "string" ? m.release_date.slice(0, 4) : "",
+        genres: ((m.genre_ids as number[]) ?? []).slice(0, 2).map((gid) => GENRES[gid]).filter(Boolean),
+        voteAverage: m.vote_average ? Math.round((m.vote_average as number) * 10) / 10 : 0,
+      }));
   } catch {
     return [];
   }
@@ -697,6 +712,28 @@ export async function fetchPersonDetail(id: number): Promise<TmdbPerson | null> 
   }
 }
 
+// Postes d'équipe qui définissent vraiment une filmographie, du plus
+// significatif au moins. Un même film peut cumuler plusieurs postes
+// (Nolan est réalisateur ET scénariste) : on retient le plus haut.
+const CREW_JOBS: Record<string, { label: string; rank: number }> = {
+  Director: { label: "Réalisateur", rank: 0 },
+  Writer: { label: "Scénariste", rank: 1 },
+  Screenplay: { label: "Scénariste", rank: 2 },
+  Story: { label: "Histoire", rank: 3 },
+  // rang 4 : réservé au rôle d'acteur (ACTING_RANK)
+  Producer: { label: "Producteur", rank: 5 },
+  "Executive Producer": { label: "Producteur exécutif", rank: 6 },
+  "Original Music Composer": { label: "Musique", rank: 7 },
+  "Director of Photography": { label: "Chef opérateur", rank: 8 },
+  Editor: { label: "Montage", rank: 9 },
+};
+
+// Le jeu d'acteur passe après la réalisation et le scénario, mais AVANT la
+// production : DiCaprio est producteur du Loup de Wall Street, on veut
+// néanmoins y lire « Jordan Belfort ». À l'inverse Eastwood, réalisateur et
+// acteur de Gran Torino, est bien annoncé comme réalisateur.
+const ACTING_RANK = 4;
+
 export async function fetchPersonCredits(id: number): Promise<TmdbPersonCredit[]> {
   const key = process.env.TMDB_API_KEY;
   if (!key) return [];
@@ -707,15 +744,40 @@ export async function fetchPersonCredits(id: number): Promise<TmdbPersonCredit[]
     );
     if (!res.ok) return [];
     const data = await res.json();
-    return (data.cast ?? [])
-      .filter((m: Record<string, unknown>) => m.poster_path)
-      .sort((a: Record<string, unknown>, b: Record<string, unknown>) =>
-        (b.vote_count as number) - (a.vote_count as number)
-      )
-      .map((m: Record<string, unknown>) => ({
-        id: m.id,
-        title: m.title,
-        character: m.character ?? "",
+
+    // On ne lisait que `cast` : pour un réalisateur comme Nolan, ses crédits
+    // d'acteur ne sont que des apparitions « Self » dans des documentaires,
+    // et ses vrais films (Inception, Interstellar…) sont dans `crew`.
+    // On fusionne les deux et on dédoublonne par film.
+    const byFilm = new Map<number, { raw: Record<string, unknown>; role: string; rank: number }>();
+
+    for (const m of (data.cast ?? []) as Record<string, unknown>[]) {
+      if (!m.poster_path) continue;
+      byFilm.set(m.id as number, {
+        raw: m,
+        role: (m.character as string) ?? "",
+        rank: ACTING_RANK,
+      });
+    }
+
+    for (const m of (data.crew ?? []) as Record<string, unknown>[]) {
+      if (!m.poster_path) continue;
+      // Postes techniques secondaires (assistants, cascades…) : ignorés, ils
+      // noieraient la filmographie.
+      const job = CREW_JOBS[m.job as string];
+      if (!job) continue;
+      const existing = byFilm.get(m.id as number);
+      if (!existing || job.rank < existing.rank) {
+        byFilm.set(m.id as number, { raw: m, role: job.label, rank: job.rank });
+      }
+    }
+
+    return [...byFilm.values()]
+      .sort((a, b) => ((b.raw.vote_count as number) ?? 0) - ((a.raw.vote_count as number) ?? 0))
+      .map(({ raw: m, role }) => ({
+        id: m.id as number,
+        title: (m.title as string) ?? "",
+        character: role,
         posterUrl: m.poster_path ? `${IMG}/w342${m.poster_path}` : "",
         year: typeof m.release_date === "string" ? m.release_date.slice(0, 4) : "",
         voteAverage: m.vote_average ? Math.round((m.vote_average as number) * 10) / 10 : 0,

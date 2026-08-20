@@ -44,7 +44,10 @@ export default async function ActorPage({ params }: { params: Promise<{ id: stri
 
   const personAge = person.birthday ? age(person.birthday, person.deathday) : null;
   const top4 = credits.slice(0, 4);
-  const filmography = credits.slice(4);
+  // La filmographie reprend TOUT, y compris les 4 films emblématiques : les
+  // exclure donnait une liste incomplète, où les films les plus connus
+  // manquaient à l'appel.
+  const filmography = credits;
   const deptLabel = DEPT_LABELS[person.knownForDepartment] ?? person.knownForDepartment;
 
   const backdropFilm = credits[0];
