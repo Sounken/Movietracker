@@ -15,11 +15,13 @@ const SearchIcon = () => (
 
 type SearchResult = {
   id: number;
-  mediaType?: "movie" | "tv";
+  mediaType?: "movie" | "tv" | "person";
   title: string;
   year: string;
   posterUrl: string;
   voteAverage: number | null;
+  /** Personnes : métier + œuvres connues (« Réalisateur · Inception, … »). */
+  subtitle?: string;
 };
 
 /**
@@ -28,7 +30,7 @@ type SearchResult = {
  * `compact` réduit la largeur pour tenir dans la barre d'une fiche.
  */
 export default function SearchBox({
-  placeholder = "Chercher un film, un réalisateur…",
+  placeholder = "Chercher un film, une série, un réalisateur…",
   compact = false,
 }: {
   placeholder?: string;
@@ -65,10 +67,14 @@ export default function SearchBox({
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const navigate = (id: number, mediaType?: "movie" | "tv") => {
+  const navigate = (id: number, mediaType?: SearchResult["mediaType"]) => {
     setQuery("");
     setOpen(false);
-    router.push(mediaType === "tv" ? `/series/${id}` : `/film/${id}`);
+    const href =
+      mediaType === "tv" ? `/series/${id}`
+      : mediaType === "person" ? `/actor/${id}`
+      : `/film/${id}`;
+    router.push(href);
   };
 
   return (
@@ -85,7 +91,7 @@ export default function SearchBox({
           onFocus={() => results.length > 0 && setOpen(true)}
           onKeyDown={(e) => { if (e.key === "Escape") setOpen(false); }}
           placeholder={placeholder}
-          aria-label="Rechercher un film ou une série"
+          aria-label="Rechercher un film, une série ou une personnalité"
           className={styles.searchInput}
         />
       </div>
@@ -102,18 +108,23 @@ export default function SearchBox({
                 <Image
                   src={m.posterUrl}
                   alt=""
-                  className={styles.thumb}
+                  // Portrait rond pour une personne, affiche pour une œuvre.
+                  className={`${styles.thumb} ${m.mediaType === "person" ? styles.thumbPerson : ""}`}
                   width={36}
                   height={54}
                   style={{ objectFit: "cover" }}
                 />
               ) : (
-                <div className={`${styles.thumb} ${styles.thumbEmpty}`} />
+                <div
+                  className={`${styles.thumb} ${styles.thumbEmpty} ${m.mediaType === "person" ? styles.thumbPerson : ""}`}
+                />
               )}
               <div className={styles.resultInfo}>
                 <div className={styles.resultTitle}>{m.title}</div>
                 <div className={styles.resultMeta}>
-                  {m.mediaType === "tv" ? "Série" : "Film"}{m.year ? ` · ${m.year}` : ""}
+                  {m.mediaType === "person"
+                    ? (m.subtitle ?? "Personnalité")
+                    : `${m.mediaType === "tv" ? "Série" : "Film"}${m.year ? ` · ${m.year}` : ""}`}
                 </div>
               </div>
               {m.voteAverage != null && m.voteAverage > 0 && (
