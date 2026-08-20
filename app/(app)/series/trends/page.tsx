@@ -5,6 +5,22 @@ import { getSeriesCards } from "@/lib/series";
 import Topbar from "../../components/Topbar";
 import SeriesGrid, { type SeriesGridItem } from "../../components/SeriesGrid";
 import discover from "../../films/discover/discover.module.css";
+import { formatRating, type RatingScale } from "@/lib/rating";
+import { getUserRatingScale } from "@/lib/rating-server";
+
+// Élément de tendance : soit une légende déjà prête, soit une note moyenne
+// brute à formater au rendu (le cache est partagé entre utilisateurs).
+type TrendItem = Omit<SeriesGridItem, "caption"> & {
+  caption?: string;
+  avgRating?: number;
+};
+
+function withCaption(items: TrendItem[], scale: RatingScale): SeriesGridItem[] {
+  return items.map(({ avgRating, caption, ...rest }) => ({
+    ...rest,
+    caption: avgRating !== undefined ? `★ ${formatRating(avgRating, scale)} moyenne` : caption,
+  }));
+}
 
 // Données communautaires (identiques pour tous) → mises en cache 10 min.
 const getSeriesTrends = unstable_cache(
@@ -46,14 +62,17 @@ const getSeriesTrends = unstable_cache(
     const build = (
       rows: { tmdbId: number; _count: { tmdbId: number }; _avg?: { rating: number | null } }[],
       kind: "watched" | "rated" | "watchlist",
-    ): SeriesGridItem[] =>
+    ): TrendItem[] =>
       rows
-        .map((r): SeriesGridItem | null => {
+        .map((r): TrendItem | null => {
           const c = cards.get(r.tmdbId);
           if (!c) return null;
+          // Attention : ce bloc est mis en cache pour TOUS les utilisateurs.
+          // La note moyenne y reste donc brute ; elle n'est formatée dans
+          // l'échelle de l'utilisateur qu'au rendu, hors du cache.
           const caption =
             kind === "rated"
-              ? `★ ${(r._avg?.rating ?? 0).toFixed(1)} moyenne`
+              ? null
               : kind === "watchlist"
                 ? `${r._count.tmdbId} en watchlist`
                 : `${r._count.tmdbId} spectateur${r._count.tmdbId > 1 ? "s" : ""}`;
@@ -63,10 +82,10 @@ const getSeriesTrends = unstable_cache(
             posterUrl: c.posterUrl,
             year: c.year,
             voteAverage: c.voteAverage,
-            caption,
+            ...(caption !== null ? { caption } : { avgRating: r._avg?.rating ?? 0 }),
           };
         })
-        .filter((x): x is SeriesGridItem => x !== null);
+        .filter((x): x is TrendItem => x !== null);
 
     return {
       watched: build(topWatched, "watched"),
@@ -79,6 +98,7 @@ const getSeriesTrends = unstable_cache(
 );
 
 export default async function SeriesTrendsPage() {
+  const ratingScale = await getUserRatingScale();
   const session = await getSession();
   const data = await getSeriesTrends();
 
@@ -98,21 +118,21 @@ export default async function SeriesTrendsPage() {
         <div className={discover.header}>
           <div className={discover.sectionSub}>Les plus suivies</div>
         </div>
-        <SeriesGrid items={data.watched} empty="Pas encore de données." />
+        <SeriesGrid items={withCaption(data.watched, ratingScale)} empty="Pas encore de données." />
       </section>
 
       <section>
         <div className={discover.header}>
           <div className={discover.sectionSub}>Les mieux notées</div>
         </div>
-        <SeriesGrid items={data.rated} empty="Pas encore de données." />
+        <SeriesGrid items={withCaption(data.rated, ratingScale)} empty="Pas encore de données." />
       </section>
 
       <section>
         <div className={discover.header}>
           <div className={discover.sectionSub}>Les plus attendues</div>
         </div>
-        <SeriesGrid items={data.watchlisted} empty="Pas encore de données." />
+        <SeriesGrid items={withCaption(data.watchlisted, ratingScale)} empty="Pas encore de données." />
       </section>
     </div>
   );

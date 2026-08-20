@@ -3,6 +3,8 @@ import { prisma } from "@/lib/db";
 import Sidebar from "./components/Sidebar";
 import styles from "./app.module.css";
 import { computeXP, getLevelInfo } from "@/lib/xp";
+import { RatingScaleProvider } from "@/lib/rating-scale";
+import { toRatingScale } from "@/lib/rating";
 
 export default async function AppLayout({
   children,
@@ -31,7 +33,7 @@ export default async function AppLayout({
         }),
         prisma.user.findUnique({
           where: { id: session.userId },
-          select: { avatarUrl: true },
+          select: { avatarUrl: true, ratingScale: true },
         }),
       ])
     : [0, 0, [], 0, 0, [], null];
@@ -41,6 +43,7 @@ export default async function AppLayout({
   const seriesLevel = getLevelInfo(computeXP(seriesEntries as XpEntry[]));
 
   return (
+    <RatingScaleProvider scale={toRatingScale(user?.ratingScale)}>
     <div className={styles.app}>
       <Sidebar
         isAuthenticated={!!session}
@@ -53,5 +56,6 @@ export default async function AppLayout({
       />
       <main className={styles.main}>{children}</main>
     </div>
+    </RatingScaleProvider>
   );
 }

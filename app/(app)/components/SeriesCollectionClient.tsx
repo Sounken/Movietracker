@@ -4,6 +4,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import SeriesGrid, { type SeriesGridItem } from "./SeriesGrid";
 import styles from "./CollectionClient.module.css";
 import loadMoreStyles from "./FilmGridInfinite.module.css";
+import { useRatingScale } from "@/lib/rating-scale";
+import { formatRatingOutOf } from "@/lib/rating";
 
 type ApiItem = {
   id: number;
@@ -31,6 +33,7 @@ export default function SeriesCollectionClient({
   showWatchlist?: boolean;
   emptyTitle?: string;
 }) {
+  const scale = useRatingScale();
   const [items, setItems] = useState<ApiItem[]>(initialItems);
   const [totalCount, setTotalCount] = useState(total);
   const [sortBy, setSortBy] = useState<"recent" | "rating" | "year">("recent");
@@ -112,7 +115,7 @@ export default function SeriesCollectionClient({
     posterUrl: s.posterUrl,
     year: s.year,
     voteAverage: s.voteAverage,
-    caption: !isWatchlist && s.rating != null ? `Ma note : ${s.rating}/10` : s.year,
+    caption: !isWatchlist && s.rating != null ? `Ma note : ${formatRatingOutOf(s.rating, scale)}` : s.year,
   }));
 
   const remaining = totalCount - items.length;

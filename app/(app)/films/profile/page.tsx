@@ -13,6 +13,8 @@ import AddFilmButton from "../../components/AddFilmButton";
 import ImportButton from "./ImportButton";
 import { computeXP, getLevelInfo } from "@/lib/xp";
 import styles from "./profile.module.css";
+import { Rating } from "@/lib/rating-scale";
+import { toRatingScale } from "@/lib/rating";
 
 // Cartes de stats — compteurs/agrégations Prisma, streamées.
 // Réutilise filmEntries déjà chargé par la page (pas de requête dupliquée).
@@ -58,7 +60,7 @@ async function StatsSection({ userId, filmEntries }: { userId: string; filmEntri
         <div className={styles.statCard}>
           <div className={styles.statDeco}><Star size={26} /></div>
           <div className={styles.statLabel}>Note moyenne</div>
-          <div className={styles.statVal}>{avgRating !== null ? avgRating.toFixed(1) : "—"}</div>
+          <div className={styles.statVal}><Rating value={avgRating} /></div>
           <div className={styles.statSub}>sur {ratedCount} films notés</div>
         </div>
         <div className={styles.statCard}>
@@ -169,12 +171,9 @@ export default async function ProfilePage() {
         initial={initial}
         levelInfo={levelInfo}
         joinedYear={joinedYear}
+        ratingScale={toRatingScale(user.ratingScale)}
+        extraActions={<ImportButton />}
       />
-
-      {/* Import action */}
-      <div className={styles.importRow}>
-        <ImportButton />
-      </div>
 
       {/* Stats grid — streamé */}
       <Suspense

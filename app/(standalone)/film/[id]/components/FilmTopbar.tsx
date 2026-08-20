@@ -1,6 +1,7 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
+import SearchBox from "@/app/(app)/components/SearchBox";
 import styles from "./FilmTopbar.module.css";
 
 const BackIcon = () => (
@@ -9,14 +10,34 @@ const BackIcon = () => (
   </svg>
 );
 
-export default function FilmTopbar() {
+/**
+ * `fallbackHref` : destination quand il n'y a pas d'historique (fiche ouverte
+ * en direct, lien partagé, PWA). La fiche série passe `/series`, la fiche film
+ * `/films` — auparavant le lien pointait en dur sur `/`, qui redirige vers
+ * `/films` : depuis une série on retombait donc toujours sur les films.
+ */
+export default function FilmTopbar({ fallbackHref = "/films" }: { fallbackHref?: string }) {
+  const router = useRouter();
+
+  // Décidé au clic (et non au montage) : pas d'état à synchroniser, et
+  // l'historique est lu au moment où il compte vraiment.
+  const goBack = () => {
+    // history.length === 1 → onglet ouvert directement sur cette fiche.
+    if (window.history.length > 1) router.back();
+    else router.push(fallbackHref);
+  };
+
   return (
     <div className={styles.topbar}>
-      <Link href="/" className={styles.backBtn}>
+      <button type="button" className={styles.backBtn} onClick={goBack}>
         <BackIcon /> <span>Retour</span>
-      </Link>
+      </button>
       <div className={styles.brand}>
         Movie<em>tracker</em>
+      </div>
+      {/* Même recherche que l'accueil, calée à droite de la barre. */}
+      <div className={styles.searchSlot}>
+        <SearchBox compact placeholder="Chercher un film, une série…" />
       </div>
     </div>
   );

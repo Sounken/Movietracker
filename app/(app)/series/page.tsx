@@ -2,6 +2,8 @@ import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { fetchDiscoverSeries, fetchOnTheAirSeries, fetchSeriesLogo } from "@/lib/tmdb";
 import { getSeriesCards } from "@/lib/series";
+import { formatRatingOutOf } from "@/lib/rating";
+import { getUserRatingScale } from "@/lib/rating-server";
 import Topbar from "../components/Topbar";
 import HeroCarousel from "../components/HeroCarousel";
 import SeriesGrid, { type SeriesGridItem } from "../components/SeriesGrid";
@@ -9,6 +11,7 @@ import discover from "../films/discover/discover.module.css";
 
 export default async function SeriesHomePage() {
   const session = await getSession();
+  const ratingScale = await getUserRatingScale();
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
@@ -105,7 +108,7 @@ export default async function SeriesHomePage() {
           posterUrl: card.posterUrl,
           year: card.year,
           voteAverage: card.voteAverage,
-          caption: `Ma note : ${r.rating}/10`,
+          caption: `Ma note : ${formatRatingOutOf(r.rating, ratingScale)}`,
         };
       })
       .filter((x): x is SeriesGridItem => x !== null);

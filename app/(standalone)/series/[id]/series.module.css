@@ -6,17 +6,19 @@
   gap: 12px;
 }
 
+/* Zones cliquables jointives : un gap laisse des pixels morts entre deux
+   étoiles, où le clic et le survol se perdent. */
 .stars {
   display: flex;
   align-items: center;
-  gap: 1px;
+  gap: 0;
   flex-wrap: wrap;
 }
 
 .star {
   background: none;
   border: 0;
-  padding: 2px;
+  padding: 4px 3px;
   cursor: pointer;
   color: var(--gold);
   line-height: 0;
@@ -30,6 +32,35 @@
   font-family: var(--font-geist-mono), monospace;
   font-size: 13px;
   color: var(--ink-dim);
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+}
+
+/* Saisie exacte de la note sur 100 */
+.ratingInput {
+  width: 3.2ch;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px dashed var(--line);
+  color: var(--gold);
+  font-family: inherit;
+  font-size: inherit;
+  text-align: right;
+  padding: 0;
+  outline: none;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.ratingInput:focus {
+  border-bottom-color: var(--accent);
+}
+
+.ratingInput::-webkit-outer-spin-button,
+.ratingInput::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
 }
 
 .actionRow {
@@ -218,6 +249,27 @@
 .episode:hover { background: var(--hover); }
 .episodeOn { color: var(--ink); }
 
+/* Épisode pas encore diffusé : non cochable, grisé — mais on n'applique pas
+   d'opacity sur la ligne entière, sinon la date de sortie (l'info utile)
+   deviendrait illisible elle aussi. */
+.episodeLocked {
+  cursor: not-allowed;
+  color: var(--ink-mute);
+}
+
+.episodeLocked:hover { background: none; }
+
+.episodeLocked .epName,
+.episodeLocked .epNum {
+  opacity: 0.55;
+}
+
+.episodeLocked .check {
+  border-style: dashed;
+  opacity: 0.5;
+  background: none;
+}
+
 .check {
   width: 20px;
   height: 20px;
@@ -242,6 +294,12 @@
 
 .epName { flex: 1; min-width: 0; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .epDate { font-size: 11px; color: var(--ink-mute); flex: 0 0 auto; }
+
+/* Date de diffusion à venir : mise en avant par rapport à la simple année. */
+.epUpcoming {
+  color: var(--accent);
+  white-space: nowrap;
+}
 
 .spin { animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }

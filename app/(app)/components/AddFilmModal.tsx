@@ -2,9 +2,12 @@
 
 import { useState, useEffect, useRef, useTransition } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { X, ArrowLeft, Check } from "lucide-react";
 import { addFilm } from "@/app/actions/film";
 import styles from "./AddFilmModal.module.css";
+import { Rating, useRatingScale } from "@/lib/rating-scale";
+import { toDisplayRating, toStoredRating, formatRating } from "@/lib/rating";
 
 type SearchResult = { id: number; title: string; year: string; posterUrl: string; voteAverage: number | null };
 
@@ -33,12 +36,15 @@ function StarIcon({ value, position }: { value: number; position: number }) {
 }
 
 export default function AddFilmModal({ onClose }: { onClose: () => void }) {
+  const router = useRouter();
+  const scale = useRatingScale();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [selected, setSelected] = useState<SearchResult | null>(null);
 
   const [rating, setRating] = useState(0);
-  const [hover, setHover] = useState(0);
+  // null = curseur hors des étoiles → on réaffiche la note choisie.
+  const [hover, setHover] = useState<number | null>(null);
   const [review, setReview] = useState("");
   const [watched, setWatched] = useState(true);
   const [watchedAt, setWatchedAt] = useState("");
@@ -81,11 +87,14 @@ export default function AddFilmModal({ onClose }: { onClose: () => void }) {
         watchedAt: watched && watchedAt ? watchedAt : null,
       });
       setDone(true);
+      // Recharge les données serveur de la page courante : la collection se met
+      // à jour toute seule, sans rafraîchissement manuel.
+      router.refresh();
       setTimeout(onClose, 800);
     });
   };
 
-  const displayed = hover || rating;
+  const displayed = hover ?? rating;
 
   return (
     <div className={styles.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
@@ -127,7 +136,7 @@ export default function AddFilmModal({ onClose }: { onClose: () => void }) {
                       <div className={styles.resultMeta}>
                         {r.year}
                         {r.voteAverage != null && r.voteAverage > 0 && (
-                          <span className={styles.resultScore}>★ {r.voteAverage}</span>
+                          <span className={styles.resultScore}>★ <Rating value={r.voteAverage} /></span>
                         )}
                       </div>
                     </div>
@@ -157,21 +166,45 @@ export default function AddFilmModal({ onClose }: { onClose: () => void }) {
 
             <div className={styles.field}>
               <div className={styles.fieldLabel}>Votre note</div>
-              <div className={styles.stars}>
+              <div className={styles.stars} onMouseLeave={() => setHover(null)}>
                 {[1,2,3,4,5,6,7,8,9,10].map((n) => (
                   <button
                     key={n}
                     className={styles.starBtn}
+                    aria-label={`Noter ${toDisplayRating(n, scale)}/${scale}`}
                     onMouseMove={(e) => setHover(getHoverVal(e, n))}
-                    onMouseLeave={() => setHover(0)}
-                    onClick={(e) => setRating(getHoverVal(e, n))}
+                    onClick={(e) => { setRating(getHoverVal(e, n)); setHover(null); }}
                   >
                     <StarIcon value={displayed} position={n} />
                   </button>
                 ))}
-                <span className={styles.ratingVal}>
-                  {displayed > 0 ? `${displayed}/10` : "—"}
-                </span>
+                {/* Sur 100 : saisie exacte, les étoiles ne font que des pas de 5. */}
+                {scale === 100 ? (
+                  <span className={styles.ratingVal}>
+                    <input
+                      type="number"
+                      className={styles.ratingInput}
+                      min={0}
+                      max={100}
+                      step={1}
+                      aria-label="Note sur 100"
+                      placeholder="—"
+                      value={rating > 0 ? String(toDisplayRating(rating, 100)) : ""}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        if (raw === "") { setRating(0); return; }
+                        const n = Number(raw);
+                        if (Number.isNaN(n)) return;
+                        setRating(toStoredRating(Math.min(100, Math.max(0, n)), 100));
+                      }}
+                    />
+                    /100
+                  </span>
+                ) : (
+                  <span className={styles.ratingVal}>
+                    {displayed > 0 ? `${formatRating(displayed, scale)}/10` : "—"}
+                  </span>
+                )}
               </div>
             </div>
 

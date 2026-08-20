@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import FilmGrid from "./FilmGrid";
 import type { TmdbFilmCard } from "@/lib/tmdb";
+import { useRatingScale } from "@/lib/rating-scale";
+import { toDisplayRating } from "@/lib/rating";
 import styles from "./CollectionClient.module.css";
 import loadMoreStyles from "./FilmGridInfinite.module.css";
 
@@ -33,6 +35,7 @@ export default function CollectionClient({
   /** Affiche un bouton « Watchlist » qui bascule la liste sur les films à voir. */
   showWatchlist?: boolean;
 }) {
+  const scale = useRatingScale();
   const [films, setFilms] = useState<Film[]>(initialFilms);
   const [totalCount, setTotalCount] = useState(total);
   const [years, setYears] = useState<string[]>([]);
@@ -47,6 +50,25 @@ export default function CollectionClient({
   const [loading, setLoading] = useState(true);
   // true tant qu'on affiche encore les données rendues côté serveur
   const isInitial = useRef(true);
+
+  // Le serveur nous renvoie une nouvelle collection après un router.refresh()
+  // (ajout d'un film, note supprimée…). Sans cette resynchro, le useState
+  // ci-dessus garderait l'ancienne liste et il fallait recharger la page.
+  // On compare une signature stable plutôt que la référence du tableau, sinon
+  // chaque re-rendu du serveur écraserait les pages déjà chargées au scroll.
+  const initialSignature = `${total}|${initialFilms.map((f) => `${f.id}:${f.rating ?? ""}`).join(",")}`;
+  const [prevSignature, setPrevSignature] = useState(initialSignature);
+  if (initialSignature !== prevSignature) {
+    setPrevSignature(initialSignature);
+    // Dès qu'un filtre / tri / la vue watchlist est actif, la liste affichée
+    // vient de /api/collection et non du serveur : on ne l'écrase pas.
+    const showsServerData =
+      view === "default" && sortBy === "recent" && minRating === null && maxRating === null && yearFilter === "";
+    if (showsServerData) {
+      setFilms(initialFilms);
+      setTotalCount(total);
+    }
+  }
 
   const isWatchlist = view === "watchlist";
   const currentType = isWatchlist ? "watchlist" : type;
@@ -170,7 +192,7 @@ export default function CollectionClient({
             >
               <option value="">Note min</option>
               {RATINGS.slice(0, -1).map((r) => (
-                <option key={r} value={r}>≥ {r}</option>
+                <option key={r} value={r}>≥ {toDisplayRating(r, scale)}</option>
               ))}
             </select>
             <select
@@ -180,7 +202,7 @@ export default function CollectionClient({
             >
               <option value="">Note max</option>
               {RATINGS.slice(1).map((r) => (
-                <option key={r} value={r}>≤ {r}</option>
+                <option key={r} value={r}>≤ {toDisplayRating(r, scale)}</option>
               ))}
             </select>
             <select

@@ -15,6 +15,9 @@ model User {
   avatarUrl      String?
   bannerUrl      String?
   bio            String?
+  /// Échelle d'affichage des notes : 10 (défaut) ou 100. Les notes restent
+  /// stockées sur 10 dans UserFilm/UserSeries, seul l'affichage change.
+  ratingScale    Int                 @default(10)
   createdAt      DateTime            @default(now())
   films          UserFilm[]
   favoriteFilms  UserFavoriteFilm[]

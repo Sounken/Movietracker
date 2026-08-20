@@ -4,6 +4,17 @@ import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
+// Mêmes anciennes routes que pour les films : `/`, `/watchlist` et `/profile`
+// n'existent plus depuis la scission Films / Séries, elles ne revalidaient
+// donc plus rien et les pages restaient en cache.
+function revalidateSeriesPages(tmdbId?: number) {
+  revalidatePath("/series");
+  revalidatePath("/series/profile");
+  revalidatePath("/series/watchlist");
+  revalidatePath("/series/favorites");
+  if (tmdbId !== undefined) revalidatePath(`/series/${tmdbId}`);
+}
+
 // ——— Niveau série (note / avis / watchlist / like) ———
 
 export async function saveSeriesRating(tmdbId: number, rating: number, review: string) {
@@ -16,9 +27,7 @@ export async function saveSeriesRating(tmdbId: number, rating: number, review: s
     create: { userId: session.userId, tmdbId, rating, review, watched: true, watchlist: false },
   });
 
-  revalidatePath("/");
-  revalidatePath("/watchlist");
-  revalidatePath(`/series/${tmdbId}`);
+  revalidateSeriesPages(tmdbId);
 }
 
 export async function toggleSeriesWatchlist(tmdbId: number) {
@@ -35,8 +44,7 @@ export async function toggleSeriesWatchlist(tmdbId: number) {
     create: { userId: session.userId, tmdbId, watchlist: true },
   });
 
-  revalidatePath("/watchlist");
-  revalidatePath(`/series/${tmdbId}`);
+  revalidateSeriesPages(tmdbId);
 }
 
 export async function toggleSeriesLiked(tmdbId: number) {
@@ -53,7 +61,7 @@ export async function toggleSeriesLiked(tmdbId: number) {
     create: { userId: session.userId, tmdbId, liked: true },
   });
 
-  revalidatePath(`/series/${tmdbId}`);
+  revalidateSeriesPages(tmdbId);
 }
 
 export async function deleteSeriesRating(tmdbId: number) {
@@ -76,9 +84,7 @@ export async function deleteSeriesRating(tmdbId: number) {
     });
   }
 
-  revalidatePath("/");
-  revalidatePath("/profile");
-  revalidatePath(`/series/${tmdbId}`);
+  revalidateSeriesPages(tmdbId);
 }
 
 // ——— Séries préférées (4 emplacements épinglés sur le profil) ———
@@ -145,7 +151,7 @@ export async function toggleEpisode(
     await ensureUserSeries(session.userId, seriesId);
   }
 
-  revalidatePath(`/series/${seriesId}`);
+  revalidateSeriesPages(seriesId);
 }
 
 // Marque (ou démarque) toute une saison d'un coup.
@@ -176,5 +182,5 @@ export async function setSeasonWatched(
     });
   }
 
-  revalidatePath(`/series/${seriesId}`);
+  revalidateSeriesPages(seriesId);
 }

@@ -5,6 +5,7 @@ import { fetchPersonDetail, fetchPersonCredits, fetchPersonPopularRank } from "@
 import ActorTopbar from "./ActorTopbar";
 import FilmographyClient from "./FilmographyClient";
 import styles from "./actor.module.css";
+import { Rating } from "@/lib/rating-scale";
 
 function age(birthday: string, deathday: string | null): number | null {
   const end = deathday ? new Date(deathday) : new Date();
@@ -195,7 +196,7 @@ export default async function ActorPage({ params }: { params: Promise<{ id: stri
                         {film.character && <> · <span className={styles.top4Role}>{film.character}</span></>}
                       </div>
                       {film.voteAverage > 0 && (
-                        <div className={styles.top4Score}>★ {film.voteAverage}</div>
+                        <div className={styles.top4Score}>★ <Rating value={film.voteAverage} /></div>
                       )}
                     </div>
                   </Link>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import styles from "../films/discover/discover.module.css";
+import { Rating } from "@/lib/rating-scale";
 
 export type SeriesGridItem = {
   id: number;
@@ -35,7 +36,7 @@ export default function SeriesGrid({
                 style={{ objectFit: "cover" }}
               />
             )}
-            {s.voteAverage > 0 && <div className={styles.score}>★ {s.voteAverage}</div>}
+            {s.voteAverage > 0 && <div className={styles.score}>★ <Rating value={s.voteAverage} /></div>}
           </div>
           <div className={styles.info}>
             <div className={styles.title}>{s.name}</div>

@@ -328,6 +328,16 @@
 }
 
 /* ——— Similar films ——— */
+/* Sous-titre du bloc saga */
+.sagaSub {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  color: var(--ink-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: -14px 0 18px;
+}
+
 .similarGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
@@ -426,11 +436,14 @@
   padding: 14px 16px;
 }
 
+/* La note se lit juste après le pseudo : `space-between` la renvoyait à
+   l'autre bout de la carte, l'œil devait traverser toute la ligne. */
 .friendReviewHead {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .friendReviewUser {
@@ -473,10 +486,17 @@
   transition: color 0.15s;
 }
 
+/* Petite pastille accolée au pseudo plutôt qu'un texte flottant. */
 .friendRating {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 13px;
+  font-size: 12px;
   color: var(--gold);
+  background: rgba(217, 119, 66, 0.12);
+  border: 1px solid rgba(217, 119, 66, 0.22);
+  border-radius: 999px;
+  padding: 2px 9px;
+  white-space: nowrap;
+  flex: 0 0 auto;
 }
 
 :global([data-theme="light"]) .friendRating {

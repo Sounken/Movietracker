@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import type { TmdbFilmCard } from "@/lib/tmdb";
 import styles from "./FilmGrid.module.css";
+import { Rating } from "@/lib/rating-scale";
 
 const StarIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" width="10" height="10">
@@ -60,7 +61,7 @@ export default function FilmGrid({
               {film.genres[0] && <span>{film.genres[0]}</span>}
               {film.rating !== null && <span>·</span>}
               {film.rating !== null && (
-                <span className={styles.stars}>★ {film.rating}/10</span>
+                <span className={styles.stars}>★ <Rating value={film.rating} outOf /></span>
               )}
             </div>
           </div>

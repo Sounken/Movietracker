@@ -7,6 +7,7 @@ import Image from "next/image";
 import { Eye, Star, PenLine, Clock, Users, type LucideIcon } from "lucide-react";
 import type { Period, FilmRanking, GenreStat, ActiveUser, RecentReview } from "./page";
 import styles from "./trends.module.css";
+import { Rating } from "@/lib/rating-scale";
 
 type Stats = {
   totalUsers: number;
@@ -188,7 +189,7 @@ export default function TrendsClient({
                     </div>
                     <div className={styles.rankBadge}>
                       {activeTab === "rated" && film.avgRating != null ? (
-                        <span className={styles.rankRating}>★ {film.avgRating.toFixed(1)}</span>
+                        <span className={styles.rankRating}>★ <Rating value={film.avgRating} /></span>
                       ) : (
                         <span className={styles.rankCount}>{film.count}</span>
                       )}
@@ -230,7 +231,7 @@ export default function TrendsClient({
                             {r.title}
                           </Link>
                           {r.rating != null && (
-                            <span className={styles.reviewRating}> ★ {r.rating}</span>
+                            <span className={styles.reviewRating}> ★ <Rating value={r.rating} /></span>
                           )}
                         </div>
                         <span className={styles.reviewTime}>{timeAgo(r.updatedAt)}</span>

@@ -1,14 +1,24 @@
 "use client";
 
-import { useState, useRef, useTransition } from "react";
+import { useState, useRef, useEffect, useTransition, type ReactNode } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { X, Camera, Check, Sparkles, Pencil } from "lucide-react";
 import { updateProfile } from "@/app/actions/profile";
 import type { LevelInfo } from "@/lib/xp";
+import ImageCropper from "./ImageCropper";
+import type { RatingScale } from "@/lib/rating";
 import styles from "./profile.module.css";
 
 const BIO_MAX_LENGTH = 1000;
+
+// Ratios calés sur l'affichage réel : la bannière fait ~1400×240 sur desktop,
+// l'avatar est un cercle. Recadrer à ces ratios évite que le navigateur
+// recoupe l'image lui-même (background-size: cover) et déplace le sujet.
+const BANNER_ASPECT = 5.5;
+const BANNER_OUTPUT_WIDTH = 1600;
+const AVATAR_ASPECT = 1;
+const AVATAR_OUTPUT_WIDTH = 512;
 
 const PencilIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="14" height="14">
@@ -34,23 +44,48 @@ type Props = {
   initial: string;
   levelInfo: LevelInfo;
   joinedYear: number;
+  /** Échelle de notation enregistrée (10 ou 100). */
+  ratingScale: RatingScale;
+  /** Boutons additionnels alignés à droite, à côté de « Modifier le profil »
+   *  (ex. l'import Letterboxd sur le profil films). */
+  extraActions?: ReactNode;
 };
 
 export default function ProfileHeaderClient({
-  name, bio, avatarUrl, bannerUrl, initial, levelInfo, joinedYear,
+  name, bio, avatarUrl, bannerUrl, initial, levelInfo, joinedYear, ratingScale, extraActions,
 }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [nameVal, setNameVal] = useState(name);
   const [bioVal, setBioVal] = useState(bio.slice(0, BIO_MAX_LENGTH));
+  const [scaleVal, setScaleVal] = useState<RatingScale>(ratingScale);
   const [avatarPreview, setAvatarPreview] = useState(avatarUrl);
   const [bannerPreview, setBannerPreview] = useState(bannerUrl);
   const [isPending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
 
+  // Fichiers déjà recadrés, prêts à être envoyés. On ne se sert plus de
+  // input.files : ce qui part au serveur est le rendu du recadrage.
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  // Fichier en cours de recadrage (null = éditeur fermé).
+  const [cropping, setCropping] = useState<{ file: File; type: "avatar" | "banner" } | null>(null);
+
   const avatarRef = useRef<HTMLInputElement>(null);
   const bannerRef = useRef<HTMLInputElement>(null);
+  // URLs d'aperçu créées localement, à libérer pour ne pas fuiter.
+  const previewUrls = useRef<string[]>([]);
+
+  useEffect(() => () => {
+    previewUrls.current.forEach((u) => URL.revokeObjectURL(u));
+  }, []);
+
+  const makePreview = (file: File) => {
+    const url = URL.createObjectURL(file);
+    previewUrls.current.push(url);
+    return url;
+  };
 
   const uploadFile = async (file: File, type: "avatar" | "banner"): Promise<string> => {
     const form = new FormData();
@@ -67,23 +102,42 @@ export default function ProfileHeaderClient({
     return url as string;
   };
 
+  // Choisir un fichier ouvre l'éditeur de recadrage plutôt que d'accepter
+  // l'image telle quelle.
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: "avatar" | "banner") => {
     const file = e.target.files?.[0];
+    // On vide l'input tout de suite : sinon re-choisir le même fichier après
+    // une annulation ne déclencherait plus d'événement change.
+    e.target.value = "";
     if (!file) return;
-    const preview = URL.createObjectURL(file);
-    if (type === "avatar") setAvatarPreview(preview);
-    else setBannerPreview(preview);
+    setError("");
+    setCropping({ file, type });
+  };
+
+  const handleCropped = (croppedFile: File) => {
+    if (!cropping) return;
+    const preview = makePreview(croppedFile);
+    if (cropping.type === "avatar") {
+      setAvatarFile(croppedFile);
+      setAvatarPreview(preview);
+    } else {
+      setBannerFile(croppedFile);
+      setBannerPreview(preview);
+    }
+    setCropping(null);
   };
 
   const clearAvatar = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     if (avatarRef.current) avatarRef.current.value = "";
+    setAvatarFile(null);
     setAvatarPreview("");
   };
 
   const clearBanner = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     if (bannerRef.current) bannerRef.current.value = "";
+    setBannerFile(null);
     setBannerPreview("");
   };
 
@@ -91,18 +145,21 @@ export default function ProfileHeaderClient({
     setError("");
     startTransition(async () => {
       try {
-        const updates: Record<string, string> = {
+        const updates: {
+          name: string;
+          bio: string;
+          ratingScale: RatingScale;
+          avatarUrl?: string;
+          bannerUrl?: string;
+        } = {
           name: nameVal,
           bio: bioVal.slice(0, BIO_MAX_LENGTH),
+          ratingScale: scaleVal,
         };
-        if (avatarRef.current?.files?.[0])
-          updates.avatarUrl = await uploadFile(avatarRef.current.files[0], "avatar");
-        else if (!avatarPreview && avatarUrl)
-          updates.avatarUrl = "";
-        if (bannerRef.current?.files?.[0])
-          updates.bannerUrl = await uploadFile(bannerRef.current.files[0], "banner");
-        else if (!bannerPreview && bannerUrl)
-          updates.bannerUrl = "";
+        if (avatarFile) updates.avatarUrl = await uploadFile(avatarFile, "avatar");
+        else if (!avatarPreview && avatarUrl) updates.avatarUrl = "";
+        if (bannerFile) updates.bannerUrl = await uploadFile(bannerFile, "banner");
+        else if (!bannerPreview && bannerUrl) updates.bannerUrl = "";
         await updateProfile(updates);
         setSaved(true);
         router.refresh();
@@ -154,12 +211,13 @@ export default function ProfileHeaderClient({
             {bio && <p className={styles.bio}>{bio}</p>}
           </div>
 
-          {/* Edit button */}
+          {/* Actions — toutes sur la même ligne, alignées à droite */}
           <div className={styles.profileActions}>
             <button className={styles.btnEdit} onClick={() => setOpen(true)}>
               <PencilIcon />
               <span className={styles.btnEditLabel}>Modifier le profil</span>
             </button>
+            {extraActions}
           </div>
         </div>
       </div>
@@ -229,7 +287,8 @@ export default function ProfileHeaderClient({
                 <input ref={avatarRef} type="file" accept="image/*" hidden onChange={(e) => handleFileChange(e, "avatar")} />
               </div>
               <div className={styles.avatarEditInfo}>
-                Cliquez sur la photo pour la remplacer.
+                Cliquez sur la photo pour la remplacer. Vous pourrez la recadrer
+                et zoomer avant de valider.
               </div>
             </div>
 
@@ -253,6 +312,29 @@ export default function ProfileHeaderClient({
               />
             </div>
 
+            {/* Réglage global : change l'affichage des notes partout dans
+                l'app. Les notes déjà saisies sont converties (8.5 → 85), rien
+                n'est perdu si on revient sur /10. */}
+            <div className={styles.field}>
+              <label className={styles.label}>Échelle de notation</label>
+              <div className={styles.scaleChoice}>
+                {([10, 100] as const).map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    className={`${styles.scaleBtn} ${scaleVal === s ? styles.scaleBtnOn : ""}`}
+                    onClick={() => setScaleVal(s)}
+                    aria-pressed={scaleVal === s}
+                  >
+                    <span className={styles.scaleBtnVal}>/{s}</span>
+                    <span className={styles.scaleBtnHint}>
+                      {s === 10 ? "Étoiles et demi-étoiles" : "Note exacte au point près"}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {error && <div className={styles.modalError}>{error}</div>}
 
             <button className={styles.saveBtn} onClick={handleSave} disabled={isPending || saved}>
@@ -260,6 +342,19 @@ export default function ProfileHeaderClient({
             </button>
           </div>
         </div>
+      )}
+
+      {/* Éditeur de recadrage — s'ouvre par-dessus la modale de profil */}
+      {cropping && (
+        <ImageCropper
+          file={cropping.file}
+          aspect={cropping.type === "avatar" ? AVATAR_ASPECT : BANNER_ASPECT}
+          outputWidth={cropping.type === "avatar" ? AVATAR_OUTPUT_WIDTH : BANNER_OUTPUT_WIDTH}
+          title={cropping.type === "avatar" ? "Recadrer la photo de profil" : "Recadrer la bannière"}
+          round={cropping.type === "avatar"}
+          onCancel={() => setCropping(null)}
+          onDone={handleCropped}
+        />
       )}
     </>
   );

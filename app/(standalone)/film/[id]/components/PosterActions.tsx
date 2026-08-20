@@ -7,15 +7,6 @@ import { toggleWatchlist, toggleLiked } from "@/app/actions/film";
 import { addFilmToList, removeFilmFromList } from "@/app/actions/lists";
 import styles from "./PosterActions.module.css";
 
-const CLEAR_RATING_REQUEST_EVENT = "movietracker:clear-rating-request";
-const RATING_CLEARED_EVENT = "movietracker:rating-cleared";
-const RATING_CHANGED_EVENT = "movietracker:rating-changed";
-
-const StarIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" width="15" height="15">
-    <path d="m12 2 3 7 7 .5-5.5 4.5L18 22l-6-4-6 4 1.5-8L2 9.5 9 9z" />
-  </svg>
-);
 const ClockIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" width="15" height="15">
     <circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" />
@@ -41,7 +32,6 @@ type UserList = { id: string; name: string; emoji: string };
 
 type Props = {
   tmdbId: number;
-  initialRating: number;
   initialWatchlist: boolean;
   initialLiked: boolean;
   userLists: UserList[];
@@ -51,7 +41,6 @@ type Props = {
 
 export default function PosterActions({
   tmdbId,
-  initialRating,
   initialWatchlist,
   initialLiked,
   userLists,
@@ -60,21 +49,12 @@ export default function PosterActions({
 }: Props) {
   const router = useRouter();
   const requireAuth = () => { if (!isAuthenticated) { router.push("/login"); return false; } return true; };
-  const [rating, setRating] = useState(initialRating);
   const [watchlist, setWatchlist] = useState(initialWatchlist);
   const [liked, setLiked] = useState(initialLiked);
   const [listMembership, setListMembership] = useState<Set<string>>(new Set(listsWithFilm));
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [, startTransition] = useTransition();
   const dropRef = useRef<HTMLDivElement>(null);
-
-  // Si la note initiale (props serveur) change, on resynchronise l'état local
-  // pendant le rendu (pattern React « ajuster l'état pendant le rendu »).
-  const [prevInitialRating, setPrevInitialRating] = useState(initialRating);
-  if (initialRating !== prevInitialRating) {
-    setPrevInitialRating(initialRating);
-    setRating(initialRating);
-  }
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -83,37 +63,6 @@ export default function PosterActions({
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
-
-  useEffect(() => {
-    const handler = (event: Event) => {
-      const detail = (event as CustomEvent<{ tmdbId: number }>).detail;
-      if (detail?.tmdbId === tmdbId) setRating(0);
-    };
-    window.addEventListener(RATING_CLEARED_EVENT, handler);
-    return () => window.removeEventListener(RATING_CLEARED_EVENT, handler);
-  }, [tmdbId]);
-
-  useEffect(() => {
-    const handler = (event: Event) => {
-      const detail = (event as CustomEvent<{ tmdbId: number; rating: number }>).detail;
-      if (detail?.tmdbId === tmdbId) setRating(detail.rating);
-    };
-    window.addEventListener(RATING_CHANGED_EVENT, handler);
-    return () => window.removeEventListener(RATING_CHANGED_EVENT, handler);
-  }, [tmdbId]);
-
-  function handleRatingAction() {
-    if (!requireAuth()) return;
-    if (rating <= 0) {
-      document.getElementById("rating-widget")?.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
-      return;
-    }
-
-    window.dispatchEvent(new CustomEvent(CLEAR_RATING_REQUEST_EVENT, { detail: { tmdbId } }));
-  }
 
   function toggleList(listId: string) {
     if (!requireAuth()) return;
@@ -131,14 +80,7 @@ export default function PosterActions({
 
   return (
     <div className={styles.actions}>
-      {/* Rating (scroll to widget) */}
-      <button
-        className={rating > 0 ? styles.rated : ""}
-        onClick={handleRatingAction}
-      >
-        <StarIcon />
-        {rating > 0 ? `Supprimer ma note (${rating}/10)` : "Noter ce film"}
-      </button>
+      {/* La notation se fait directement dans le bloc « Votre note » à droite. */}
 
       {/* Watchlist */}
       <button

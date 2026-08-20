@@ -13,6 +13,27 @@ type SeasonState = {
   loaded: boolean;
 };
 
+/**
+ * Un épisode est cochable seulement s'il est déjà diffusé. TMDB renvoie
+ * `air_date` vide tant que la date n'est pas annoncée : dans ce cas on
+ * considère l'épisode comme non sorti (date inconnue).
+ */
+function isReleased(ep: TmdbEpisode): boolean {
+  if (!ep.airDate) return false;
+  const air = new Date(`${ep.airDate}T00:00:00`);
+  if (Number.isNaN(air.getTime())) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return air <= today;
+}
+
+const DATE_FMT = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+
+function formatAirDate(airDate: string): string {
+  const d = new Date(`${airDate}T00:00:00`);
+  return Number.isNaN(d.getTime()) ? airDate : DATE_FMT.format(d);
+}
+
 export default function SeasonTracker({
   seriesId,
   seasons,
@@ -63,6 +84,9 @@ export default function SeasonTracker({
 
   function onToggleEpisode(seasonNumber: number, ep: TmdbEpisode) {
     if (!requireAuth()) return;
+    // Garde-fou : le bouton est déjà `disabled`, mais on ne veut en aucun cas
+    // enregistrer un épisode non diffusé (il compterait dans l'XP / le temps vu).
+    if (!isReleased(ep)) return;
     const s = state[seasonNumber];
     if (!s) return;
     const was = s.watched.has(ep.episodeNumber);
@@ -90,23 +114,27 @@ export default function SeasonTracker({
     const s = state[seasonNumber];
     if (!s) return;
 
+    // « Marquer la saison comme vue » ne concerne que les épisodes diffusés :
+    // sur une saison en cours, les épisodes à venir restent décochés.
+    const released = s.episodes.filter(isReleased);
+
     setState((prev) => ({
       ...prev,
       [seasonNumber]: {
         ...prev[seasonNumber],
         watched: watched
-          ? new Set(s.episodes.map((e) => e.episodeNumber))
+          ? new Set(released.map((e) => e.episodeNumber))
           : new Set(),
       },
     }));
-    setCounts((c) => ({ ...c, [seasonNumber]: watched ? s.episodes.length : 0 }));
+    setCounts((c) => ({ ...c, [seasonNumber]: watched ? released.length : 0 }));
 
     startTransition(async () => {
       try {
         await setSeasonWatched(
           seriesId,
           seasonNumber,
-          s.episodes.map((e) => ({ episodeNumber: e.episodeNumber, runtime: e.runtime })),
+          released.map((e) => ({ episodeNumber: e.episodeNumber, runtime: e.runtime })),
           watched,
         );
       } catch {
@@ -122,7 +150,10 @@ export default function SeasonTracker({
         const pct = season.episodeCount > 0 ? Math.round((watched / season.episodeCount) * 100) : 0;
         const isOpen = open === season.seasonNumber;
         const s = state[season.seasonNumber];
-        const allWatched = watched >= season.episodeCount && season.episodeCount > 0;
+        // Une saison en cours ne peut pas être « complète » au sens TMDB :
+        // une fois les épisodes chargés, on se base sur ceux déjà diffusés.
+        const releasedCount = s?.loaded ? s.episodes.filter(isReleased).length : season.episodeCount;
+        const allWatched = releasedCount > 0 && watched >= releasedCount;
 
         return (
           <div key={season.seasonNumber} className={styles.season}>
@@ -156,18 +187,29 @@ export default function SeasonTracker({
                     </button>
                     {s?.episodes.map((ep) => {
                       const isWatched = s.watched.has(ep.episodeNumber);
+                      const released = isReleased(ep);
                       return (
                         <button
                           key={ep.episodeNumber}
-                          className={`${styles.episode} ${isWatched ? styles.episodeOn : ""}`}
+                          className={`${styles.episode} ${isWatched ? styles.episodeOn : ""} ${released ? "" : styles.episodeLocked}`}
                           onClick={() => onToggleEpisode(season.seasonNumber, ep)}
+                          disabled={!released}
+                          title={released ? undefined : "Épisode pas encore diffusé"}
                         >
                           <span className={`${styles.check} ${isWatched ? styles.checkOn : ""}`}>
                             {isWatched && <Check size={12} strokeWidth={3} />}
                           </span>
                           <span className={styles.epNum}>{ep.episodeNumber}</span>
                           <span className={styles.epName}>{ep.name || `Épisode ${ep.episodeNumber}`}</span>
-                          {ep.airDate && <span className={styles.epDate}>{ep.airDate.slice(0, 4)}</span>}
+                          {/* Épisode à venir : date complète (l'info utile),
+                              sinon la simple année suffit. */}
+                          {released ? (
+                            ep.airDate && <span className={styles.epDate}>{ep.airDate.slice(0, 4)}</span>
+                          ) : (
+                            <span className={`${styles.epDate} ${styles.epUpcoming}`}>
+                              {ep.airDate ? formatAirDate(ep.airDate) : "Date inconnue"}
+                            </span>
+                          )}
                         </button>
                       );
                     })}

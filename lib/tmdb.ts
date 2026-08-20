@@ -34,6 +34,9 @@ export type TmdbFilmDetail = {
   originalLanguage: string;
   spokenLanguages: string[];
   productionCountries: string[];
+  /** Saga TMDB à laquelle le film appartient (« Star Wars — La Saga »…). */
+  collectionId: number | null;
+  collectionName: string;
 };
 
 export type TmdbPerson = {
@@ -263,6 +266,8 @@ export async function fetchFilmDetail(id: number): Promise<TmdbFilmDetail | null
         .slice(0, 5)
         .map((c: { name: string }) => c.name),
       originalLanguage: m.original_language ?? "",
+      collectionId: m.belongs_to_collection?.id ?? null,
+      collectionName: m.belongs_to_collection?.name ?? "",
       spokenLanguages: (m.spoken_languages ?? []).map((l: { name: string }) => l.name),
       productionCountries: (m.production_countries ?? []).map((c: { name: string }) => c.name),
     };
@@ -586,6 +591,41 @@ export async function fetchSimilarFilms(id: number): Promise<TmdbFilmCard[]> {
       posterUrl: m.poster_path ? `${IMG}/w342${m.poster_path}` : "",
       year: typeof m.release_date === "string" ? m.release_date.slice(0, 4) : "",
       genres: ((m.genre_ids as number[]) ?? []).slice(0, 2).map((gid) => GENRES[gid]).filter(Boolean),
+    }));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Tous les films d'une saga TMDB (« collection »), triés par date de sortie.
+ * `/movie/{id}/recommendations` n'en renvoie qu'une partie : sur Star Wars par
+ * exemple, plusieurs épisodes manquaient à l'appel.
+ */
+export async function fetchFilmCollection(collectionId: number): Promise<TmdbFilmCard[]> {
+  const key = process.env.TMDB_API_KEY;
+  if (!key) return [];
+  try {
+    const res = await fetch(
+      `${BASE}/collection/${collectionId}?api_key=${key}&language=fr-FR`,
+      { next: { revalidate: 86400 } }
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    // Ordre chronologique de sortie ; les films sans date passent à la fin.
+    const parts = ((data.parts ?? []) as Record<string, unknown>[]).slice().sort((a, b) => {
+      const da = (a.release_date as string) || "9999";
+      const db = (b.release_date as string) || "9999";
+      return da.localeCompare(db);
+    });
+
+    return parts.map((m) => ({
+      id: m.id as number,
+      title: (m.title as string) ?? "",
+      posterUrl: m.poster_path ? `${IMG}/w342${m.poster_path}` : "",
+      year: typeof m.release_date === "string" ? m.release_date.slice(0, 4) : "",
+      genres: ((m.genre_ids as number[]) ?? []).slice(0, 2).map((gid) => GENRES[gid]).filter(Boolean),
+      voteAverage: Math.round(((m.vote_average as number) ?? 0) * 10) / 10,
     }));
   } catch {
     return [];

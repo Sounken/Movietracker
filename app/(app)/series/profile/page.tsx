@@ -9,6 +9,8 @@ import ProfileHeaderClient from "../../films/profile/ProfileHeaderClient";
 import FavFilmsClient from "../../films/profile/FavFilmsClient";
 import SeriesCollectionClient from "../../components/SeriesCollectionClient";
 import styles from "../../films/profile/profile.module.css";
+import { Rating } from "@/lib/rating-scale";
+import { toRatingScale } from "@/lib/rating";
 
 export default async function SeriesProfilePage() {
   const session = await getSession();
@@ -81,6 +83,7 @@ export default async function SeriesProfilePage() {
         initial={initial}
         levelInfo={levelInfo}
         joinedYear={joinedYear}
+        ratingScale={toRatingScale(user.ratingScale)}
       />
 
       {/* Stats séries */}
@@ -94,7 +97,7 @@ export default async function SeriesProfilePage() {
           <div className={styles.statCard}>
             <div className={styles.statDeco}><Star size={26} /></div>
             <div className={styles.statLabel}>Note moyenne</div>
-            <div className={styles.statVal}>{avgRating !== null ? avgRating.toFixed(1) : "—"}</div>
+            <div className={styles.statVal}><Rating value={avgRating} /></div>
             <div className={styles.statSub}>sur {ratedCount} séries notées</div>
           </div>
           <div className={styles.statCard}>

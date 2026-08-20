@@ -11,6 +11,8 @@ export async function updateProfile(data: {
   bio?: string;
   avatarUrl?: string;
   bannerUrl?: string;
+  /** Échelle d'affichage des notes : 10 ou 100. */
+  ratingScale?: number;
 }) {
   const session = await getSession();
   if (!session) throw new Error("Non authentifié");
@@ -18,6 +20,10 @@ export async function updateProfile(data: {
   const updateData = {
     ...data,
     ...(data.bio !== undefined ? { bio: data.bio.slice(0, BIO_MAX_LENGTH) } : {}),
+    // Toute autre valeur est ignorée : la colonne n'accepte que 10 ou 100.
+    ...(data.ratingScale !== undefined
+      ? { ratingScale: data.ratingScale === 100 ? 100 : 10 }
+      : {}),
   };
 
   await prisma.user.update({
@@ -25,7 +31,11 @@ export async function updateProfile(data: {
     data: updateData,
   });
 
-  revalidatePath("/profile");
+  revalidatePath("/films/profile");
+  revalidatePath("/series/profile");
+  // L'échelle de notation change l'affichage de TOUTES les pages qui montrent
+  // une note : on invalide l'arbre entier plutôt que page par page.
+  if (data.ratingScale !== undefined) revalidatePath("/", "layout");
 }
 
 export async function setFavoriteFilm(position: 1 | 2 | 3 | 4, tmdbId: number | null) {
@@ -48,5 +58,6 @@ export async function setFavoriteFilm(position: 1 | 2 | 3 | 4, tmdbId: number | 
     });
   }
 
-  revalidatePath("/profile");
+  revalidatePath("/films/profile");
+  revalidatePath("/series/profile");
 }

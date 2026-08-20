@@ -3,7 +3,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import { fetchFilmDetail, fetchFilmCredits, fetchSimilarFilms, fetchFilmKeywords, fetchFilmLogo, formatMoney, formatRuntime } from "@/lib/tmdb";
+import { fetchFilmDetail, fetchFilmCredits, fetchSimilarFilms, fetchFilmKeywords, fetchFilmLogo, fetchFilmCollection, formatMoney, formatRuntime } from "@/lib/tmdb";
 import FilmTopbar from "./components/FilmTopbar";
 import FilmTitleLogo from "./components/FilmTitleLogo";
 import PosterActions from "./components/PosterActions";
@@ -11,6 +11,7 @@ import RatingWidget from "./components/RatingWidget";
 import CastGrid from "./components/CastGrid";
 import FriendReviews from "./components/FriendReviews";
 import styles from "./film.module.css";
+import { Rating } from "@/lib/rating-scale";
 
 const LANG_NAMES: Record<string, string> = {
   en: "Anglais", fr: "Français", es: "Espagnol", de: "Allemand", it: "Italien",
@@ -33,6 +34,17 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
   ]);
 
   if (!film) notFound();
+
+  // Films de la saga (hors film courant). `recommendations` en oublie une
+  // partie — sur Star Wars, plusieurs épisodes n'apparaissaient pas.
+  const sagaFilms = film.collectionId
+    ? (await fetchFilmCollection(film.collectionId)).filter((f) => f.id !== film.id)
+    : [];
+
+  // Pas de doublon entre les deux blocs : ce qui est déjà dans la saga sort
+  // des « films similaires ».
+  const sagaIds = new Set(sagaFilms.map((f) => f.id));
+  const similarFilms = similar.filter((s) => !sagaIds.has(s.id));
 
   const [userFilm, userLists, listsWithFilmRaw, friendFilms] = session
     ? await Promise.all([
@@ -108,7 +120,6 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
           </div>
           <PosterActions
             tmdbId={id}
-            initialRating={userFilm?.rating ?? 0}
             initialWatchlist={userFilm?.watchlist ?? false}
             initialLiked={userFilm?.liked ?? false}
             userLists={userLists}
@@ -142,7 +153,7 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
 
           <div className={styles.scores}>
             <div className={`${styles.scoreCard} ${styles.scoreAccent}`}>
-              <div className={`${styles.scoreVal} ${styles.scoreGold}`}>★ {film.voteAverage}</div>
+              <div className={`${styles.scoreVal} ${styles.scoreGold}`}>★ <Rating value={film.voteAverage} /></div>
               <div className={styles.scoreLab}>Note TMDB</div>
             </div>
             <div className={styles.scoreCard}>
@@ -305,11 +316,43 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
             </div>
           )}
 
-          {similar.length > 0 && (
+          {sagaFilms.length > 0 && (
+            <div className={styles.section}>
+              <div className={styles.sectionTitle}>
+                {film.collectionName || "La saga"}
+              </div>
+              <div className={styles.sagaSub}>
+                {sagaFilms.length + 1} films · dans l&apos;ordre de sortie
+              </div>
+              <div className={styles.similarGrid}>
+                {sagaFilms.map((s) => (
+                  <Link key={s.id} href={`/film/${s.id}`} className={styles.similarCard}>
+                    {s.posterUrl ? (
+                      <Image
+                        src={s.posterUrl}
+                        alt={s.title}
+                        className={styles.similarPoster}
+                        width={300}
+                        height={450}
+                        sizes="(max-width: 768px) 33vw, 160px"
+                        style={{ height: "auto" }}
+                      />
+                    ) : (
+                      <div className={styles.similarPosterEmpty} />
+                    )}
+                    <div className={styles.similarTitle}>{s.title}</div>
+                    {s.year && <div className={styles.similarYear}>{s.year}</div>}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {similarFilms.length > 0 && (
             <div className={styles.section}>
               <div className={styles.sectionTitle}>Films similaires</div>
               <div className={styles.similarGrid}>
-                {similar.map((s) => (
+                {similarFilms.map((s) => (
                   <Link key={s.id} href={`/film/${s.id}`} className={styles.similarCard}>
                     {s.posterUrl ? (
                       <Image

@@ -10,6 +10,7 @@ import CollectionClient from "../../components/CollectionClient";
 import FollowButton from "./FollowButton";
 import { computeXP, getLevelInfo } from "@/lib/xp";
 import styles from "../../films/profile/profile.module.css";
+import { Rating } from "@/lib/rating-scale";
 
 const COLLECTION_LIMIT = 24;
 
@@ -148,7 +149,7 @@ export default async function PublicProfilePage({
           <div className={styles.statCard}>
             <div className={styles.statDeco}><Star size={26} /></div>
             <div className={styles.statLabel}>Note moyenne</div>
-            <div className={styles.statVal}>{avgRating !== null ? avgRating.toFixed(1) : "—"}</div>
+            <div className={styles.statVal}><Rating value={avgRating} /></div>
             <div className={styles.statSub}>sur {ratedCount} films notés</div>
           </div>
           <div className={styles.statCard}>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import type { TmdbPersonCredit } from "@/lib/tmdb";
 import styles from "./actor.module.css";
+import { Rating } from "@/lib/rating-scale";
 
 type SortKey = "date" | "note" | "popularite";
 
@@ -60,7 +61,7 @@ export default function FilmographyClient({
               style={{ height: "auto" }}
             />
             {film.voteAverage > 0 && (
-              <div className={styles.filmScore}>★ {film.voteAverage}</div>
+              <div className={styles.filmScore}>★ <Rating value={film.voteAverage} /></div>
             )}
             <div className={styles.filmInfo}>
               <div className={styles.filmTitle}>{film.title}</div>

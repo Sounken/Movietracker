@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import type { TmdbDiscoverFilm } from "@/lib/tmdb";
 import styles from "./discover.module.css";
+import { Rating } from "@/lib/rating-scale";
 
 const PlusIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="36" height="36" strokeLinecap="round">
@@ -90,7 +91,7 @@ export default function DiscoverGrid({
               />
             )}
             {film.voteAverage > 0 && (
-              <div className={styles.score}>★ {film.voteAverage}</div>
+              <div className={styles.score}>★ <Rating value={film.voteAverage} /></div>
             )}
           </div>
           <div className={styles.info}>

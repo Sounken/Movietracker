@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Plus, Loader2 } from "lucide-react";
 import type { TmdbDiscoverSeries } from "@/lib/tmdb";
 import styles from "../../films/discover/discover.module.css";
+import { Rating } from "@/lib/rating-scale";
 
 export default function SeriesDiscoverGrid({
   initialSeries,
@@ -76,7 +77,7 @@ export default function SeriesDiscoverGrid({
                 style={{ objectFit: "cover" }}
               />
             )}
-            {s.voteAverage > 0 && <div className={styles.score}>★ {s.voteAverage}</div>}
+            {s.voteAverage > 0 && <div className={styles.score}>★ <Rating value={s.voteAverage} /></div>}
           </div>
           <div className={styles.info}>
             <div className={styles.title}>{s.name}</div>

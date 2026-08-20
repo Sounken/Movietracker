@@ -32,24 +32,29 @@
   background: var(--line);
 }
 
+/* Aucun gap : les zones cliquables doivent se toucher, sinon un pixel « mort »
+   entre deux étoiles avale le clic ou fait perdre le survol. L'espacement
+   visuel vient du padding, qui fait partie de la zone cliquable. */
 .stars {
   display: flex;
-  gap: 4px;
+  gap: 0;
 }
 
 .starBtn {
   background: none;
   border: 0;
   cursor: pointer;
-  padding: 2px;
+  padding: 4px 3px;
   color: var(--ink-mute);
-  transition: transform 0.1s;
+  transition: filter 0.12s;
   display: inline-flex;
   align-items: center;
 }
 
+/* Pas de scale au survol : l'étoile agrandie déborde sur sa voisine, l'étoile
+   vue sous le curseur n'est alors plus celle qui reçoit le clic. */
 .starBtn:hover {
-  transform: scale(1.15);
+  filter: brightness(1.25);
 }
 
 /* Half star layout */
@@ -82,6 +87,49 @@
   font-size: 22px;
   color: var(--gold);
   min-width: 60px;
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+}
+
+/* Saisie exacte de la note sur 100 */
+.noteInput {
+  width: 3ch;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px dashed var(--line);
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  text-align: right;
+  padding: 0 0 2px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.noteInput:focus {
+  border-bottom-color: var(--accent);
+}
+
+.noteInput::placeholder {
+  color: var(--ink-mute);
+}
+
+/* Masque les flèches natives, qui déforment la mise en page */
+.noteInput::-webkit-outer-spin-button,
+.noteInput::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.noteInput {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.noteScale {
+  font-size: 15px;
+  color: var(--ink-mute);
 }
 
 :global([data-theme="light"]) .note {
@@ -198,12 +246,12 @@
   }
 
   .stars {
-    gap: 1px;
+    gap: 0;
     min-width: 0;
   }
 
   .starBtn {
-    padding: 1px;
+    padding: 3px 2px;
   }
 
   .starBtn svg {

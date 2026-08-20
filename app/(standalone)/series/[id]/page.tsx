@@ -9,6 +9,7 @@ import SeriesActions from "./SeriesActions";
 import SeasonTracker from "./SeasonTracker";
 import filmStyles from "../../film/[id]/film.module.css";
 import styles from "./series.module.css";
+import { Rating } from "@/lib/rating-scale";
 
 const STATUS_LABELS: Record<string, string> = {
   "Returning Series": "En cours",
@@ -63,7 +64,7 @@ export default async function SeriesPage({ params }: { params: Promise<{ id: str
       )}
       <div className={filmStyles.backdropOverlay} />
 
-      <FilmTopbar />
+      <FilmTopbar fallbackHref="/series" />
 
       <div className={filmStyles.hero}>
         {/* Colonne gauche : poster + actions */}
@@ -102,7 +103,7 @@ export default async function SeriesPage({ params }: { params: Promise<{ id: str
 
           <div className={filmStyles.scores}>
             <div className={`${filmStyles.scoreCard} ${filmStyles.scoreAccent}`}>
-              <div className={`${filmStyles.scoreVal} ${filmStyles.scoreGold}`}>★ {series.voteAverage}</div>
+              <div className={`${filmStyles.scoreVal} ${filmStyles.scoreGold}`}>★ <Rating value={series.voteAverage} /></div>
               <div className={filmStyles.scoreLab}>Note TMDB</div>
             </div>
             <div className={filmStyles.scoreCard}>

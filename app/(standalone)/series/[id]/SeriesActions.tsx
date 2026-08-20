@@ -4,6 +4,8 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Star, Clock, Heart, Check } from "lucide-react";
 import { saveSeriesRating, toggleSeriesWatchlist, toggleSeriesLiked } from "@/app/actions/series";
+import { useRatingScale } from "@/lib/rating-scale";
+import { toDisplayRating, toStoredRating, formatRating } from "@/lib/rating";
 import styles from "./series.module.css";
 
 export default function SeriesActions({
@@ -22,6 +24,7 @@ export default function SeriesActions({
   isAuthenticated: boolean;
 }) {
   const router = useRouter();
+  const scale = useRatingScale();
   const [rating, setRating] = useState(initialRating);
   const [hover, setHover] = useState(0);
   const [review, setReview] = useState(initialReview);
@@ -91,15 +94,16 @@ export default function SeriesActions({
 
   return (
     <div className={styles.actions}>
-      <div className={styles.stars}>
+      {/* mouseleave sur le conteneur : sortir de la rangée réaffiche
+          systématiquement la note enregistrée (cf. RatingWidget). */}
+      <div className={styles.stars} onMouseLeave={() => setHover(0)}>
         {Array.from({ length: 10 }, (_, i) => i + 1).map((v) => (
           <button
             key={v}
             className={styles.star}
             onMouseEnter={() => setHover(v)}
-            onMouseLeave={() => setHover(0)}
-            onClick={() => saveRating(v)}
-            aria-label={`Noter ${v}/10`}
+            onClick={() => { setHover(0); saveRating(v); }}
+            aria-label={`Noter ${toDisplayRating(v, scale)}/${scale}`}
           >
             <Star
               size={18}
@@ -108,7 +112,32 @@ export default function SeriesActions({
             />
           </button>
         ))}
-        <span className={styles.ratingVal}>{rating > 0 ? `${rating}/10` : ""}</span>
+        {scale === 100 ? (
+          <span className={styles.ratingVal}>
+            <input
+              type="number"
+              className={styles.ratingInput}
+              min={0}
+              max={100}
+              step={1}
+              aria-label="Note sur 100"
+              placeholder="—"
+              value={rating > 0 ? String(toDisplayRating(rating, 100)) : ""}
+              onChange={(e) => {
+                const raw = e.target.value;
+                if (raw === "") return;
+                const n = Number(raw);
+                if (Number.isNaN(n)) return;
+                setRating(toStoredRating(Math.min(100, Math.max(0, n)), 100));
+              }}
+              onBlur={() => { if (rating > 0) saveRating(rating); }}
+              onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+            />
+            /100
+          </span>
+        ) : (
+          <span className={styles.ratingVal}>{rating > 0 ? `${formatRating(rating, scale)}/10` : ""}</span>
+        )}
       </div>
 
       <div className={styles.actionRow}>

@@ -12,7 +12,7 @@ export async function createList(data: { name: string; description?: string; emo
     data: { userId: session.userId, ...data },
   });
 
-  revalidatePath("/lists");
+  revalidatePath("/films/lists");
   return list;
 }
 
@@ -25,8 +25,8 @@ export async function updateList(id: string, data: { name?: string; description?
     data,
   });
 
-  revalidatePath("/lists");
-  revalidatePath(`/lists/${id}`);
+  revalidatePath("/films/lists");
+  revalidatePath(`/films/lists/${id}`);
 }
 
 export async function deleteList(id: string) {
@@ -37,7 +37,7 @@ export async function deleteList(id: string) {
     where: { id, userId: session.userId },
   });
 
-  revalidatePath("/lists");
+  revalidatePath("/films/lists");
 }
 
 export async function addFilmToList(listId: string, tmdbId: number) {
@@ -55,7 +55,7 @@ export async function addFilmToList(listId: string, tmdbId: number) {
     update: {},
   });
 
-  revalidatePath(`/lists/${listId}`);
+  revalidatePath(`/films/lists/${listId}`);
 }
 
 export async function removeFilmFromList(listId: string, tmdbId: number) {
@@ -71,5 +71,5 @@ export async function removeFilmFromList(listId: string, tmdbId: number) {
     where: { listId, tmdbId },
   });
 
-  revalidatePath(`/lists/${listId}`);
+  revalidatePath(`/films/lists/${listId}`);
 }

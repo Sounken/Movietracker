@@ -5,6 +5,19 @@ import { prisma } from "@/lib/db";
 import { fetchFilmDetail } from "@/lib/tmdb";
 import { revalidatePath } from "next/cache";
 
+// Toutes les pages « monde Films » qui affichent la collection de l'utilisateur.
+// `/` n'existe plus (redirigé vers /films par next.config), il fallait donc
+// invalider les vraies routes — sinon la page restait en cache et il fallait
+// rafraîchir à la main après chaque ajout/notation.
+function revalidateFilmPages(tmdbId: number) {
+  revalidatePath("/films");
+  revalidatePath("/films/profile");
+  revalidatePath("/films/watchlist");
+  revalidatePath("/films/favorites");
+  revalidatePath("/films/lists");
+  revalidatePath(`/film/${tmdbId}`);
+}
+
 export async function saveRating(tmdbId: number, rating: number, review: string) {
   const session = await getSession();
   if (!session) throw new Error("Non authentifié");
@@ -27,9 +40,7 @@ export async function saveRating(tmdbId: number, rating: number, review: string)
     create: { userId: session.userId, tmdbId, rating, review, watched: true, watchlist: false, runtime },
   });
 
-  revalidatePath("/");
-  revalidatePath("/watchlist");
-  revalidatePath(`/film/${tmdbId}`);
+  revalidateFilmPages(tmdbId);
 }
 
 export async function addFilm(data: {
@@ -68,9 +79,7 @@ export async function addFilm(data: {
     },
   });
 
-  revalidatePath("/");
-  revalidatePath("/watchlist");
-  revalidatePath(`/film/${data.tmdbId}`);
+  revalidateFilmPages(data.tmdbId);
 }
 
 export async function toggleWatchlist(tmdbId: number) {
@@ -87,7 +96,7 @@ export async function toggleWatchlist(tmdbId: number) {
     create: { userId: session.userId, tmdbId, watchlist: true },
   });
 
-  revalidatePath(`/film/${tmdbId}`);
+  revalidateFilmPages(tmdbId);
 }
 
 export async function deleteRating(tmdbId: number) {
@@ -111,9 +120,7 @@ export async function deleteRating(tmdbId: number) {
     });
   }
 
-  revalidatePath("/");
-  revalidatePath("/profile");
-  revalidatePath(`/film/${tmdbId}`);
+  revalidateFilmPages(tmdbId);
 }
 
 export async function toggleLiked(tmdbId: number) {
@@ -130,5 +137,5 @@ export async function toggleLiked(tmdbId: number) {
     create: { userId: session.userId, tmdbId, liked: true },
   });
 
-  revalidatePath(`/film/${tmdbId}`);
+  revalidateFilmPages(tmdbId);
 }

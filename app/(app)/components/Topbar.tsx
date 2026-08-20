@@ -1,16 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef, useSyncExternalStore } from "react";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
+import { useSyncExternalStore } from "react";
+import SearchBox from "./SearchBox";
 import styles from "./Topbar.module.css";
 
-const SearchIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-    <circle cx="11" cy="11" r="7" />
-    <path d="m20 20-3.5-3.5" />
-  </svg>
-);
 const SunIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
     <circle cx="12" cy="12" r="4" />
@@ -28,7 +21,6 @@ const BellIcon = () => (
   </svg>
 );
 
-type SearchResult = { id: number; mediaType?: "movie" | "tv"; title: string; year: string; posterUrl: string; voteAverage: number | null };
 type Props = { greeting: string; userName: string | null };
 
 // Le thème vit dans localStorage (système externe) : on s'y abonne via
@@ -41,16 +33,11 @@ function subscribeTheme(onChange: () => void) {
 }
 
 export default function Topbar({ greeting, userName }: Props) {
-  const router = useRouter();
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<SearchResult[]>([]);
-  const [open, setOpen] = useState(false);
   const isDark = useSyncExternalStore(
     subscribeTheme,
     () => localStorage.getItem("mt-theme") !== "light",
     () => true,
   );
-  const containerRef = useRef<HTMLDivElement>(null);
 
   function toggleTheme() {
     const next = isDark ? "light" : "dark";
@@ -62,37 +49,6 @@ export default function Topbar({ greeting, userName }: Props) {
     }
     window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
   }
-
-  // Debounced search
-  useEffect(() => {
-    if (query.length < 2) return;
-    const timer = setTimeout(async () => {
-      try {
-        const res = await fetch(`/api/search?type=multi&q=${encodeURIComponent(query)}`);
-        const data: SearchResult[] = await res.json();
-        setResults(data);
-        setOpen(data.length > 0);
-      } catch {
-        setResults([]);
-      }
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [query]);
-
-  // Close on outside click
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (!containerRef.current?.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  const navigate = (id: number, mediaType?: "movie" | "tv") => {
-    setQuery("");
-    setOpen(false);
-    router.push(mediaType === "tv" ? `/series/${id}` : `/film/${id}`);
-  };
 
   return (
     <div className={styles.topbar}>
@@ -112,55 +68,7 @@ export default function Topbar({ greeting, userName }: Props) {
         </h1>
       </div>
 
-      <div className={styles.searchWrap} ref={containerRef}>
-        <div className={styles.search}>
-          <SearchIcon />
-          <input
-            value={query}
-            onChange={(e) => {
-              const q = e.target.value;
-              setQuery(q);
-              if (q.length < 2) { setResults([]); setOpen(false); }
-            }}
-            onFocus={() => results.length > 0 && setOpen(true)}
-            placeholder="Chercher un film, un réalisateur…"
-            className={styles.searchInput}
-          />
-        </div>
-
-        {open && results.length > 0 && (
-          <div className={styles.dropdown}>
-            {results.map((m) => (
-              <div key={`${m.mediaType ?? "movie"}-${m.id}`} className={styles.result} onClick={() => navigate(m.id, m.mediaType)}>
-                {m.posterUrl ? (
-                  <Image
-                    src={m.posterUrl}
-                    alt=""
-                    className={styles.thumb}
-                    width={36}
-                    height={54}
-                    style={{ objectFit: "cover" }}
-                  />
-                ) : (
-                  <div className={`${styles.thumb} ${styles.thumbEmpty}`} />
-                )}
-                <div className={styles.resultInfo}>
-                  <div className={styles.resultTitle}>{m.title}</div>
-                  <div className={styles.resultMeta}>
-                    {m.mediaType === "tv" ? "Série" : "Film"}{m.year ? ` · ${m.year}` : ""}
-                  </div>
-                </div>
-                {m.voteAverage != null && m.voteAverage > 0 && (
-                  <div className={styles.resultRating}>
-                    <span className={styles.resultStar}>★</span>
-                    {m.voteAverage}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <SearchBox />
 
       <button className={styles.iconBtn} title={isDark ? "Passer en clair" : "Passer en sombre"} onClick={toggleTheme}>
         {isDark ? <SunIcon /> : <MoonIcon />}

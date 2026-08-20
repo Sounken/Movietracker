@@ -10,6 +10,7 @@ import HeroCarousel from "../components/HeroCarousel";
 import CollectionClient from "../components/CollectionClient";
 import AddFilmButton from "../components/AddFilmButton";
 import styles from "./dashboard.module.css";
+import { Rating } from "@/lib/rating-scale";
 
 function formatHours(totalMinutes: number): string {
   const h = Math.floor(totalMinutes / 60);
@@ -207,7 +208,7 @@ async function CollectionSection({ userId }: { userId: string }) {
 
           <div className={styles.stat}>
             <div className={styles.statLab}>Note moyenne</div>
-            <div className={styles.statVal}>{avgRating ? avgRating.toFixed(1) : "—"}/10</div>
+            <div className={styles.statVal}><Rating value={avgRating || null} outOf /></div>
             <Delta value={Number(deltaRating.toFixed(1))} suffix="" decimals={1} />
             <Sparkline points={last10ratings} />
           </div>

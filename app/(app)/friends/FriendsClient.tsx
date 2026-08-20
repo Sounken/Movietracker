@@ -7,6 +7,7 @@ import Image from "next/image";
 import { followUser, unfollowUser } from "@/app/actions/friends";
 import { Check, Heart } from "lucide-react";
 import styles from "./friends.module.css";
+import { Rating } from "@/lib/rating-scale";
 
 type FollowingUser = { id: string; name: string; avatarUrl: string | null; filmCount: number; avgRating: number | null };
 type FollowerUser  = { id: string; name: string; avatarUrl: string | null; followsBack: boolean };
@@ -168,7 +169,7 @@ export default function FriendsClient({
                         <div className={styles.userName}>{u.name}</div>
                         <div className={styles.userMeta}>
                           {u.filmCount} {countNoun}{u.filmCount !== 1 ? "s" : ""}
-                          {u.avgRating != null && <> · ★ {u.avgRating.toFixed(1)}</>}
+                          {u.avgRating != null && <> · ★ <Rating value={u.avgRating} /></>}
                         </div>
                       </div>
                     </Link>
@@ -248,7 +249,7 @@ export default function FriendsClient({
                           {item.title}
                         </Link>
                         {item.rating != null && (
-                          <span className={styles.feedRating}> ★ {item.rating}</span>
+                          <span className={styles.feedRating}> ★ <Rating value={item.rating} /></span>
                         )}
                         {item.liked && <span className={styles.feedLiked}> <Heart size={11} fill="currentColor" /></span>}
                       </div>

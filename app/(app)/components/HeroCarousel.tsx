@@ -9,6 +9,7 @@ import { genreLabels } from "@/lib/tmdb";
 import { toggleWatchlist } from "@/app/actions/film";
 import { toggleSeriesWatchlist } from "@/app/actions/series";
 import styles from "./HeroCarousel.module.css";
+import { Rating } from "@/lib/rating-scale";
 
 const StarIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" width="10" height="10">
@@ -156,7 +157,7 @@ export default function HeroCarousel({
           {genres.length > 0 && <span>{genres.join(" · ")}</span>}
           {cur.voteAverage > 0 && (
             <span className={styles.score}>
-              <StarIcon /> {cur.voteAverage}/10
+              <StarIcon /> <Rating value={cur.voteAverage} outOf />
             </span>
           )}
         </div>

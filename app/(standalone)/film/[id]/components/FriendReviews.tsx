@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import styles from "../film.module.css";
+import { Rating } from "@/lib/rating-scale";
 
 export type FriendReview = {
   userId: string;
@@ -39,7 +40,7 @@ export default function FriendReviews({ reviews }: { reviews: FriendReview[] }) 
                 <span className={styles.friendName}>{f.name}</span>
               </Link>
               {f.rating != null && (
-                <span className={styles.friendRating}>★ {f.rating}</span>
+                <span className={styles.friendRating}>★ <Rating value={f.rating} /></span>
               )}
             </div>
             {f.review && <p className={styles.friendReviewText}>{f.review}</p>}

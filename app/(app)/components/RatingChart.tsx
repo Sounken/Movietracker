@@ -1,3 +1,7 @@
+"use client";
+
+import { useRatingScale } from "@/lib/rating-scale";
+import { toDisplayRating } from "@/lib/rating";
 import styles from "./RatingChart.module.css";
 
 const COLORS: Record<number, string> = {
@@ -7,6 +11,8 @@ const COLORS: Record<number, string> = {
 };
 
 export default function RatingChart({ distribution }: { distribution: Record<number, number> }) {
+  // Les paquets restent des déciles ; seul leur libellé change (1..10 ou 10..100).
+  const scale = useRatingScale();
   const max = Math.max(...Object.values(distribution), 1);
   const total = Object.values(distribution).reduce((s, v) => s + v, 0);
   if (total === 0) return null;
@@ -31,7 +37,7 @@ export default function RatingChart({ distribution }: { distribution: Record<num
                   }}
                 />
               </div>
-              <div className={styles.ratingLabel}>{r}</div>
+              <div className={styles.ratingLabel}>{toDisplayRating(r, scale)}</div>
             </div>
           );
         })}
