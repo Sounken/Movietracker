@@ -69,6 +69,8 @@ Légende : `[ ]` à faire · `[x]` fait · `[?]` besoin d'une décision de Damie
 - [x] **G2** — Motion UI : transitions de chargement, navigation sidebar, bascule Films/Séries (animation plutôt qu'un simple changement de couleur), ouverture des fiches film/série.
 - [x] **G3** — Animations d'apparition sur certaines sections (stagger sur les grilles, fade-in des stats).
 
+- [ ] 
+
 ---
 
 ## Notes techniques
@@ -83,3 +85,4 @@ Agréger les genres des films notés ≥ 7/10 par l'utilisateur, pondérer par l
 
 **F13 / S17 — plateformes**
 TMDB fournit bien `/watch/providers` (données JustWatch). Attention : l'attribution JustWatch est obligatoire dans les CGU TMDB.
+

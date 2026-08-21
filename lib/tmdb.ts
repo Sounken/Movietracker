@@ -443,7 +443,12 @@ export async function fetchSeriesCard(id: number): Promise<TmdbSeriesCard | null
 export async function fetchSeriesDetail(id: number): Promise<TmdbSeriesDetail | null> {
   // Même distinction 404 / panne passagère que pour les films.
   const m = await fetchTmdbDetail(`/tv/${id}`);
-  if (!m) return null;
+  return m ? mapSeriesDetail(m) : null;
+}
+
+/** Conversion du payload brut /tv/{id}. Partagée avec fetchSeriesBundle. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- payload TMDB brut
+function mapSeriesDetail(m: any): TmdbSeriesDetail {
   {
     const runTimes: number[] = m.episode_run_time ?? [];
 
@@ -569,25 +574,10 @@ export async function fetchSeason(
   }
 }
 
-/**
- * Casting d'une série via `aggregate_credits`.
- *
- * `/tv/{id}/credits` ne renvoie que le casting de la dernière saison — sur une
- * série longue, les personnages principaux des premières saisons manquent.
- * `aggregate_credits` agrège tous les rôles de toute la série et indique le
- * nombre d'épisodes joués, qui trie naturellement principaux et invités.
- */
-export async function fetchSeriesCredits(id: number): Promise<TmdbCredits> {
-  const key = process.env.TMDB_API_KEY;
-  if (!key) return { cast: [], directors: [], writers: [] };
-  try {
-    const res = await fetch(
-      `${BASE}/tv/${id}/aggregate_credits?api_key=${key}&language=fr-FR`,
-      { next: { revalidate: 86400 } },
-    );
-    if (!res.ok) return { cast: [], directors: [], writers: [] };
-    const data = await res.json();
-
+/** Conversion d'un payload aggregate_credits. Partagée avec fetchSeriesBundle. */
+function mapAggregateCredits(raw: unknown): TmdbCredits {
+  const data = (raw ?? {}) as { cast?: unknown; crew?: unknown };
+  {
     const cast: TmdbCastMember[] = ((data.cast ?? []) as Record<string, unknown>[])
       .sort((a, b) => ((b.total_episode_count as number) ?? 0) - ((a.total_episode_count as number) ?? 0))
       .slice(0, 20)
@@ -612,26 +602,98 @@ export async function fetchSeriesCredits(id: number): Promise<TmdbCredits> {
         .map((c) => ({ id: c.id as number, name: (c.name as string) ?? "" }));
 
     return { cast, directors: pick("Directing"), writers: pick("Writing") };
-  } catch {
-    return { cast: [], directors: [], writers: [] };
   }
 }
 
-/** Séries recommandées à partir d'une série. */
-export async function fetchSimilarSeries(id: number): Promise<TmdbFilmCard[]> {
+/**
+ * Tout ce dont la fiche série a besoin, en UN SEUL appel réseau.
+ *
+ * La page enchaînait six requêtes TMDB indépendantes (détail, logo, casting,
+ * recommandations, plateformes, identifiants externes). `append_to_response`
+ * accepte jusqu'à 20 sous-ressources dans la même requête — vérifié avec les
+ * huit ci-dessous.
+ */
+export type SeriesBundle = {
+  detail: TmdbSeriesDetail;
+  credits: TmdbCredits;
+  providers: WatchProviders;
+  externalIds: TmdbExternalIds;
+  keywords: string[];
+  video: TmdbVideo | null;
+  /** Classification d'âge française (ou américaine en repli). */
+  certification: string | null;
+  logoUrl: string | null;
+  similar: TmdbFilmCard[];
+};
+
+const SERIES_APPEND = [
+  "aggregate_credits",
+  "watch/providers",
+  "external_ids",
+  "keywords",
+  "videos",
+  "content_ratings",
+  "recommendations",
+  "images",
+].join(",");
+
+export async function fetchSeriesBundle(id: number): Promise<SeriesBundle | null> {
   const key = process.env.TMDB_API_KEY;
-  if (!key) return [];
-  try {
-    const res = await fetch(
-      `${BASE}/tv/${id}/recommendations?api_key=${key}&language=fr-FR&page=1`,
-      { next: { revalidate: 86400 } },
-    );
-    if (!res.ok) return [];
-    const data = await res.json();
-    return ((data.results ?? []) as Record<string, unknown>[])
+  if (!key) return null;
+
+  // Même distinction 404 / panne passagère que fetchTmdbDetail : un hoquet de
+  // TMDB ne doit pas produire une page « série introuvable ».
+  const url =
+    `${BASE}/tv/${id}?api_key=${key}&language=fr-FR` +
+    `&append_to_response=${SERIES_APPEND}&include_image_language=fr,en,null`;
+
+  let raw: Record<string, unknown> | null = null;
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetch(url, { next: { revalidate: 3600 } });
+      if (res.status === 404) return null;
+      if (res.ok) {
+        raw = await res.json();
+        break;
+      }
+      lastError = new Error(`TMDB a répondu ${res.status} sur /tv/${id}`);
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  if (!raw) {
+    throw lastError instanceof Error ? lastError : new Error(`TMDB injoignable sur /tv/${id}`);
+  }
+
+  const providersRaw = (raw["watch/providers"] as { results?: Record<string, unknown> })?.results;
+  const local = providersRaw?.[WATCH_REGION] as Record<string, unknown> | undefined;
+
+  const recommendations =
+    (raw.recommendations as { results?: Record<string, unknown>[] })?.results ?? [];
+
+  return {
+    detail: mapSeriesDetail(raw),
+    credits: mapAggregateCredits(raw.aggregate_credits),
+    providers: local
+      ? {
+          flatrate: mapProviders(local.flatrate),
+          rent: mapProviders(local.rent),
+          buy: mapProviders(local.buy),
+          link: (local.link as string) ?? "",
+        }
+      : EMPTY_PROVIDERS,
+    externalIds: mapExternalIds(raw.external_ids as Record<string, unknown>),
+    keywords: (((raw.keywords as { results?: Array<{ name: string }> })?.results) ?? []).map(
+      (k) => k.name,
+    ),
+    video: pickBestVideo((raw.videos as { results?: unknown })?.results),
+    certification: pickCertification("tv", raw.content_ratings),
+    logoUrl: pickBestLogo((raw.images as { logos?: TmdbLogo[] })?.logos),
+    similar: recommendations
       .filter((s) => s.poster_path)
       .map((s) => ({
-        // On réutilise TmdbFilmCard pour partager la grille avec les films :
+        // TmdbFilmCard est réutilisé pour partager la grille avec les films :
         // `title` porte donc le nom de la série.
         id: s.id as number,
         title: (s.name as string) ?? "",
@@ -639,10 +701,30 @@ export async function fetchSimilarSeries(id: number): Promise<TmdbFilmCard[]> {
         year: typeof s.first_air_date === "string" ? s.first_air_date.slice(0, 4) : "",
         genres: ((s.genre_ids as number[]) ?? []).slice(0, 2).map((g) => TV_GENRES[g]).filter(Boolean),
         voteAverage: s.vote_average ? Math.round((s.vote_average as number) * 10) / 10 : 0,
-      }));
-  } catch {
-    return [];
-  }
+      })),
+  };
+}
+
+/**
+ * Meilleur logo exploitable parmi ceux renvoyés par TMDB.
+ *
+ * On écarte les logos hauts et étroits (illisibles dans un bandeau) et tout ce
+ * qui n'est pas PNG (fond transparent). Priorité : français, puis anglais,
+ * puis sans langue ; à égalité, le mieux noté.
+ */
+function pickBestLogo(logos: TmdbLogo[] | undefined): string | null {
+  const usable = (logos ?? []).filter(
+    (l) => l.aspect_ratio >= 1.2 && l.file_path.toLowerCase().endsWith(".png"),
+  );
+  if (usable.length === 0) return null;
+
+  const bestFor = (lang: string | null) =>
+    usable
+      .filter((l) => l.iso_639_1 === lang)
+      .sort((a, b) => b.vote_average - a.vote_average)[0];
+
+  const best = bestFor("fr") ?? bestFor("en") ?? bestFor(null) ?? usable[0];
+  return best ? `${IMG}/w500${best.file_path}` : null;
 }
 
 export async function fetchSeriesLogo(id: number): Promise<string | null> {
@@ -654,18 +736,7 @@ export async function fetchSeriesLogo(id: number): Promise<string | null> {
       { next: { revalidate: 86400 } },
     );
     if (!res.ok) return null;
-    const data = await res.json();
-    const logos = (data.logos ?? []) as TmdbLogo[];
-    const usable = logos.filter(
-      (l) => l.aspect_ratio >= 1.2 && l.file_path.toLowerCase().endsWith(".png"),
-    );
-    if (usable.length === 0) return null;
-    const bestFor = (lang: string | null) =>
-      usable
-        .filter((l) => l.iso_639_1 === lang)
-        .sort((a, b) => b.vote_average - a.vote_average)[0];
-    const best = bestFor("fr") ?? bestFor("en") ?? bestFor(null) ?? usable[0];
-    return best ? `${IMG}/w500${best.file_path}` : null;
+    return pickBestLogo((await res.json()).logos);
   } catch {
     return null;
   }
@@ -996,6 +1067,111 @@ export async function fetchDiscoverSeries(
     return ((data.results ?? []) as Record<string, unknown>[]).map(mapDiscoverSeries);
   } catch {
     return [];
+  }
+}
+
+// ——————————————————————————————————————————————————————————————
+//  Bandes-annonces
+// ——————————————————————————————————————————————————————————————
+
+export type TmdbVideo = {
+  key: string;
+  name: string;
+  /** « Trailer », « Teaser »… */
+  type: string;
+  official: boolean;
+  /** Langue de la vidéo, pour préférer le français. */
+  lang: string;
+};
+
+/**
+ * Meilleure bande-annonce disponible, ou `null`.
+ *
+ * TMDB renvoie pêle-mêle bandes-annonces, teasers, featurettes et extraits, de
+ * toutes langues et de qualité inégale. On classe : bande-annonce avant
+ * teaser, officielle avant amateur, française avant anglaise. On ne garde que
+ * YouTube — c'est le seul hébergeur qu'on sait intégrer.
+ */
+export function pickBestVideo(raw: unknown): TmdbVideo | null {
+  const list = (Array.isArray(raw) ? raw : []) as Record<string, unknown>[];
+
+  const usable = list
+    .filter((v) => v.site === "YouTube" && typeof v.key === "string")
+    .map((v) => ({
+      key: v.key as string,
+      name: (v.name as string) ?? "",
+      type: (v.type as string) ?? "",
+      official: Boolean(v.official),
+      lang: (v.iso_639_1 as string) ?? "",
+    }))
+    .filter((v) => v.type === "Trailer" || v.type === "Teaser");
+
+  if (usable.length === 0) return null;
+
+  const score = (v: TmdbVideo) =>
+    (v.type === "Trailer" ? 4 : 0) +
+    (v.official ? 2 : 0) +
+    (v.lang === "fr" ? 1 : 0);
+
+  return usable.sort((a, b) => score(b) - score(a))[0];
+}
+
+// ——————————————————————————————————————————————————————————————
+//  Classification d'âge
+// ——————————————————————————————————————————————————————————————
+
+/**
+ * Classification française, depuis `content_ratings` (séries) ou
+ * `release_dates` (films) — deux formats différents pour la même information.
+ * Repli sur les États-Unis quand la France n'est pas renseignée.
+ */
+export function pickCertification(
+  media: "movie" | "tv",
+  raw: unknown,
+): string | null {
+  const results = ((raw as { results?: unknown })?.results ?? []) as Record<string, unknown>[];
+  if (results.length === 0) return null;
+
+  const forCountry = (code: string): string | null => {
+    const entry = results.find((r) => r.iso_3166_1 === code);
+    if (!entry) return null;
+
+    if (media === "tv") return (entry.rating as string) || null;
+
+    // Films : la certification est nichée dans une liste de dates de sortie,
+    // et plusieurs entrées peuvent être vides (ressorties, festivals).
+    const dates = (entry.release_dates ?? []) as Array<{ certification?: string }>;
+    return dates.map((d) => d.certification).find((c) => c && c.trim() !== "") ?? null;
+  };
+
+  return forCountry("FR") ?? forCountry("US");
+}
+
+/**
+ * Bande-annonce + classification d'âge d'un film, en un seul appel.
+ *
+ * La fiche film garde ses requêtes séparées (elle a d'autres dépendances qui
+ * ne se groupent pas), mais ces deux-là partagent le même endpoint via
+ * `append_to_response` : autant ne pas payer deux allers-retours.
+ */
+export async function fetchFilmExtras(
+  id: number,
+): Promise<{ video: TmdbVideo | null; certification: string | null }> {
+  const key = process.env.TMDB_API_KEY;
+  if (!key) return { video: null, certification: null };
+  try {
+    const res = await fetch(
+      `${BASE}/movie/${id}?api_key=${key}&language=fr-FR&append_to_response=videos,release_dates`,
+      { next: { revalidate: 86400 } },
+    );
+    if (!res.ok) return { video: null, certification: null };
+    const data = await res.json();
+    return {
+      video: pickBestVideo(data.videos?.results),
+      certification: pickCertification("movie", data.release_dates),
+    };
+  } catch {
+    return { video: null, certification: null };
   }
 }
 

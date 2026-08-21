@@ -8,6 +8,14 @@ const nextConfig: NextConfig = {
         hostname: "image.tmdb.org",
         pathname: "/t/p/**",
       },
+      // Vignettes des bandes-annonces : on affiche l'image YouTube tant que
+      // l'utilisateur n'a pas lancé la lecture, pour ne pas charger le lecteur
+      // (ni ses cookies tiers) sur chaque fiche.
+      {
+        protocol: "https",
+        hostname: "i.ytimg.com",
+        pathname: "/vi/**",
+      },
     ],
     // URLs locales avec query string (cache-busting `?v=…` après upload) :
     // Next 16 les rejette par défaut, il faut les autoriser explicitement.

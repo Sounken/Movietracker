@@ -3,22 +3,15 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import {
-  fetchSeriesDetail,
-  fetchSeriesLogo,
-  fetchSeriesCredits,
-  fetchSimilarSeries,
-  fetchWatchProviders,
-  fetchExternalIds,
-  fetchKeywords,
-  formatRuntime,
-} from "@/lib/tmdb";
+import { fetchSeriesBundle, formatRuntime } from "@/lib/tmdb";
 import FilmTopbar from "../../film/[id]/components/FilmTopbar";
 import FilmTitleLogo from "../../film/[id]/components/FilmTitleLogo";
 import CastGrid from "../../film/[id]/components/CastGrid";
 import SimilarFilms from "../../film/[id]/components/SimilarFilms";
 import WatchProvidersSection from "../../components/WatchProvidersSection";
 import AwardsSection from "../../components/AwardsSection";
+import TrailerSection from "../../components/TrailerSection";
+import ExternalLinks from "../../components/ExternalLinks";
 import { fetchAwards } from "@/lib/awards";
 import SeriesActions from "./SeriesActions";
 import SeasonTracker from "./SeasonTracker";
@@ -72,19 +65,23 @@ export default async function SeriesPage({ params }: { params: Promise<{ id: str
   const id = parseInt(idStr);
   if (isNaN(id)) notFound();
 
-  const [session, series, logoUrl, credits, similar, providers, externalIds, keywords] =
-    await Promise.all([
-      getSession(),
-      fetchSeriesDetail(id),
-      fetchSeriesLogo(id),
-      fetchSeriesCredits(id),
-      fetchSimilarSeries(id),
-      fetchWatchProviders("tv", id),
-      fetchExternalIds("tv", id),
-      fetchKeywords("tv", id),
-    ]);
+  // Un seul appel TMDB pour toute la fiche (append_to_response) au lieu des
+  // six requêtes indépendantes d'avant.
+  const [session, bundle] = await Promise.all([getSession(), fetchSeriesBundle(id)]);
 
-  if (!series) notFound();
+  if (!bundle) notFound();
+
+  const {
+    detail: series,
+    credits,
+    similar,
+    providers,
+    externalIds,
+    keywords,
+    video,
+    certification,
+    logoUrl,
+  } = bundle;
 
   // Distinctions réelles (Wikidata) : dépend de external_ids, donc en second
   // temps. Un échec renvoie une liste vide, la fiche s'affiche quand même.
@@ -165,8 +162,13 @@ export default async function SeriesPage({ params }: { params: Promise<{ id: str
 
         {/* Colonne droite : métadonnées */}
         <div className={filmStyles.metaCol}>
-          {series.genres.length > 0 && (
+          {(series.genres.length > 0 || certification) && (
             <div className={filmStyles.genres}>
+              {certification && (
+                <span className={styles.certification} title="Classification d'âge">
+                  {certification}
+                </span>
+              )}
               {series.genres.map((g) => (
                 <span key={g} className={filmStyles.genreTag}>{g}</span>
               ))}
@@ -254,6 +256,15 @@ export default async function SeriesPage({ params }: { params: Promise<{ id: str
               <div className={filmStyles.sectionTitle}>Synopsis</div>
               <p className={filmStyles.synopsis}>{series.overview}</p>
             </div>
+          )}
+
+          {video && (
+            <TrailerSection
+              video={video}
+              title={series.name}
+              sectionClassName={filmStyles.section}
+              titleClassName={filmStyles.sectionTitle}
+            />
           )}
 
           <WatchProvidersSection
@@ -375,7 +386,15 @@ export default async function SeriesPage({ params }: { params: Promise<{ id: str
                 <div className={filmStyles.factLab}>Popularité</div>
                 <div className={filmStyles.factVal}>{series.popularity}</div>
               </div>
+              {certification && (
+                <div className={filmStyles.fact}>
+                  <div className={filmStyles.factLab}>Classification</div>
+                  <div className={filmStyles.factVal}>{certification}</div>
+                </div>
+              )}
             </div>
+
+            <ExternalLinks ids={externalIds} homepage={series.homepage} />
           </div>
 
           <AwardsSection

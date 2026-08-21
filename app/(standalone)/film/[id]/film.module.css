@@ -467,6 +467,24 @@
   flex-wrap: wrap;
 }
 
+/* Classification d'âge, en tête des genres. Encadrée comme un pictogramme
+   officiel plutôt que comme une étiquette de genre. */
+.certification {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  padding: 4px 8px;
+  border-radius: 5px;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  background: transparent;
+  border: 1.5px solid var(--ink-dim);
+}
+
 /* Devenu un lien vers la filmographie de la société */
 .companyTag {
   display: inline-flex;

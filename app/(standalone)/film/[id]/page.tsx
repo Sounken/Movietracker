@@ -4,9 +4,11 @@ import { notFound } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { saveRating, deleteRating } from "@/app/actions/film";
-import { fetchFilmDetail, fetchFilmCredits, fetchSimilarFilms, fetchFilmKeywords, fetchFilmLogo, fetchFilmCollection, fetchWatchProviders, fetchExternalIds, formatMoney, formatRuntime } from "@/lib/tmdb";
+import { fetchFilmDetail, fetchFilmCredits, fetchSimilarFilms, fetchFilmKeywords, fetchFilmLogo, fetchFilmCollection, fetchWatchProviders, fetchExternalIds, fetchFilmExtras, formatMoney, formatRuntime } from "@/lib/tmdb";
 import WatchProvidersSection from "../../components/WatchProvidersSection";
 import AwardsSection from "../../components/AwardsSection";
+import TrailerSection from "../../components/TrailerSection";
+import ExternalLinks from "../../components/ExternalLinks";
 import { fetchAwards } from "@/lib/awards";
 import FilmTopbar from "./components/FilmTopbar";
 import FilmTitleLogo from "./components/FilmTitleLogo";
@@ -29,7 +31,7 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
   const id = parseInt(idStr);
   if (isNaN(id)) notFound();
 
-  const [session, film, credits, similar, keywords, logoUrl, providers, externalIds] =
+  const [session, film, credits, similar, keywords, logoUrl, providers, externalIds, extras] =
     await Promise.all([
       getSession(),
       fetchFilmDetail(id),
@@ -39,6 +41,7 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
       fetchFilmLogo(id),
       fetchWatchProviders("movie", id),
       fetchExternalIds("movie", id),
+      fetchFilmExtras(id),
     ]);
 
   if (!film) notFound();
@@ -137,8 +140,13 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
 
         {/* Colonne droite : métadonnées */}
         <div className={styles.metaCol}>
-          {film.genres.length > 0 && (
+          {(film.genres.length > 0 || extras.certification) && (
             <div className={styles.genres}>
+              {extras.certification && (
+                <span className={styles.certification} title="Classification d'âge">
+                  {extras.certification}
+                </span>
+              )}
               {film.genres.map((g) => (
                 <span key={g} className={styles.genreTag}>{g}</span>
               ))}
@@ -200,6 +208,15 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
               <div className={styles.sectionTitle}>Synopsis</div>
               <p className={styles.synopsis}>{film.overview}</p>
             </div>
+          )}
+
+          {extras.video && (
+            <TrailerSection
+              video={extras.video}
+              title={film.title}
+              sectionClassName={styles.section}
+              titleClassName={styles.sectionTitle}
+            />
           )}
 
           <WatchProvidersSection
@@ -304,7 +321,15 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
                   </div>
                 </div>
               )}
+              {extras.certification && (
+                <div className={styles.fact}>
+                  <div className={styles.factLab}>Classification</div>
+                  <div className={styles.factVal}>{extras.certification}</div>
+                </div>
+              )}
             </div>
+
+            <ExternalLinks ids={externalIds} />
           </div>
 
           {credits.cast.length > 0 && <CastGrid cast={credits.cast} />}
