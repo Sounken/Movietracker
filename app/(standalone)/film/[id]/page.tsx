@@ -4,8 +4,10 @@ import { notFound } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { saveRating, deleteRating } from "@/app/actions/film";
-import { fetchFilmDetail, fetchFilmCredits, fetchSimilarFilms, fetchFilmKeywords, fetchFilmLogo, fetchFilmCollection, fetchWatchProviders, formatMoney, formatRuntime } from "@/lib/tmdb";
+import { fetchFilmDetail, fetchFilmCredits, fetchSimilarFilms, fetchFilmKeywords, fetchFilmLogo, fetchFilmCollection, fetchWatchProviders, fetchExternalIds, formatMoney, formatRuntime } from "@/lib/tmdb";
 import WatchProvidersSection from "../../components/WatchProvidersSection";
+import AwardsSection from "../../components/AwardsSection";
+import { fetchAwards } from "@/lib/awards";
 import FilmTopbar from "./components/FilmTopbar";
 import FilmTitleLogo from "./components/FilmTitleLogo";
 import PosterActions from "./components/PosterActions";
@@ -27,17 +29,23 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
   const id = parseInt(idStr);
   if (isNaN(id)) notFound();
 
-  const [session, film, credits, similar, keywords, logoUrl, providers] = await Promise.all([
-    getSession(),
-    fetchFilmDetail(id),
-    fetchFilmCredits(id),
-    fetchSimilarFilms(id),
-    fetchFilmKeywords(id),
-    fetchFilmLogo(id),
-    fetchWatchProviders("movie", id),
-  ]);
+  const [session, film, credits, similar, keywords, logoUrl, providers, externalIds] =
+    await Promise.all([
+      getSession(),
+      fetchFilmDetail(id),
+      fetchFilmCredits(id),
+      fetchSimilarFilms(id),
+      fetchFilmKeywords(id),
+      fetchFilmLogo(id),
+      fetchWatchProviders("movie", id),
+      fetchExternalIds("movie", id),
+    ]);
 
   if (!film) notFound();
+
+  // Distinctions réelles (Wikidata). Dépend de external_ids, donc en second
+  // temps ; un échec renvoie une liste vide et la fiche s'affiche quand même.
+  const awards = externalIds.wikidataId ? await fetchAwards(externalIds.wikidataId) : [];
 
   // Films de la saga (hors film courant). `recommendations` en oublie une
   // partie — sur Star Wars, plusieurs épisodes n'apparaissaient pas.
@@ -92,11 +100,6 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
 
   const showOriginalTitle = film.originalTitle && film.originalTitle !== film.title;
   const langLabel = LANG_NAMES[film.originalLanguage] ?? film.originalLanguage?.toUpperCase();
-
-  const AWARD_KEYWORDS = ["oscar", "academy award", "cannes", "golden globe", "palme d'or", "césar", "bafta", "venice", "berlin", "sundance", "prix du jury", "grand prix"];
-  const awardKeywords = keywords.filter((k) =>
-    AWARD_KEYWORDS.some((a) => k.toLowerCase().includes(a))
-  );
 
   return (
     <>
@@ -328,11 +331,19 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
             </div>
           )}
 
-          {awardKeywords.length > 0 && (
+          <AwardsSection
+            awards={awards}
+            sectionClassName={styles.section}
+            titleClassName={styles.sectionTitle}
+          />
+
+          {keywords.length > 0 && (
             <div className={styles.section}>
-              <div className={styles.sectionTitle}>Distinctions</div>
+              <div className={styles.sectionTitle}>Thèmes</div>
               <div className={styles.awardTags}>
-                {awardKeywords.map((k) => (
+                {/* TMDB en renvoie parfois plus de 50 : on s'arrête à 18, au-delà
+                    c'est un nuage de tags illisible. */}
+                {keywords.slice(0, 18).map((k) => (
                   <span key={k} className={styles.awardTag}>{k}</span>
                 ))}
               </div>

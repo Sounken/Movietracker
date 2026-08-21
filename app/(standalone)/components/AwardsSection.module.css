@@ -1,0 +1,66 @@
+.list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.award {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 13px;
+  border-radius: 8px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  font-size: 12.5px;
+  color: var(--ink-dim);
+  line-height: 1.3;
+}
+
+/* Oscar, Palme, Emmy… : mises en avant par rapport aux prix techniques. */
+.major {
+  background: rgba(232, 201, 138, 0.09);
+  border-color: rgba(232, 201, 138, 0.28);
+  color: var(--ink);
+}
+
+:global([data-theme="light"]) .major {
+  background: rgba(160, 112, 48, 0.08);
+  border-color: rgba(160, 112, 48, 0.28);
+}
+
+.icon {
+  color: var(--gold);
+  flex: none;
+}
+
+:global([data-theme="light"]) .icon {
+  color: var(--accent);
+}
+
+.year {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10px;
+  color: var(--ink-mute);
+  padding-left: 7px;
+  border-left: 1px solid var(--line);
+}
+
+.foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 11px;
+  font-family: var(--font-geist-mono), monospace;
+  color: var(--ink-mute);
+}
+
+.sep {
+  opacity: 0.5;
+}
+
+.source {
+  margin-left: auto;
+  opacity: 0.75;
+}

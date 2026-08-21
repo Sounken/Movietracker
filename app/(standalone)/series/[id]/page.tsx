@@ -9,6 +9,8 @@ import {
   fetchSeriesCredits,
   fetchSimilarSeries,
   fetchWatchProviders,
+  fetchExternalIds,
+  fetchKeywords,
   formatRuntime,
 } from "@/lib/tmdb";
 import FilmTopbar from "../../film/[id]/components/FilmTopbar";
@@ -16,6 +18,8 @@ import FilmTitleLogo from "../../film/[id]/components/FilmTitleLogo";
 import CastGrid from "../../film/[id]/components/CastGrid";
 import SimilarFilms from "../../film/[id]/components/SimilarFilms";
 import WatchProvidersSection from "../../components/WatchProvidersSection";
+import AwardsSection from "../../components/AwardsSection";
+import { fetchAwards } from "@/lib/awards";
 import SeriesActions from "./SeriesActions";
 import SeasonTracker from "./SeasonTracker";
 import RatingWidget from "../../film/[id]/components/RatingWidget";
@@ -68,16 +72,23 @@ export default async function SeriesPage({ params }: { params: Promise<{ id: str
   const id = parseInt(idStr);
   if (isNaN(id)) notFound();
 
-  const [session, series, logoUrl, credits, similar, providers] = await Promise.all([
-    getSession(),
-    fetchSeriesDetail(id),
-    fetchSeriesLogo(id),
-    fetchSeriesCredits(id),
-    fetchSimilarSeries(id),
-    fetchWatchProviders("tv", id),
-  ]);
+  const [session, series, logoUrl, credits, similar, providers, externalIds, keywords] =
+    await Promise.all([
+      getSession(),
+      fetchSeriesDetail(id),
+      fetchSeriesLogo(id),
+      fetchSeriesCredits(id),
+      fetchSimilarSeries(id),
+      fetchWatchProviders("tv", id),
+      fetchExternalIds("tv", id),
+      fetchKeywords("tv", id),
+    ]);
 
   if (!series) notFound();
+
+  // Distinctions réelles (Wikidata) : dépend de external_ids, donc en second
+  // temps. Un échec renvoie une liste vide, la fiche s'affiche quand même.
+  const awards = externalIds.wikidataId ? await fetchAwards(externalIds.wikidataId) : [];
 
   const [userSeries, watchedEpisodes, seasonRatings] = session
     ? await Promise.all([
@@ -367,7 +378,24 @@ export default async function SeriesPage({ params }: { params: Promise<{ id: str
             </div>
           </div>
 
+          <AwardsSection
+            awards={awards}
+            sectionClassName={filmStyles.section}
+            titleClassName={filmStyles.sectionTitle}
+          />
+
           {credits.cast.length > 0 && <CastGrid cast={credits.cast} />}
+
+          {keywords.length > 0 && (
+            <div className={filmStyles.section}>
+              <div className={filmStyles.sectionTitle}>Thèmes</div>
+              <div className={filmStyles.awardTags}>
+                {keywords.slice(0, 18).map((k) => (
+                  <span key={k} className={filmStyles.awardTag}>{k}</span>
+                ))}
+              </div>
+            </div>
+          )}
 
           {series.networks.length > 0 && (
             <div className={filmStyles.section}>

@@ -1000,6 +1000,55 @@ export async function fetchDiscoverSeries(
 }
 
 // ——————————————————————————————————————————————————————————————
+//  Identifiants externes (IMDb, Wikidata, réseaux sociaux)
+// ——————————————————————————————————————————————————————————————
+
+export type TmdbExternalIds = {
+  imdbId: string | null;
+  /** Pont vers Wikidata, d'où l'on tire les distinctions. */
+  wikidataId: string | null;
+  instagramId: string | null;
+  twitterId: string | null;
+  facebookId: string | null;
+};
+
+const EMPTY_EXTERNAL_IDS: TmdbExternalIds = {
+  imdbId: null,
+  wikidataId: null,
+  instagramId: null,
+  twitterId: null,
+  facebookId: null,
+};
+
+export function mapExternalIds(raw: Record<string, unknown> | null | undefined): TmdbExternalIds {
+  if (!raw) return EMPTY_EXTERNAL_IDS;
+  return {
+    imdbId: (raw.imdb_id as string) || null,
+    wikidataId: (raw.wikidata_id as string) || null,
+    instagramId: (raw.instagram_id as string) || null,
+    twitterId: (raw.twitter_id as string) || null,
+    facebookId: (raw.facebook_id as string) || null,
+  };
+}
+
+export async function fetchExternalIds(
+  media: "movie" | "tv",
+  id: number,
+): Promise<TmdbExternalIds> {
+  const key = process.env.TMDB_API_KEY;
+  if (!key) return EMPTY_EXTERNAL_IDS;
+  try {
+    const res = await fetch(`${BASE}/${media}/${id}/external_ids?api_key=${key}`, {
+      next: { revalidate: 86400 },
+    });
+    if (!res.ok) return EMPTY_EXTERNAL_IDS;
+    return mapExternalIds(await res.json());
+  } catch {
+    return EMPTY_EXTERNAL_IDS;
+  }
+}
+
+// ——————————————————————————————————————————————————————————————
 //  Sociétés de production
 // ——————————————————————————————————————————————————————————————
 
@@ -1235,20 +1284,30 @@ export async function fetchFilmCollection(collectionId: number): Promise<TmdbFil
   }
 }
 
-export async function fetchFilmKeywords(id: number): Promise<string[]> {
+/**
+ * Mots-clés thématiques.
+ *
+ * Attention au détail d'API : les films renvoient `keywords`, les séries
+ * `results` — même endpoint, clé différente. On lit les deux.
+ */
+export async function fetchKeywords(media: "movie" | "tv", id: number): Promise<string[]> {
   const key = process.env.TMDB_API_KEY;
   if (!key) return [];
   try {
-    const res = await fetch(
-      `${BASE}/movie/${id}/keywords?api_key=${key}`,
-      { next: { revalidate: 86400 } }
-    );
+    const res = await fetch(`${BASE}/${media}/${id}/keywords?api_key=${key}`, {
+      next: { revalidate: 86400 },
+    });
     if (!res.ok) return [];
     const data = await res.json();
-    return (data.keywords ?? []).map((k: { name: string }) => k.name as string);
+    const list = (data.keywords ?? data.results ?? []) as Array<{ name: string }>;
+    return list.map((k) => k.name);
   } catch {
     return [];
   }
+}
+
+export async function fetchFilmKeywords(id: number): Promise<string[]> {
+  return fetchKeywords("movie", id);
 }
 
 export async function fetchPersonDetail(id: number): Promise<TmdbPerson | null> {
