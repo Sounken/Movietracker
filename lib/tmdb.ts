@@ -401,6 +401,21 @@ export type TmdbEpisode = {
   airDate: string;
   runtime: number | null;
   voteAverage: number;
+  /** Nombre de votes TMDB : une note à 10/10 sur 3 votes ne vaut pas un 8,5 sur 500. */
+  voteCount: number;
+  /** « standard », « finale », « mid_season »… — sert à repérer les fins de saison. */
+  episodeType: string;
+  /** Réalisateur(s) de l'épisode. */
+  directors: TmdbCrewMember[];
+};
+
+/** Détail d'une saison : les épisodes + la note TMDB de la saison entière. */
+export type TmdbSeason = {
+  episodes: TmdbEpisode[];
+  /** Moyenne TMDB de la saison, à confronter à la note personnelle. */
+  voteAverage: number;
+  overview: string;
+  airDate: string;
 };
 
 export async function fetchSeriesCard(id: number): Promise<TmdbSeriesCard | null> {
@@ -500,30 +515,57 @@ export async function fetchSeriesDetail(id: number): Promise<TmdbSeriesDetail | 
   }
 }
 
+const EMPTY_SEASON: TmdbSeason = { episodes: [], voteAverage: 0, overview: "", airDate: "" };
+
+/**
+ * Détail d'une saison.
+ *
+ * La réponse TMDB contient déjà la note et le nombre de votes de chaque
+ * épisode, ainsi que son équipe — on ne les lisait pas. Les exploiter ne coûte
+ * donc aucun appel supplémentaire : c'est la même requête qu'avant.
+ */
 export async function fetchSeason(
   seriesId: number,
   seasonNumber: number,
-): Promise<TmdbEpisode[]> {
+): Promise<TmdbSeason> {
   const key = process.env.TMDB_API_KEY;
-  if (!key) return [];
+  if (!key) return EMPTY_SEASON;
   try {
     const res = await fetch(
       `${BASE}/tv/${seriesId}/season/${seasonNumber}?api_key=${key}&language=fr-FR`,
       { next: { revalidate: 3600 } },
     );
-    if (!res.ok) return [];
+    if (!res.ok) return EMPTY_SEASON;
     const data = await res.json();
-    return ((data.episodes ?? []) as Record<string, unknown>[]).map((e) => ({
-      episodeNumber: e.episode_number as number,
-      name: (e.name as string) ?? "",
-      overview: (e.overview as string) ?? "",
-      stillUrl: e.still_path ? `${IMG}/w300${e.still_path}` : "",
-      airDate: (e.air_date as string) ?? "",
-      runtime: (e.runtime as number) ?? null,
-      voteAverage: e.vote_average ? Math.round((e.vote_average as number) * 10) / 10 : 0,
-    }));
+
+    const episodes: TmdbEpisode[] = ((data.episodes ?? []) as Record<string, unknown>[]).map((e) => {
+      const crew = (e.crew ?? []) as Array<{ id: number; name: string; job: string }>;
+      return {
+        episodeNumber: e.episode_number as number,
+        name: (e.name as string) ?? "",
+        overview: (e.overview as string) ?? "",
+        stillUrl: e.still_path ? `${IMG}/w300${e.still_path}` : "",
+        airDate: (e.air_date as string) ?? "",
+        runtime: (e.runtime as number) ?? null,
+        voteAverage: e.vote_average ? Math.round((e.vote_average as number) * 10) / 10 : 0,
+        voteCount: (e.vote_count as number) ?? 0,
+        episodeType: (e.episode_type as string) ?? "standard",
+        // Deux réalisateurs au plus : au-delà, la ligne d'épisode déborde.
+        directors: crew
+          .filter((c) => c.job === "Director")
+          .slice(0, 2)
+          .map((c) => ({ id: c.id, name: c.name })),
+      };
+    });
+
+    return {
+      episodes,
+      voteAverage: data.vote_average ? Math.round((data.vote_average as number) * 10) / 10 : 0,
+      overview: (data.overview as string) ?? "",
+      airDate: (data.air_date as string) ?? "",
+    };
   } catch {
-    return [];
+    return EMPTY_SEASON;
   }
 }
 

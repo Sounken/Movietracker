@@ -6,6 +6,7 @@ import { Check, ChevronDown, Loader2 } from "lucide-react";
 import type { TmdbSeasonSummary, TmdbEpisode } from "@/lib/tmdb";
 import { toggleEpisode, setSeasonWatched, saveSeasonRating } from "@/app/actions/series";
 import StarRating from "@/app/(app)/components/StarRating";
+import EpisodeRatingChart from "./EpisodeRatingChart";
 import { Rating } from "@/lib/rating-scale";
 import styles from "./series.module.css";
 
@@ -13,6 +14,8 @@ type SeasonState = {
   episodes: TmdbEpisode[];
   watched: Set<number>;
   loaded: boolean;
+  /** Moyenne TMDB de la saison, pour situer sa propre note. */
+  tmdbRating: number;
 };
 
 /**
@@ -74,6 +77,7 @@ export default function SeasonTracker({
           episodes: data.episodes,
           watched: new Set<number>(data.watched),
           loaded: true,
+          tmdbRating: data.tmdbRating ?? 0,
         },
       }));
       // Resynchronise la note au cas où elle aurait changé ailleurs.
@@ -204,6 +208,16 @@ export default function SeasonTracker({
                   </div>
                 ) : (
                   <>
+                    {/* Courbe des notes TMDB, épisode par épisode. Les données
+                        arrivent dans la même réponse que la liste ci-dessous :
+                        aucun appel réseau supplémentaire. */}
+                    {s?.episodes && (
+                      <EpisodeRatingChart
+                        episodes={s.episodes}
+                        seasonNumber={season.seasonNumber}
+                      />
+                    )}
+
                     <div className={styles.seasonToolbar}>
                       <button
                         className={styles.markSeason}
@@ -214,6 +228,13 @@ export default function SeasonTracker({
                       {/* Note propre à la saison, indépendante de celle de la
                           série. Recliquer la même valeur la retire. */}
                       <div className={styles.seasonRating}>
+                        {/* Repère : la moyenne TMDB de la saison, pour situer
+                            sa propre note par rapport au public. */}
+                        {(s?.tmdbRating ?? 0) > 0 && (
+                          <span className={styles.tmdbSeasonScore} title="Moyenne TMDB de la saison">
+                            TMDB ★ <Rating value={s!.tmdbRating} />
+                          </span>
+                        )}
                         <span className={styles.seasonRatingLabel}>Ma note</span>
                         <StarRating
                           value={ratings[season.seasonNumber] ?? 0}
@@ -239,7 +260,26 @@ export default function SeasonTracker({
                             {isWatched && <Check size={12} strokeWidth={3} />}
                           </span>
                           <span className={styles.epNum}>{ep.episodeNumber}</span>
-                          <span className={styles.epName}>{ep.name || `Épisode ${ep.episodeNumber}`}</span>
+                          <span className={styles.epName}>
+                            {ep.name || `Épisode ${ep.episodeNumber}`}
+                            {ep.directors.length > 0 && (
+                              <span className={styles.epDirector}>
+                                {" "}· {ep.directors.map((d) => d.name).join(", ")}
+                              </span>
+                            )}
+                          </span>
+                          {/* Finale de saison ou de mi-saison : l'info se perd
+                              autrement dans une liste de 24 lignes. */}
+                          {(ep.episodeType === "finale" || ep.episodeType === "mid_season") && (
+                            <span className={styles.epFinale}>
+                              {ep.episodeType === "finale" ? "Finale" : "Mi-saison"}
+                            </span>
+                          )}
+                          {/* Note TMDB de l'épisode, quand elle est un tant soit
+                              peu soutenue (sinon elle induit en erreur). */}
+                          {released && ep.voteAverage > 0 && ep.voteCount >= 10 && (
+                            <span className={styles.epScore}>★ <Rating value={ep.voteAverage} /></span>
+                          )}
                           {/* Épisode à venir : date complète (l'info utile),
                               sinon la simple année suffit. */}
                           {released ? (

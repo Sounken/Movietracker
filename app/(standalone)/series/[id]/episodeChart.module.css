@@ -1,0 +1,177 @@
+.wrap {
+  padding: 14px 14px 10px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 6px;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.title {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+
+.avg {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  color: var(--gold);
+}
+
+:global([data-theme="light"]) .avg {
+  color: var(--accent);
+}
+
+/* ——— Graphique ——— */
+.chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 92px;
+  /* Une saison de 24 épisodes tient sans écraser les barres ; au-delà on
+     défile plutôt que de réduire les colonnes à un cheveu. */
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 2px;
+}
+
+.col {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 14px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+.bar {
+  width: 100%;
+  border-radius: 3px 3px 0 0;
+  transition: filter 0.14s, transform 0.14s;
+  transform-origin: bottom;
+}
+
+.col:hover .bar,
+.colOn .bar {
+  filter: brightness(1.35);
+  transform: scaleX(1.06);
+}
+
+/* Paliers de qualité — du plus faible au plus fort */
+.tier1 { background: #6b4a3a; }
+.tier2 { background: #9a6540; }
+.tier3 { background: var(--accent); }
+.tier4 { background: #e0a05e; }
+.tier5 { background: var(--gold); }
+
+/* Trop peu de votes pour être significatif : hachures et opacité réduite. */
+.barWeak {
+  opacity: 0.42;
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(0, 0, 0, 0.25) 0 2px,
+    transparent 2px 4px
+  );
+}
+
+/* Marqueur de finale (de saison ou de mi-saison) */
+.finaleDot {
+  position: absolute;
+  top: -1px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--ink);
+}
+
+.num {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 9px;
+  color: var(--ink-mute);
+  flex: none;
+}
+
+/* ——— Légende ——— */
+/* Hauteur fixe : le survol ne doit pas décaler la liste d'épisodes en dessous. */
+.readout {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 30px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--ink-dim);
+  overflow: hidden;
+}
+
+.readoutNum {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  color: var(--accent);
+  flex: none;
+}
+
+.readoutName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink);
+}
+
+.readoutScore {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  font-family: var(--font-geist-mono), monospace;
+  color: var(--gold);
+  flex: none;
+}
+
+:global([data-theme="light"]) .readoutScore {
+  color: var(--accent);
+}
+
+.readoutVotes {
+  font-size: 10px;
+  color: var(--ink-mute);
+}
+
+.hint {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  color: var(--ink-mute);
+}
+
+.hint strong {
+  color: var(--ink-dim);
+  font-weight: 500;
+}
+
+@media (max-width: 600px) {
+  .chart {
+    height: 72px;
+  }
+
+  .readoutName {
+    display: none;
+  }
+}

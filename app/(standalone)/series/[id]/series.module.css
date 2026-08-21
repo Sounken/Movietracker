@@ -354,6 +354,53 @@
 .epName { flex: 1; min-width: 0; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .epDate { font-size: 11px; color: var(--ink-mute); flex: 0 0 auto; }
 
+/* Réalisateur de l'épisode, en retrait derrière le titre */
+.epDirector {
+  color: var(--ink-mute);
+  font-size: 12px;
+}
+
+/* Note TMDB de l'épisode */
+.epScore {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  color: var(--gold);
+  flex: 0 0 auto;
+  /* Largeur réservée : sans elle, les dates à droite formaient un escalier
+     selon que l'épisode a une note ou non. */
+  min-width: 46px;
+  text-align: right;
+}
+
+:global([data-theme="light"]) .epScore {
+  color: var(--accent);
+}
+
+/* Étiquette « Finale » / « Mi-saison » */
+.epFinale {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid rgba(217, 119, 66, 0.3);
+  background: rgba(217, 119, 66, 0.1);
+  border-radius: 999px;
+  padding: 2px 7px;
+  flex: 0 0 auto;
+}
+
+/* Moyenne TMDB de la saison, à gauche de « Ma note » */
+.tmdbSeasonScore {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10px;
+  color: var(--ink-mute);
+  white-space: nowrap;
+  padding-right: 10px;
+  margin-right: 2px;
+  border-right: 1px solid var(--line);
+}
+
 /* Date de diffusion à venir : mise en avant par rapport à la simple année. */
 .epUpcoming {
   color: var(--accent);
