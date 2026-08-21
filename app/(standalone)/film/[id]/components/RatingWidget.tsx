@@ -37,9 +37,11 @@ export default function RatingWidget({
   const [isPending, startTransition] = useTransition();
   // Saisie libre sur 100 : texte tant qu'on tape, converti au blur/Entrée.
   const [draft, setDraft] = useState<string | null>(null);
+  // Prévisualisation : le chiffre suit les étoiles survolées, et revient à la
+  // note enregistrée dès que le curseur quitte la rangée.
+  const [hover, setHover] = useState<number | null>(null);
 
-  // Le survol vit désormais dans StarRating ; ici on n'affiche que l'enregistré.
-  const displayed = rating;
+  const displayed = hover ?? rating;
 
   const handleRate = (value: number) => {
     if (!isAuthenticated) { router.push("/login"); return; }
@@ -95,6 +97,7 @@ export default function RatingWidget({
           value={rating}
           onRate={handleRate}
           onClear={handleClearRating}
+          onHoverChange={setHover}
           showValue={false}
         />
 

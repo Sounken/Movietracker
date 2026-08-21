@@ -1,37 +1,49 @@
-import Link from "next/link";
+import { Suspense } from "react";
 import { getSession } from "@/lib/session";
 import { fetchDiscoverSeries } from "@/lib/tmdb";
+import { fetchForYouSeries } from "@/lib/recommendations";
 import Topbar from "../../components/Topbar";
+import SeriesDiscoverFilters from "./SeriesDiscoverFilters";
 import SeriesDiscoverGrid from "./SeriesDiscoverGrid";
 import styles from "../../films/discover/discover.module.css";
-
-const CATEGORIES = [
-  { key: "popular", label: "Populaires" },
-  { key: "top_rated", label: "Mieux notées" },
-  { key: "on_the_air", label: "En diffusion" },
-];
 
 export default async function SeriesDiscoverPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; anime?: string }>;
+  searchParams: Promise<{
+    category?: string;
+    genre?: string;
+    anime?: string;
+    minYear?: string;
+    maxYear?: string;
+    minRating?: string;
+  }>;
 }) {
   const [session, params] = await Promise.all([getSession(), searchParams]);
-  const category = params.category ?? "popular";
-  const anime = params.anime === "1";
 
-  const series = await fetchDiscoverSeries(category, null, 1, anime);
+  const genre = params.genre ?? "";
+  const anime = params.anime === "1";
+  const minYear = params.minYear ?? "";
+  const maxYear = params.maxYear ?? "";
+  const minRating = params.minRating ?? "";
+
+  // Sans compte, « Pour vous » n'a rien sur quoi se baser : on retombe sur Populaires.
+  const requested = params.category ?? "popular";
+  const category = requested === "for_you" && !session ? "popular" : requested;
+
+  const series =
+    category === "for_you" && session
+      ? await fetchForYouSeries(session.userId)
+      : await fetchDiscoverSeries(category, {
+          genreId: genre ? parseInt(genre) : null,
+          anime,
+          minYear,
+          maxYear,
+          minRating: minRating ? Number(minRating) : undefined,
+        });
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
-
-  const hrefFor = (cat: string, an: boolean) => {
-    const p = new URLSearchParams();
-    if (cat !== "popular") p.set("category", cat);
-    if (an) p.set("anime", "1");
-    const q = p.toString();
-    return `/series/discover${q ? `?${q}` : ""}`;
-  };
 
   return (
     <div className={styles.page}>
@@ -39,32 +51,37 @@ export default async function SeriesDiscoverPage({
 
       <div className={styles.header}>
         <div className={styles.sectionSub}>01 — Explorer</div>
-        <h2 className={styles.sectionTitle}>Découvrir des séries</h2>
+        <h2 className={styles.sectionTitle}>
+          {category === "for_you" ? "Pour vous" : "Découvrir des séries"}
+        </h2>
       </div>
 
-      <div className={styles.categoryTabs}>
-        {CATEGORIES.map((c) => (
-          <Link
-            key={c.key}
-            href={hrefFor(c.key, anime)}
-            className={`${styles.tab} ${category === c.key ? styles.tabOn : ""}`}
-          >
-            {c.label}
-          </Link>
-        ))}
-        <Link
-          href={hrefFor(category, !anime)}
-          className={`${styles.pill} ${anime ? styles.pillOn : ""}`}
-        >
-          Anime
-        </Link>
-      </div>
+      <Suspense fallback={null}>
+        <SeriesDiscoverFilters
+          category={category}
+          genre={genre}
+          anime={anime}
+          minYear={minYear}
+          maxYear={maxYear}
+          minRating={minRating}
+          showForYou={Boolean(session)}
+        />
+      </Suspense>
 
       <SeriesDiscoverGrid
-        key={`${category}-${anime}`}
+        key={`${category}-${genre}-${anime}-${minYear}-${maxYear}-${minRating}`}
         initialSeries={series}
         category={category}
+        genre={genre}
         anime={anime}
+        minYear={minYear}
+        maxYear={maxYear}
+        minRating={minRating}
+        emptyMessage={
+          category === "for_you"
+            ? "Notez quelques séries pour que l'on puisse vous en conseiller."
+            : undefined
+        }
       />
     </div>
   );

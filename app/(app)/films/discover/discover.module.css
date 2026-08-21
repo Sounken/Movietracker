@@ -93,6 +93,140 @@
   color: var(--accent);
 }
 
+/* ——— Filter row (dropdowns) ——— */
+.filterRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dropdown {
+  position: relative;
+}
+
+.dropdownBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--ink-dim);
+  font-size: 12px;
+  font-family: var(--font-geist-mono), monospace;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.dropdownBtn:hover {
+  color: var(--ink);
+  border-color: var(--ink-mute);
+}
+
+.dropdownOn {
+  background: rgba(217, 119, 66, 0.12);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.chevron {
+  transition: transform 0.18s ease;
+}
+
+.chevronUp {
+  transform: rotate(180deg);
+}
+
+.dropdownPanel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 20;
+  min-width: 180px;
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  animation: dropdownIn 0.16s ease;
+}
+
+@keyframes dropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Panneau des genres : plus large, pills sur plusieurs lignes */
+.genreGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 320px;
+  max-width: calc(100vw - 60px);
+}
+
+.dropdownList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.dropdownItem {
+  padding: 7px 10px;
+  border-radius: 6px;
+  border: none;
+  background: none;
+  color: var(--ink-dim);
+  font-size: 12px;
+  font-family: var(--font-geist-mono), monospace;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  white-space: nowrap;
+}
+
+.dropdownItem:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--ink);
+}
+
+:global([data-theme="light"]) .dropdownItem:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.dropdownItemOn {
+  color: var(--accent);
+}
+
+.clearFilters {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  background: rgba(217, 119, 66, 0.08);
+  border: 1px solid rgba(217, 119, 66, 0.3);
+  color: var(--accent);
+  font-size: 12px;
+  font-family: var(--font-geist-mono), monospace;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.clearFilters:hover {
+  background: rgba(217, 119, 66, 0.15);
+}
+
 /* ——— Film grid ——— */
 .grid {
   display: grid;

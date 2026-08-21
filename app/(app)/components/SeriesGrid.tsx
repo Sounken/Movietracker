@@ -23,7 +23,8 @@ export default function SeriesGrid({
     return empty ? <div className={styles.empty}>{empty}</div> : null;
   }
   return (
-    <div className={styles.grid}>
+    // Même apparition en cascade que la grille de films (cf. globals.css)
+    <div className={`${styles.grid} stagger`}>
       {items.map((s) => (
         <Link key={s.id} href={`/series/${s.id}`} className={styles.filmCard}>
           <div className={styles.poster}>

@@ -5,8 +5,9 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { X, Camera, Check, Sparkles, Pencil } from "lucide-react";
 import { updateProfile } from "@/app/actions/profile";
-import type { LevelInfo } from "@/lib/xp";
+import { getRanks, type LevelInfo } from "@/lib/xp";
 import ImageCropper from "./ImageCropper";
+import RanksModal from "./RanksModal";
 import type { RatingScale } from "@/lib/rating";
 import styles from "./profile.module.css";
 
@@ -56,6 +57,7 @@ export default function ProfileHeaderClient({
 }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [ranksOpen, setRanksOpen] = useState(false);
   const [nameVal, setNameVal] = useState(name);
   const [bioVal, setBioVal] = useState(bio.slice(0, BIO_MAX_LENGTH));
   const [scaleVal, setScaleVal] = useState<RatingScale>(ratingScale);
@@ -203,9 +205,15 @@ export default function ProfileHeaderClient({
           <div className={styles.nameBlock}>
             <h1 className={styles.name}>{name || "Cinéphile"}</h1>
             <div className={styles.metaRow}>
-              <span className={styles.profileBadge}>
+              <button
+                type="button"
+                className={styles.profileBadge}
+                onClick={() => setRanksOpen(true)}
+                title="Voir tous les rangs et votre progression"
+              >
                 <Sparkles size={11} /> {levelInfo.title}
-              </span>
+                <span className={styles.profileBadgeLevel}>niv. {levelInfo.level}</span>
+              </button>
               <span className={styles.joinedDate}>Membre depuis {joinedYear}</span>
             </div>
             {bio && <p className={styles.bio}>{bio}</p>}
@@ -237,6 +245,14 @@ export default function ProfileHeaderClient({
           <span>Niv. {levelInfo.level + 1}</span>
         </div>
       </div>
+
+      {ranksOpen && (
+        <RanksModal
+          ranks={getRanks(levelInfo.totalXP)}
+          levelInfo={levelInfo}
+          onClose={() => setRanksOpen(false)}
+        />
+      )}
 
       {/* Edit modal */}
       {open && (

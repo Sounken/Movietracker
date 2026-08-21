@@ -45,6 +45,7 @@
 
 /* Switch Films / Séries */
 .sectionSwitch {
+  position: relative;
   display: flex;
   gap: 4px;
   background: var(--bg-2);
@@ -54,7 +55,28 @@
   margin-bottom: 28px;
 }
 
+/* Pastille qui glisse d'un onglet à l'autre. Avant, seule la couleur de fond
+   changeait : la bascule Films/Séries se faisait sans qu'on voie le mouvement.
+   La pastille est un élément unique, positionné par `data-side`. */
+.switchThumb {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc(50% - 6px);
+  border-radius: 8px;
+  background: var(--accent);
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+
+.sectionSwitch[data-side="series"] .switchThumb {
+  transform: translateX(calc(100% + 4px));
+}
+
 .switchBtn {
+  position: relative;
+  z-index: 1;
   flex: 1;
   display: flex;
   align-items: center;
@@ -66,19 +88,37 @@
   font-weight: 500;
   color: var(--ink-dim);
   text-decoration: none;
-  transition: all 0.15s;
+  /* Le fond est porté par la pastille : on n'anime plus que la couleur du texte,
+     et légèrement en retard pour qu'elle bascule quand la pastille arrive. */
+  transition: color 0.2s ease 0.06s;
 }
 
-.switchBtn svg { width: 16px; height: 16px; }
+.switchBtn svg {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
 
 .switchBtn:hover { color: var(--ink); }
 
-.switchOn {
-  background: var(--accent);
+.switchOn,
+.switchOn:hover {
   color: #1a0e08;
 }
 
-.switchOn:hover { color: #1a0e08; }
+.switchOn svg {
+  transform: scale(1.08);
+}
+
+/* Sur un appareil qui n'aime pas le mouvement, la pastille apparaît sans glisser. */
+@media (prefers-reduced-motion: reduce) {
+  .switchThumb,
+  .switchBtn,
+  .switchBtn svg,
+  .navItem::before {
+    transition: none;
+  }
+}
 
 .navSection {
   margin-bottom: 28px;
@@ -95,6 +135,7 @@
 }
 
 .navItem {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -103,8 +144,33 @@
   color: var(--ink-dim);
   font-size: 14px;
   text-decoration: none;
-  transition: all 0.18s ease;
+  transition: color 0.18s ease, background 0.18s ease;
   user-select: none;
+}
+
+/* Barre d'indicateur : une vraie bordure gauche, arrondie et détachée du bord,
+   plutôt qu'un `inset box-shadow` qui rendait un trait carré collé au texte.
+   Elle existe sur tous les onglets mais reste transparente — c'est ce qui
+   permet de l'animer à l'activation au lieu de la faire apparaître d'un coup. */
+.navItem::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 3px;
+  height: 0;
+  border-radius: 0 3px 3px 0;
+  /* L'accent occupe la moitié centrale de la barre et s'estompe aux extrémités :
+     la couleur « se propage » depuis le milieu au lieu de peindre tout le bord. */
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    var(--accent) 25%,
+    var(--accent) 75%,
+    transparent 100%
+  );
+  transform: translateY(-50%);
+  transition: height 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .navItem:hover {
@@ -112,10 +178,27 @@
   color: var(--ink);
 }
 
+/* Au survol, la barre s'amorce discrètement : l'onglet répond avant le clic. */
+.navItem:hover::before {
+  height: 40%;
+  background: linear-gradient(180deg, transparent, var(--ink-mute), transparent);
+}
+
 .navItem.active {
   background: linear-gradient(90deg, rgba(217, 119, 66, 0.14), rgba(217, 119, 66, 0.03));
   color: var(--ink);
-  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.navItem.active::before,
+.navItem.active:hover::before {
+  height: 100%;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    var(--accent) 25%,
+    var(--accent) 75%,
+    transparent 100%
+  );
 }
 
 .navItem svg {
@@ -329,6 +412,7 @@ button.navItem {
 
   /* Switch Films/Séries en haut du menu mobile */
   .sectionSwitchSheet {
+    position: relative;
     display: flex;
     gap: 4px;
     background: var(--bg-2);
@@ -336,6 +420,11 @@ button.navItem {
     border-radius: 12px;
     padding: 4px;
     margin-bottom: 8px;
+  }
+
+  /* Même pastille glissante que la sidebar desktop */
+  .sectionSwitchSheet[data-side="series"] .switchThumb {
+    transform: translateX(calc(100% + 4px));
   }
 
   .sheetItem {

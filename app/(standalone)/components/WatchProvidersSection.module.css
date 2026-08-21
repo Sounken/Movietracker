@@ -1,0 +1,87 @@
+.group {
+  margin-bottom: 16px;
+}
+
+.groupLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-mute);
+  font-family: var(--font-geist-mono), monospace;
+  margin-bottom: 10px;
+}
+
+.providers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.provider {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 13px 7px 7px;
+  border-radius: 10px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  text-decoration: none;
+  color: var(--ink-dim);
+  transition: border-color 0.15s, color 0.15s, transform 0.15s;
+}
+
+.provider:hover {
+  border-color: var(--accent);
+  color: var(--ink);
+  transform: translateY(-2px);
+}
+
+.logo {
+  border-radius: 8px;
+  flex: none;
+}
+
+/* Repli quand TMDB n'a pas de logo pour la plateforme */
+.fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: var(--line);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  flex: none;
+}
+
+.name {
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.attribution {
+  font-size: 11px;
+  color: var(--ink-mute);
+  font-family: var(--font-geist-mono), monospace;
+  margin-top: 4px;
+}
+
+.attribution a {
+  color: var(--ink-dim);
+}
+
+.attribution a:hover {
+  color: var(--accent);
+}
+
+@media (max-width: 768px) {
+  .name {
+    display: none;
+  }
+
+  .provider {
+    padding: 7px;
+  }
+}

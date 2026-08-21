@@ -5,18 +5,16 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Eye, Star, PenLine, Clock, Users, type LucideIcon } from "lucide-react";
-import type { Period, FilmRanking, GenreStat, ActiveUser, RecentReview } from "./page";
+import type {
+  Period,
+  TitleRanking,
+  GenreStat,
+  ActiveUser,
+  RecentReview,
+  TrendsStats,
+} from "@/lib/trends";
 import styles from "./trends.module.css";
 import { Rating } from "@/lib/rating-scale";
-
-type Stats = {
-  totalUsers: number;
-  totalWatched: number;
-  totalRated: number;
-  totalReviews: number;
-  totalWatchlist: number;
-  totalHours: number;
-};
 
 type TabKey = "watched" | "liked" | "rated" | "watchlisted";
 
@@ -74,21 +72,36 @@ export default function TrendsClient({
   genres,
   recentReviews,
   activeUsers,
+  basePath = "/films/trends",
+  mediaBase = "/film",
+  media = "film",
 }: {
   period: Period;
-  stats: Stats;
-  topWatched: FilmRanking[];
-  topLiked: FilmRanking[];
-  topRated: FilmRanking[];
-  topWatchlisted: FilmRanking[];
+  stats: TrendsStats;
+  topWatched: TitleRanking[];
+  topLiked: TitleRanking[];
+  topRated: TitleRanking[];
+  topWatchlisted: TitleRanking[];
   genres: GenreStat[];
   recentReviews: RecentReview[];
   activeUsers: ActiveUser[];
+  /** Route de la page elle-même, pour les liens de période. */
+  basePath?: string;
+  /** Base des liens vers une fiche : « /film » ou « /series ». */
+  mediaBase?: string;
+  /** Détermine les libellés (« Top films » / « Top séries »…). */
+  media?: "film" | "series";
 }) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabKey>("watched");
 
-  const tabData: Record<TabKey, FilmRanking[]> = {
+  const isSeries = media === "series";
+  const labels = {
+    topTitle: isSeries ? "Top séries" : "Top films",
+    watchedStat: isSeries ? "Séries suivies" : "Films vus",
+  };
+
+  const tabData: Record<TabKey, TitleRanking[]> = {
     watched: topWatched,
     liked: topLiked,
     rated: topRated,
@@ -99,7 +112,7 @@ export default function TrendsClient({
   const maxCount = currentList[0]?.count ?? 1;
 
   function setPeriod(p: Period) {
-    router.push(`/films/trends?period=${p}`);
+    router.push(`${basePath}?period=${p}`);
   }
 
   return (
@@ -108,7 +121,7 @@ export default function TrendsClient({
       <div className={styles.header}>
         <div>
           <div className={styles.headerSub}>Communauté</div>
-          <h1 className={styles.headerTitle}>Tendances</h1>
+          <h1 className={styles.headerTitle}>Tendances{isSeries ? " séries" : ""}</h1>
         </div>
         <div className={styles.periodPills}>
           {(Object.keys(PERIOD_LABELS) as Period[]).map((p) => (
@@ -125,7 +138,7 @@ export default function TrendsClient({
 
       {/* Stats bar */}
       <div className={styles.statsGrid}>
-        <StatCard value={stats.totalWatched} label="Films vus" icon={Eye} />
+        <StatCard value={stats.totalWatched} label={labels.watchedStat} icon={Eye} />
         <StatCard value={stats.totalRated} label="Notes données" icon={Star} />
         <StatCard value={stats.totalReviews} label="Avis rédigés" icon={PenLine} />
         <StatCard value={stats.totalHours} label="Heures visionnées" icon={Clock} suffix="h" />
@@ -138,7 +151,7 @@ export default function TrendsClient({
         <div className={styles.mainCol}>
           <div className={styles.section}>
             <div className={styles.sectionHead}>
-              <div className={styles.sectionTitle}>Top films</div>
+              <div className={styles.sectionTitle}>{labels.topTitle}</div>
               <div className={styles.tabs}>
                 {(Object.keys(TAB_LABELS) as TabKey[]).map((tab) => (
                   <button
@@ -157,7 +170,7 @@ export default function TrendsClient({
             ) : (
               <div className={styles.rankList}>
                 {currentList.map((film, i) => (
-                  <Link key={film.tmdbId} href={`/film/${film.tmdbId}`} className={styles.rankItem}>
+                  <Link key={film.tmdbId} href={`${mediaBase}/${film.tmdbId}`} className={styles.rankItem}>
                     <span className={`${styles.rankNum} ${i < 3 ? styles.rankTop : ""}`}>
                       {i + 1}
                     </span>
@@ -201,7 +214,7 @@ export default function TrendsClient({
           </div>
 
           {/* Recent reviews */}
-          <div className={styles.section} style={{ marginTop: 24 }}>
+          <div className={styles.section}>
             <div className={styles.sectionHead}>
               <div className={styles.sectionTitle}>Avis récents</div>
               <span className={styles.sectionCount}>{recentReviews.length}</span>
@@ -213,7 +226,7 @@ export default function TrendsClient({
                 {recentReviews.map((r) => (
                   <div key={r.id} className={styles.reviewCard}>
                     {r.posterUrl && (
-                      <Link href={`/film/${r.tmdbId}`}>
+                      <Link href={`${mediaBase}/${r.tmdbId}`}>
                         <Image src={r.posterUrl} alt={r.title} className={styles.reviewPoster} width={48} height={72} />
                       </Link>
                     )}
@@ -227,7 +240,7 @@ export default function TrendsClient({
                             {r.user.name}
                           </Link>
                           {" · "}
-                          <Link href={`/film/${r.tmdbId}`} className={styles.reviewFilm}>
+                          <Link href={`${mediaBase}/${r.tmdbId}`} className={styles.reviewFilm}>
                             {r.title}
                           </Link>
                           {r.rating != null && (
@@ -272,7 +285,7 @@ export default function TrendsClient({
           </div>
 
           {/* Most active users */}
-          <div className={styles.section} style={{ marginTop: 24 }}>
+          <div className={styles.section}>
             <div className={styles.sectionHead}>
               <div className={styles.sectionTitle}>Utilisateurs actifs</div>
               <span className={styles.sectionCount}>{activeUsers.length}</span>

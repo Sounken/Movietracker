@@ -181,6 +181,22 @@
   color: var(--accent);
   border: 1px solid rgba(217,119,66,0.22);
   white-space: nowrap;
+  /* Devenu un bouton : ouvre le tableau des rangs */
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.profileBadge:hover {
+  background: rgba(217,119,66,0.2);
+  border-color: var(--accent);
+}
+
+/* Le niveau chiffré, détaché du titre par un filet */
+.profileBadgeLevel {
+  padding-left: 7px;
+  margin-left: 1px;
+  border-left: 1px solid rgba(217,119,66,0.3);
+  opacity: 0.85;
 }
 
 .joinedDate {

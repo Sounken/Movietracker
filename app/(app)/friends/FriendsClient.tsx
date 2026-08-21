@@ -5,12 +5,18 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { followUser, unfollowUser } from "@/app/actions/friends";
-import { Check, Heart } from "lucide-react";
+import { Check, Heart, GitCompare } from "lucide-react";
 import styles from "./friends.module.css";
 import { Rating } from "@/lib/rating-scale";
 
-type FollowingUser = { id: string; name: string; avatarUrl: string | null; filmCount: number; avgRating: number | null };
-type FollowerUser  = { id: string; name: string; avatarUrl: string | null; followsBack: boolean };
+type FollowingUser = {
+  id: string; name: string; avatarUrl: string | null; filmCount: number;
+  avgRating: number | null; level: number; levelTitle: string;
+};
+type FollowerUser  = {
+  id: string; name: string; avatarUrl: string | null; followsBack: boolean;
+  level: number; levelTitle: string;
+};
 type ActivityItem  = {
   id: string; tmdbId: number; title: string; posterUrl: string | null; year: string;
   watched: boolean; liked: boolean; rating: number | null;
@@ -29,11 +35,39 @@ function timeAgo(iso: string) {
   return `Il y a ${d}j`;
 }
 
-function Avatar({ url, name, size = 38 }: { url: string | null; name: string; size?: number }) {
-  if (url) return <Image src={url} alt={name} className={styles.avatar} width={size} height={size} />;
-  return (
+function Avatar({
+  url,
+  name,
+  size = 38,
+  level,
+  levelTitle,
+}: {
+  url: string | null;
+  name: string;
+  size?: number;
+  /** Pastille de niveau en bas à droite de la photo. Omis = pas de pastille. */
+  level?: number;
+  levelTitle?: string;
+}) {
+  const picture = url ? (
+    <Image src={url} alt={name} className={styles.avatar} width={size} height={size} />
+  ) : (
     <div className={styles.avatarFallback} style={{ width: size, height: size, fontSize: size * 0.4 }}>
       {name[0]?.toUpperCase()}
+    </div>
+  );
+
+  if (level === undefined) return picture;
+
+  return (
+    <div className={styles.avatarWrap} style={{ width: size, height: size }}>
+      {picture}
+      <span
+        className={styles.levelBadge}
+        title={levelTitle ? `${levelTitle} · niveau ${level}` : `Niveau ${level}`}
+      >
+        {level}
+      </span>
     </div>
   );
 }
@@ -44,6 +78,7 @@ export default function FriendsClient({
   activity,
   mediaBase = "/film",
   countNoun = "film",
+  compareBase = "/compare",
 }: {
   following: FollowingUser[];
   followers: FollowerUser[];
@@ -52,6 +87,8 @@ export default function FriendsClient({
   mediaBase?: string;
   /** « film » (défaut) ou « série » — nom pour les compteurs */
   countNoun?: string;
+  /** « /compare » (défaut) ou « /series/compare » — base du lien de comparaison */
+  compareBase?: string;
 }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -164,7 +201,7 @@ export default function FriendsClient({
                 {initialFollowing.map((u) => (
                   <div key={u.id} className={styles.userCard}>
                     <Link href={`/user/${u.id}`} className={styles.userLink}>
-                      <Avatar url={u.avatarUrl} name={u.name} />
+                      <Avatar url={u.avatarUrl} name={u.name} level={u.level} levelTitle={u.levelTitle} />
                       <div className={styles.userInfo}>
                         <div className={styles.userName}>{u.name}</div>
                         <div className={styles.userMeta}>
@@ -173,13 +210,22 @@ export default function FriendsClient({
                         </div>
                       </div>
                     </Link>
-                    <button
-                      className={styles.btnUnfollow}
-                      onClick={() => toggle(u.id, true)}
-                      disabled={pendingIds.has(u.id)}
-                    >
-                      {pendingIds.has(u.id) ? "…" : <>Suivi <Check size={12} /></>}
-                    </button>
+                    <div className={styles.userActions}>
+                      <Link
+                        href={`${compareBase}/${u.id}`}
+                        className={styles.btnCompare}
+                        title={`Comparer vos notes avec ${u.name}`}
+                      >
+                        <GitCompare size={12} /> Comparer
+                      </Link>
+                      <button
+                        className={styles.btnUnfollow}
+                        onClick={() => toggle(u.id, true)}
+                        disabled={pendingIds.has(u.id)}
+                      >
+                        {pendingIds.has(u.id) ? "…" : <>Suivi <Check size={12} /></>}
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -199,7 +245,7 @@ export default function FriendsClient({
                 {followers.map((u) => (
                   <div key={u.id} className={styles.userCard}>
                     <Link href={`/user/${u.id}`} className={styles.userLink}>
-                      <Avatar url={u.avatarUrl} name={u.name} />
+                      <Avatar url={u.avatarUrl} name={u.name} level={u.level} levelTitle={u.levelTitle} />
                       <div className={styles.userInfo}>
                         <div className={styles.userName}>{u.name}</div>
                         {u.followsBack && <div className={styles.mutualBadge}>Abonné mutuel</div>}

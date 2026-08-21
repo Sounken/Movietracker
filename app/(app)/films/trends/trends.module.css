@@ -58,7 +58,9 @@
 /* Stats grid */
 .statsGrid {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  /* La grille était figée à 6 colonnes pour 5 cartes : une colonne vide
+     traînait à droite. En auto-fit, les cartes occupent toute la largeur. */
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 16px;
   margin-bottom: 32px;
 }
@@ -99,21 +101,29 @@
   gap: 24px;
   align-items: start;
 }
+/* L'espacement entre blocs vient de la colonne, pas d'un margin-top posé au
+   cas par cas dans le JSX : toutes les sections respirent pareil. */
 .mainCol {
   display: flex;
   flex-direction: column;
+  gap: 24px;
 }
 .sideCol {
   display: flex;
   flex-direction: column;
+  gap: 24px;
 }
 
 /* Section */
+/* Chaque bloc est une carte nettement détachée du fond : bordure, coin
+   arrondi et ombre portée légère, pour qu'on distingue au premier coup d'œil
+   où commence et où finit une partie. */
 .section {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 16px;
   overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
 }
 .sectionHead {
   display: flex;
@@ -122,6 +132,25 @@
   gap: 12px;
   padding: 16px 20px;
   border-bottom: 1px solid var(--line);
+  /* Teinte à peine plus soutenue que le corps : la barre de titre se lit
+     comme un en-tête, pas comme la première ligne du contenu. */
+  background: rgba(255, 255, 255, 0.02);
+}
+
+:global([data-theme="light"]) .sectionHead {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+/* Filet d'accent devant le titre, pour marquer le début d'une partie. */
+.sectionTitle::before {
+  content: "";
+  display: inline-block;
+  width: 3px;
+  height: 12px;
+  border-radius: 2px;
+  background: var(--accent);
+  margin-right: 9px;
+  vertical-align: -1px;
 }
 .sectionTitle {
   font-size: 12px;

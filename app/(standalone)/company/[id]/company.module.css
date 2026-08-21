@@ -1,0 +1,108 @@
+/* Une société n'a pas de portrait à mettre en colonne latérale : la page est
+   donc sur une seule colonne, contrairement à la fiche acteur. */
+.page {
+  position: relative;
+  z-index: 2;
+  padding: 60px 52px 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  margin-bottom: 44px;
+}
+
+.logoWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 150px;
+  height: 100px;
+  flex: none;
+  padding: 18px;
+  border-radius: 14px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+
+.logo {
+  width: 100%;
+  height: auto;
+  max-height: 64px;
+  object-fit: contain;
+  /* Logos TMDB : noir sur transparent, invisibles en thème sombre. */
+  filter: invert(1) grayscale(1) brightness(1.7);
+}
+
+:global([data-theme="light"]) .logo {
+  filter: none;
+}
+
+.logoFallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 150px;
+  height: 100px;
+  flex: none;
+  border-radius: 14px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  font-family: var(--font-serif), serif;
+  font-size: 44px;
+  color: var(--ink-mute);
+}
+
+.name {
+  font-family: var(--font-serif), serif;
+  font-size: 40px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  margin: 0 0 10px;
+  color: var(--ink);
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  font-size: 13px;
+  color: var(--ink-mute);
+  font-family: var(--font-geist-mono), monospace;
+}
+
+/* Séparateur en puce entre les informations */
+.meta > * + *::before {
+  content: "·";
+  margin-right: 16px;
+  color: var(--line);
+}
+
+.link {
+  color: var(--ink-dim);
+  text-decoration: none;
+}
+
+.link:hover {
+  color: var(--accent);
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: 32px 20px;
+  }
+
+  .head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+  }
+
+  .name {
+    font-size: 28px;
+  }
+}

@@ -23,11 +23,21 @@ function ratingColumn(field: string | null) {
   return field === "voteAverage" ? 'f."voteAverage"' : 'uf."rating"';
 }
 
-function orderSql(sort: string, ratingCol: string) {
-  if (sort === "rating") return `${ratingCol} DESC NULLS LAST, uf."updatedAt" DESC`;
+// `dir` vient d'une liste blanche côté appelant, mais on le re-valide ici :
+// il est concaténé dans le SQL, jamais paramétrable.
+function orderSql(sort: string, ratingCol: string, dir: string) {
+  const d = dir === "asc" ? "ASC" : "DESC";
+  // NULLS LAST dans les deux sens : un film sans note ne doit jamais remonter
+  // en tête, même en tri croissant.
+  if (sort === "rating") return `${ratingCol} ${d} NULLS LAST, uf."updatedAt" DESC`;
   // year est stocké en texte sur 4 caractères : le tri lexicographique est correct
-  if (sort === "year") return 'f."year" DESC NULLS LAST, uf."updatedAt" DESC';
-  return 'uf."updatedAt" DESC';
+  if (sort === "year") return `f."year" ${d} NULLS LAST, uf."updatedAt" DESC`;
+  return `uf."updatedAt" ${d}`;
+}
+
+// Échappe les jokers LIKE pour qu'une recherche « 100% » ne matche pas tout.
+function escapeLike(s: string) {
+  return s.replace(/[\\%_]/g, (c) => `\\${c}`);
 }
 
 export async function GET(req: NextRequest) {
@@ -36,6 +46,8 @@ export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
   const type = searchParams.get("type") ?? "watched";
   const sort = searchParams.get("sort") ?? "recent";
+  const dir = searchParams.get("dir") === "asc" ? "asc" : "desc";
+  const q = (searchParams.get("q") ?? "").trim();
   const skip = Math.max(parseInt(searchParams.get("skip") ?? "0"), 0);
   const take = Math.min(parseInt(searchParams.get("take") ?? String(PAGE_SIZE)), 60);
   const requestedUserId = searchParams.get("userId");
@@ -58,7 +70,7 @@ export async function GET(req: NextRequest) {
 
   const typeSql = TYPE_SQL[type] ?? TYPE_SQL.watched;
   const ratingCol = ratingColumn(searchParams.get("ratingField"));
-  const order = orderSql(sort, ratingCol);
+  const order = orderSql(sort, ratingCol, dir);
 
   // ——— Construction des filtres (valeurs toujours paramétrées) ———
   const params: unknown[] = [targetUserId];
@@ -75,6 +87,10 @@ export async function GET(req: NextRequest) {
   if (year) {
     params.push(year);
     where += ` AND f."year" = $${params.length}`;
+  }
+  if (q) {
+    params.push(`%${escapeLike(q)}%`);
+    where += ` AND f."title" ILIKE $${params.length} ESCAPE '\\'`;
   }
 
   const FROM = `FROM "UserFilm" uf LEFT JOIN "Film" f ON f."tmdbId" = uf."tmdbId"`;

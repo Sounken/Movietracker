@@ -2,8 +2,13 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { getFilmCards } from "@/lib/films";
+import { computeXP, getLevelInfo } from "@/lib/xp";
 import Topbar from "../components/Topbar";
 import FriendsClient from "./FriendsClient";
+
+// Les champs dont computeXP a besoin : la note seule ne suffit pas, un avis
+// vaut plus qu'une note et un « j'aime » compte aussi.
+const XP_SELECT = { rating: true, review: true, liked: true, watched: true } as const;
 
 export default async function FriendsPage() {
   const session = await getSession();
@@ -20,10 +25,9 @@ export default async function FriendsPage() {
         select: {
           id: true, name: true, email: true, avatarUrl: true,
           _count: { select: { films: true } },
-          films: {
-            where: { rating: { not: null } },
-            select: { rating: true },
-          },
+          // Toute la collection : le niveau se calcule sur l'ensemble de
+          // l'activité, pas seulement sur les films notés.
+          films: { select: XP_SELECT },
         },
       },
     },
@@ -35,7 +39,10 @@ export default async function FriendsPage() {
     where: { followingId: session.userId },
     include: {
       follower: {
-        select: { id: true, name: true, email: true, avatarUrl: true },
+        select: {
+          id: true, name: true, email: true, avatarUrl: true,
+          films: { select: XP_SELECT },
+        },
       },
     },
     orderBy: { createdAt: "desc" },
@@ -82,21 +89,29 @@ export default async function FriendsPage() {
   const following = followingRaw.map((f) => {
     const ratings = f.following.films.map((film) => film.rating).filter(Boolean) as number[];
     const avg = ratings.length > 0 ? ratings.reduce((a, b) => a + b, 0) / ratings.length : null;
+    const level = getLevelInfo(computeXP(f.following.films));
     return {
       id: f.following.id,
       name: f.following.name ?? f.following.email.split("@")[0],
       avatarUrl: f.following.avatarUrl,
       filmCount: f.following._count.films,
       avgRating: avg,
+      level: level.level,
+      levelTitle: level.title,
     };
   });
 
-  const followers = followersRaw.map((f) => ({
-    id: f.follower.id,
-    name: f.follower.name ?? f.follower.email.split("@")[0],
-    avatarUrl: f.follower.avatarUrl,
-    followsBack: followingIds.has(f.follower.id),
-  }));
+  const followers = followersRaw.map((f) => {
+    const level = getLevelInfo(computeXP(f.follower.films));
+    return {
+      id: f.follower.id,
+      name: f.follower.name ?? f.follower.email.split("@")[0],
+      avatarUrl: f.follower.avatarUrl,
+      followsBack: followingIds.has(f.follower.id),
+      level: level.level,
+      levelTitle: level.title,
+    };
+  });
 
   return (
     <div>

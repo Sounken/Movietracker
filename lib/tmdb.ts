@@ -30,7 +30,7 @@ export type TmdbFilmDetail = {
   genres: string[];
   budget: number;
   revenue: number;
-  productionCompanies: string[];
+  productionCompanies: TmdbCompany[];
   originalLanguage: string;
   spokenLanguages: string[];
   productionCountries: string[];
@@ -72,6 +72,14 @@ export type TmdbPersonCredit = {
 
 export type TmdbCrewMember = { id: number; name: string };
 
+/** Société de production — cliquable vers sa filmographie. */
+export type TmdbCompany = {
+  id: number;
+  name: string;
+  /** Logo sur fond transparent ; vide si TMDB n'en a pas. */
+  logoUrl: string;
+};
+
 export type TmdbCredits = {
   cast: TmdbCastMember[];
   directors: TmdbCrewMember[];
@@ -91,6 +99,16 @@ export const GENRES: Record<number, string> = {
   14: "Fantastique", 36: "Histoire", 27: "Horreur", 10402: "Musique",
   9648: "Mystère", 10749: "Romance", 878: "Science-Fiction", 53: "Thriller",
   10752: "Guerre", 37: "Western",
+};
+
+// Les séries ont leur propre nomenclature chez TMDB : « Action & Adventure »
+// remplace Action et Aventure, « Sci-Fi & Fantasy » fusionne SF et Fantastique.
+// Utiliser GENRES sur une série donnerait des filtres silencieusement vides.
+export const TV_GENRES: Record<number, string> = {
+  10759: "Action & Adventure", 16: "Animation", 35: "Comédie", 80: "Crime",
+  99: "Documentaire", 18: "Drame", 10751: "Famille", 10762: "Enfants",
+  9648: "Mystère", 10763: "Actualités", 10764: "Réalité", 10765: "Sci-Fi & Fantasy",
+  10766: "Feuilleton", 10767: "Talk", 10768: "Guerre & Politique", 37: "Western",
 };
 
 export function genreLabels(ids: number[]): string[] {
@@ -294,8 +312,12 @@ export async function fetchFilmDetail(id: number): Promise<TmdbFilmDetail | null
       budget: m.budget ?? 0,
       revenue: m.revenue ?? 0,
       productionCompanies: (m.production_companies ?? [])
-        .slice(0, 5)
-        .map((c: { name: string }) => c.name),
+        .slice(0, 6)
+        .map((c: { id: number; name: string; logo_path: string | null }) => ({
+          id: c.id,
+          name: c.name,
+          logoUrl: c.logo_path ? `${IMG}/w154${c.logo_path}` : "",
+        })),
       originalLanguage: m.original_language ?? "",
       collectionId: m.belongs_to_collection?.id ?? null,
       collectionName: m.belongs_to_collection?.name ?? "",
@@ -326,23 +348,48 @@ export type TmdbSeasonSummary = {
   year: string;
 };
 
+/** Chaîne ou plateforme de diffusion, avec son logo. */
+export type TmdbNetwork = { id: number; name: string; logoUrl: string };
+
+/** Épisode annoncé (le prochain à venir, ou le dernier diffusé). */
+export type TmdbEpisodeStub = {
+  name: string;
+  airDate: string;
+  seasonNumber: number;
+  episodeNumber: number;
+};
+
 export type TmdbSeriesDetail = {
   id: number;
   name: string;
+  originalName: string;
+  tagline: string;
   overview: string;
   posterUrl: string;
   backdropUrl: string;
   year: string;
+  firstAirDate: string;
   lastAirDate: string;
   status: string;
+  /** « Scripted », « Miniseries », « Reality »… */
+  type: string;
+  inProduction: boolean;
   numberOfSeasons: number;
   numberOfEpisodes: number;
   episodeRunTime: number | null;
   voteAverage: number;
   voteCount: number;
+  popularity: number;
   genres: string[];
-  networks: string[];
+  networks: TmdbNetwork[];
+  createdBy: TmdbCrewMember[];
   originalLanguage: string;
+  spokenLanguages: string[];
+  productionCountries: string[];
+  productionCompanies: TmdbCompany[];
+  homepage: string;
+  nextEpisode: TmdbEpisodeStub | null;
+  lastEpisode: TmdbEpisodeStub | null;
   seasons: TmdbSeasonSummary[];
 };
 
@@ -384,23 +431,61 @@ export async function fetchSeriesDetail(id: number): Promise<TmdbSeriesDetail | 
   if (!m) return null;
   {
     const runTimes: number[] = m.episode_run_time ?? [];
+
+    const toStub = (e: Record<string, unknown> | null): TmdbEpisodeStub | null =>
+      e
+        ? {
+            name: (e.name as string) ?? "",
+            airDate: (e.air_date as string) ?? "",
+            seasonNumber: (e.season_number as number) ?? 0,
+            episodeNumber: (e.episode_number as number) ?? 0,
+          }
+        : null;
+
     return {
       id: m.id,
       name: m.name ?? "",
+      originalName: m.original_name ?? "",
+      tagline: m.tagline ?? "",
       overview: m.overview ?? "",
       posterUrl: m.poster_path ? `${IMG}/w500${m.poster_path}` : "",
       backdropUrl: m.backdrop_path ? `${IMG}/original${m.backdrop_path}` : "",
       year: m.first_air_date?.slice(0, 4) ?? "",
+      firstAirDate: m.first_air_date ?? "",
       lastAirDate: m.last_air_date ?? "",
       status: m.status ?? "",
+      type: m.type ?? "",
+      inProduction: Boolean(m.in_production),
       numberOfSeasons: m.number_of_seasons ?? 0,
       numberOfEpisodes: m.number_of_episodes ?? 0,
       episodeRunTime: runTimes.length > 0 ? runTimes[0] : null,
       voteAverage: Math.round((m.vote_average ?? 0) * 10) / 10,
       voteCount: m.vote_count ?? 0,
+      popularity: Math.round((m.popularity ?? 0) * 10) / 10,
       genres: (m.genres ?? []).map((g: { name: string }) => g.name),
-      networks: (m.networks ?? []).slice(0, 4).map((n: { name: string }) => n.name),
+      networks: (m.networks ?? [])
+        .slice(0, 5)
+        .map((n: { id: number; name: string; logo_path: string | null }) => ({
+          id: n.id,
+          name: n.name,
+          logoUrl: n.logo_path ? `${IMG}/w154${n.logo_path}` : "",
+        })),
+      createdBy: (m.created_by ?? [])
+        .slice(0, 4)
+        .map((c: { id: number; name: string }) => ({ id: c.id, name: c.name })),
+      productionCompanies: (m.production_companies ?? [])
+        .slice(0, 6)
+        .map((c: { id: number; name: string; logo_path: string | null }) => ({
+          id: c.id,
+          name: c.name,
+          logoUrl: c.logo_path ? `${IMG}/w154${c.logo_path}` : "",
+        })),
+      homepage: m.homepage ?? "",
+      nextEpisode: toStub(m.next_episode_to_air ?? null),
+      lastEpisode: toStub(m.last_episode_to_air ?? null),
       originalLanguage: m.original_language ?? "",
+      spokenLanguages: (m.spoken_languages ?? []).map((l: { name: string }) => l.name),
+      productionCountries: (m.production_countries ?? []).map((c: { name: string }) => c.name),
       // on garde les saisons ayant au moins un épisode (saison 0 = spéciaux inclus)
       seasons: (m.seasons ?? [])
         .filter((s: { episode_count: number }) => s.episode_count > 0)
@@ -442,6 +527,82 @@ export async function fetchSeason(
   }
 }
 
+/**
+ * Casting d'une série via `aggregate_credits`.
+ *
+ * `/tv/{id}/credits` ne renvoie que le casting de la dernière saison — sur une
+ * série longue, les personnages principaux des premières saisons manquent.
+ * `aggregate_credits` agrège tous les rôles de toute la série et indique le
+ * nombre d'épisodes joués, qui trie naturellement principaux et invités.
+ */
+export async function fetchSeriesCredits(id: number): Promise<TmdbCredits> {
+  const key = process.env.TMDB_API_KEY;
+  if (!key) return { cast: [], directors: [], writers: [] };
+  try {
+    const res = await fetch(
+      `${BASE}/tv/${id}/aggregate_credits?api_key=${key}&language=fr-FR`,
+      { next: { revalidate: 86400 } },
+    );
+    if (!res.ok) return { cast: [], directors: [], writers: [] };
+    const data = await res.json();
+
+    const cast: TmdbCastMember[] = ((data.cast ?? []) as Record<string, unknown>[])
+      .sort((a, b) => ((b.total_episode_count as number) ?? 0) - ((a.total_episode_count as number) ?? 0))
+      .slice(0, 20)
+      .map((c) => {
+        // `roles` liste chaque personnage joué ; on retient le principal.
+        const roles = (c.roles ?? []) as Array<{ character: string }>;
+        return {
+          id: c.id as number,
+          name: (c.name as string) ?? "",
+          character: roles[0]?.character ?? "",
+          profileUrl: c.profile_path ? `${IMG}/w185${c.profile_path}` : "",
+        };
+      });
+
+    // Côté équipe, on garde réalisation et écriture, triées par implication.
+    const crew = (data.crew ?? []) as Record<string, unknown>[];
+    const pick = (department: string) =>
+      crew
+        .filter((c) => c.department === department)
+        .sort((a, b) => ((b.total_episode_count as number) ?? 0) - ((a.total_episode_count as number) ?? 0))
+        .slice(0, 4)
+        .map((c) => ({ id: c.id as number, name: (c.name as string) ?? "" }));
+
+    return { cast, directors: pick("Directing"), writers: pick("Writing") };
+  } catch {
+    return { cast: [], directors: [], writers: [] };
+  }
+}
+
+/** Séries recommandées à partir d'une série. */
+export async function fetchSimilarSeries(id: number): Promise<TmdbFilmCard[]> {
+  const key = process.env.TMDB_API_KEY;
+  if (!key) return [];
+  try {
+    const res = await fetch(
+      `${BASE}/tv/${id}/recommendations?api_key=${key}&language=fr-FR&page=1`,
+      { next: { revalidate: 86400 } },
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return ((data.results ?? []) as Record<string, unknown>[])
+      .filter((s) => s.poster_path)
+      .map((s) => ({
+        // On réutilise TmdbFilmCard pour partager la grille avec les films :
+        // `title` porte donc le nom de la série.
+        id: s.id as number,
+        title: (s.name as string) ?? "",
+        posterUrl: `${IMG}/w342${s.poster_path}`,
+        year: typeof s.first_air_date === "string" ? s.first_air_date.slice(0, 4) : "",
+        genres: ((s.genre_ids as number[]) ?? []).slice(0, 2).map((g) => TV_GENRES[g]).filter(Boolean),
+        voteAverage: s.vote_average ? Math.round((s.vote_average as number) * 10) / 10 : 0,
+      }));
+  } catch {
+    return [];
+  }
+}
+
 export async function fetchSeriesLogo(id: number): Promise<string | null> {
   const key = process.env.TMDB_API_KEY;
   if (!key) return null;
@@ -476,22 +637,172 @@ export type TmdbDiscoverFilm = {
   voteAverage: number;
 };
 
+// ——————————————————————————————————————————————————————————————
+//  « Mieux notés » — classement bayésien
+// ——————————————————————————————————————————————————————————————
+//
+// Trier bêtement sur `vote_average.desc` fait remonter n'importe quel film
+// confidentiel noté 8.9 par 350 personnes devant Le Parrain. Relever le seuil
+// de votes (`vote_count.gte`) règle ce cas mais en crée un autre : les films
+// reconnus mais peu vus disparaissent complètement du classement.
+//
+// On applique donc la moyenne pondérée utilisée par le Top 250 d'IMDb :
+//
+//     WR = (v / (v + m)) × R  +  (m / (v + m)) × C
+//
+// où R = note du titre, v = nombre de votes, C = moyenne globale du catalogue
+// et m = « masse » de votes a priori. Un titre peu voté est tiré vers C ; plus
+// il accumule de votes, plus sa propre note pèse. Le seuil n'est plus un
+// couperet mais une pente : un film à 800 votes reste classable, simplement il
+// lui faut une note nettement supérieure pour devancer un classique.
+const BAYES_C = 6.7; // moyenne observée sur le catalogue TMDB
+const BAYES_M_MOVIE = 3000;
+const BAYES_M_TV = 900; // les séries récoltent bien moins de votes que les films
+
+type RankedRaw = {
+  raw: Record<string, unknown>;
+  score: number;
+};
+
+function bayesianScore(raw: Record<string, unknown>, m: number): number {
+  const R = (raw.vote_average as number) ?? 0;
+  const v = (raw.vote_count as number) ?? 0;
+  return (v / (v + m)) * R + (m / (v + m)) * BAYES_C;
+}
+
+/**
+ * Construit un vivier de candidats puis le reclasse au score bayésien.
+ *
+ * TMDB ne sait pas trier ainsi : on constitue le vivier en croisant trois
+ * angles complémentaires, puisqu'aucun tri TMDB seul ne contient l'ensemble
+ * des bons candidats :
+ *   1. les plus votés            → les classiques massivement vus
+ *   2. les mieux notés, très soutenus → le haut du panier incontesté
+ *   3. les mieux notés, seuil bas → les titres acclamés mais confidentiels
+ * Le score départage ensuite tout le monde sur un pied d'égalité.
+ */
+const POOL_PAGES = 5; // 20 titres par page et par source
+
+async function fetchRankedPool(
+  media: "movie" | "tv",
+  genreId: number | null,
+  extraFilter: string,
+): Promise<Record<string, unknown>[]> {
+  const key = process.env.TMDB_API_KEY;
+  if (!key) return [];
+
+  const m = media === "movie" ? BAYES_M_MOVIE : BAYES_M_TV;
+  const strongVotes = media === "movie" ? 2000 : 600;
+  const weakVotes = media === "movie" ? 300 : 100;
+
+  const sources = [
+    `&sort_by=vote_count.desc`,
+    `&sort_by=vote_average.desc&vote_count.gte=${strongVotes}`,
+    `&sort_by=vote_average.desc&vote_count.gte=${weakVotes}`,
+  ];
+
+  const genreFilter = genreId ? `&with_genres=${genreId}` : "";
+
+  const requests = sources.flatMap((source) =>
+    Array.from({ length: POOL_PAGES }, (_, i) =>
+      fetch(
+        `${BASE}/discover/${media}?api_key=${key}&language=fr-FR&page=${i + 1}${source}${genreFilter}${extraFilter}`,
+        { next: { revalidate: 86400 } },
+      )
+        .then((r) => (r.ok ? r.json() : { results: [] }))
+        .catch(() => ({ results: [] })),
+    ),
+  );
+
+  const pages = await Promise.all(requests);
+
+  // Dédoublonnage : les trois sources se recoupent largement en haut de classement
+  const byId = new Map<number, Record<string, unknown>>();
+  for (const page of pages) {
+    for (const item of (page.results ?? []) as Record<string, unknown>[]) {
+      if (!item.poster_path) continue;
+      byId.set(item.id as number, item);
+    }
+  }
+
+  const ranked: RankedRaw[] = [...byId.values()].map((raw) => ({
+    raw,
+    score: bayesianScore(raw, m),
+  }));
+
+  return ranked.sort((a, b) => b.score - a.score).map((r) => r.raw);
+}
+
+// Le vivier coûte 15 appels TMDB : on le garde 24 h, par média et par genre.
+const getRankedPool = unstable_cache(
+  fetchRankedPool,
+  ["tmdb-ranked-pool"],
+  { revalidate: 86400 },
+);
+
+/** Filtres communs aux pages « Découvrir » films et séries. */
+export type DiscoverOptions = {
+  genreId?: number | null;
+  page?: number;
+  /** Année de sortie minimale, incluse (ex. « 1990 »). */
+  minYear?: string;
+  /** Année de sortie maximale, incluse. */
+  maxYear?: string;
+  /** Note TMDB minimale, sur 10. */
+  minRating?: number;
+  /** Séries uniquement : restreint aux animes (animation japonaise). */
+  anime?: boolean;
+};
+
+const DISCOVER_PAGE_SIZE = 20; // taille d'une page TMDB, que l'on reproduit sur le vivier
+
+/** Bornes d'années + note plancher, communes aux deux médias. */
+function commonFilters(
+  { minYear, maxYear, minRating }: DiscoverOptions,
+  dateField: "primary_release_date" | "first_air_date",
+): string {
+  let f = "";
+  if (minYear) f += `&${dateField}.gte=${minYear}-01-01`;
+  if (maxYear) f += `&${dateField}.lte=${maxYear}-12-31`;
+  if (minRating) f += `&vote_average.gte=${minRating}`;
+  return f;
+}
+
+function mapDiscoverFilm(m: Record<string, unknown>): TmdbDiscoverFilm {
+  return {
+    id: m.id as number,
+    title: (m.title as string) ?? "",
+    year: typeof m.release_date === "string" ? m.release_date.slice(0, 4) : "",
+    posterUrl: m.poster_path ? `${IMG}/w342${m.poster_path}` : "",
+    voteAverage: m.vote_average ? Math.round((m.vote_average as number) * 10) / 10 : 0,
+  };
+}
+
 export async function fetchDiscover(
   category: string,
-  genreId: number | null,
-  page: number = 1,
+  opts: DiscoverOptions = {},
 ): Promise<TmdbDiscoverFilm[]> {
   const key = process.env.TMDB_API_KEY;
   if (!key) return [];
+
+  const { genreId = null, page = 1 } = opts;
+  const filters = commonFilters(opts, "primary_release_date");
+
   try {
+    // « Mieux notés » ne passe pas par un tri TMDB : on pagine le vivier reclassé.
+    if (category === "top_rated") {
+      const pool = await getRankedPool("movie", genreId, filters);
+      return pool
+        .slice((page - 1) * DISCOVER_PAGE_SIZE, page * DISCOVER_PAGE_SIZE)
+        .map(mapDiscoverFilm);
+    }
+
     const today = new Date().toISOString().split("T")[0];
     const past45 = new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
     const future90 = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
 
     let extra = "";
-    if (category === "top_rated") {
-      extra = "&sort_by=vote_average.desc&vote_count.gte=300";
-    } else if (category === "now_playing") {
+    if (category === "now_playing") {
       extra = `&sort_by=popularity.desc&primary_release_date.gte=${past45}&primary_release_date.lte=${today}`;
     } else if (category === "upcoming") {
       extra = `&sort_by=popularity.desc&primary_release_date.gte=${today}&primary_release_date.lte=${future90}`;
@@ -499,18 +810,16 @@ export async function fetchDiscover(
       extra = "&sort_by=popularity.desc";
     }
     if (genreId) extra += `&with_genres=${genreId}`;
+    // « En salle » et « À venir » définissent déjà leur fenêtre de dates :
+    // y superposer les bornes de l'utilisateur donnerait un résultat vide.
+    if (category !== "now_playing" && category !== "upcoming") extra += filters;
+    else if (opts.minRating) extra += `&vote_average.gte=${opts.minRating}`;
 
     const url = `${BASE}/discover/movie?api_key=${key}&language=fr-FR&page=${page}${extra}`;
     const res = await fetch(url, { next: { revalidate: 3600 } });
     if (!res.ok) return [];
     const data = await res.json();
-    return (data.results ?? []).map((m: Record<string, unknown>) => ({
-      id: m.id,
-      title: m.title,
-      year: typeof m.release_date === "string" ? m.release_date.slice(0, 4) : "",
-      posterUrl: m.poster_path ? `${IMG}/w342${m.poster_path}` : "",
-      voteAverage: m.vote_average ? Math.round((m.vote_average as number) * 10) / 10 : 0,
-    }));
+    return ((data.results ?? []) as Record<string, unknown>[]).map(mapDiscoverFilm);
   } catch {
     return [];
   }
@@ -524,47 +833,203 @@ export type TmdbDiscoverSeries = {
   voteAverage: number;
 };
 
+function mapDiscoverSeries(m: Record<string, unknown>): TmdbDiscoverSeries {
+  return {
+    id: m.id as number,
+    name: (m.name as string) ?? "",
+    year: typeof m.first_air_date === "string" ? m.first_air_date.slice(0, 4) : "",
+    posterUrl: m.poster_path ? `${IMG}/w342${m.poster_path}` : "",
+    voteAverage: m.vote_average ? Math.round((m.vote_average as number) * 10) / 10 : 0,
+  };
+}
+
 export async function fetchDiscoverSeries(
   category: string,
-  genreId: number | null,
-  page: number = 1,
-  anime: boolean = false,
+  opts: DiscoverOptions = {},
 ): Promise<TmdbDiscoverSeries[]> {
   const key = process.env.TMDB_API_KEY;
   if (!key) return [];
+
+  const { genreId = null, page = 1, anime = false } = opts;
+  const filters = commonFilters(opts, "first_air_date");
+  // L'anime se définit par Animation (16) + langue japonaise : ce n'est pas un
+  // genre TMDB, il se superpose donc au genre éventuellement choisi.
+  const animeFilter = anime ? "&with_genres=16&with_original_language=ja" : "";
+
   try {
+    if (category === "top_rated") {
+      const pool = await getRankedPool("tv", genreId, filters + animeFilter);
+      return pool
+        .slice((page - 1) * DISCOVER_PAGE_SIZE, page * DISCOVER_PAGE_SIZE)
+        .map(mapDiscoverSeries);
+    }
+
     const today = new Date().toISOString().split("T")[0];
     const past60 = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+    const future90 = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
 
     let extra = "";
-    if (category === "top_rated") {
-      extra = "&sort_by=vote_average.desc&vote_count.gte=200";
-    } else if (category === "on_the_air") {
+    if (category === "on_the_air") {
       extra = `&sort_by=popularity.desc&air_date.gte=${past60}&air_date.lte=${today}`;
+    } else if (category === "upcoming") {
+      // Séries dont la toute première diffusion est encore à venir
+      extra = `&sort_by=popularity.desc&first_air_date.gte=${today}&first_air_date.lte=${future90}`;
     } else {
       extra = "&sort_by=popularity.desc";
     }
 
-    // Genres : l'anime = Animation (16) + langue japonaise
     const genres: string[] = [];
     if (anime) genres.push("16");
     if (genreId) genres.push(String(genreId));
     if (genres.length) extra += `&with_genres=${genres.join(",")}`;
     if (anime) extra += "&with_original_language=ja";
 
+    // Comme pour les films : ne pas écraser la fenêtre de dates des catégories
+    // qui en imposent déjà une.
+    if (category !== "on_the_air" && category !== "upcoming") extra += filters;
+    else if (opts.minRating) extra += `&vote_average.gte=${opts.minRating}`;
+
     const url = `${BASE}/discover/tv?api_key=${key}&language=fr-FR&page=${page}${extra}`;
     const res = await fetch(url, { next: { revalidate: 3600 } });
     if (!res.ok) return [];
     const data = await res.json();
-    return (data.results ?? []).map((m: Record<string, unknown>) => ({
-      id: m.id,
-      name: m.name,
-      year: typeof m.first_air_date === "string" ? m.first_air_date.slice(0, 4) : "",
-      posterUrl: m.poster_path ? `${IMG}/w342${m.poster_path}` : "",
-      voteAverage: m.vote_average ? Math.round((m.vote_average as number) * 10) / 10 : 0,
-    }));
+    return ((data.results ?? []) as Record<string, unknown>[]).map(mapDiscoverSeries);
   } catch {
     return [];
+  }
+}
+
+// ——————————————————————————————————————————————————————————————
+//  Sociétés de production
+// ——————————————————————————————————————————————————————————————
+
+export type TmdbCompanyDetail = TmdbCompany & {
+  description: string;
+  headquarters: string;
+  originCountry: string;
+  homepage: string;
+};
+
+export async function fetchCompanyDetail(id: number): Promise<TmdbCompanyDetail | null> {
+  const key = process.env.TMDB_API_KEY;
+  if (!key) return null;
+  try {
+    // Pas de `language=fr-FR` : l'endpoint company ne traduit rien et le
+    // paramètre fait seulement du bruit.
+    const res = await fetch(`${BASE}/company/${id}?api_key=${key}`, {
+      next: { revalidate: 86400 },
+    });
+    if (!res.ok) return null;
+    const c = await res.json();
+    return {
+      id: c.id,
+      name: c.name ?? "",
+      logoUrl: c.logo_path ? `${IMG}/w154${c.logo_path}` : "",
+      description: c.description ?? "",
+      headquarters: c.headquarters ?? "",
+      originCountry: c.origin_country ?? "",
+      homepage: c.homepage ?? "",
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** Films d'une société, des plus populaires aux moins. */
+export async function fetchCompanyFilms(
+  companyId: number,
+  page: number = 1,
+): Promise<TmdbFilmCard[]> {
+  const key = process.env.TMDB_API_KEY;
+  if (!key) return [];
+  try {
+    const res = await fetch(
+      `${BASE}/discover/movie?api_key=${key}&language=fr-FR&page=${page}` +
+        `&with_companies=${companyId}&sort_by=popularity.desc`,
+      { next: { revalidate: 86400 } },
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return ((data.results ?? []) as Record<string, unknown>[])
+      .filter((m) => m.poster_path)
+      .map((m) => ({
+        id: m.id as number,
+        title: (m.title as string) ?? "",
+        posterUrl: `${IMG}/w342${m.poster_path}`,
+        year: typeof m.release_date === "string" ? m.release_date.slice(0, 4) : "",
+        genres: ((m.genre_ids as number[]) ?? []).slice(0, 2).map((g) => GENRES[g]).filter(Boolean),
+        voteAverage: m.vote_average ? Math.round((m.vote_average as number) * 10) / 10 : 0,
+      }));
+  } catch {
+    return [];
+  }
+}
+
+// ——————————————————————————————————————————————————————————————
+//  Plateformes de visionnage (données JustWatch relayées par TMDB)
+// ——————————————————————————————————————————————————————————————
+
+export type WatchProvider = {
+  id: number;
+  name: string;
+  logoUrl: string;
+};
+
+export type WatchProviders = {
+  /** Inclus dans un abonnement (Netflix, Max…). */
+  flatrate: WatchProvider[];
+  /** Location à l'acte. */
+  rent: WatchProvider[];
+  /** Achat définitif. */
+  buy: WatchProvider[];
+  /** Page JustWatch — son affichage est exigé par les conditions TMDB. */
+  link: string;
+};
+
+const EMPTY_PROVIDERS: WatchProviders = { flatrate: [], rent: [], buy: [], link: "" };
+
+function mapProviders(list: unknown): WatchProvider[] {
+  if (!Array.isArray(list)) return [];
+  return (list as Record<string, unknown>[])
+    .sort((a, b) => ((a.display_priority as number) ?? 99) - ((b.display_priority as number) ?? 99))
+    .map((p) => ({
+      id: p.provider_id as number,
+      name: (p.provider_name as string) ?? "",
+      logoUrl: p.logo_path ? `${IMG}/w92${p.logo_path}` : "",
+    }));
+}
+
+/**
+ * Où regarder un titre, pour une région donnée (France par défaut).
+ *
+ * TMDB renvoie toutes les régions d'un coup ; on ne garde que celle demandée.
+ * Un titre indisponible en France renvoie simplement des listes vides — c'est
+ * un cas normal, pas une erreur.
+ */
+export async function fetchWatchProviders(
+  media: "movie" | "tv",
+  id: number,
+  region: string = "FR",
+): Promise<WatchProviders> {
+  const key = process.env.TMDB_API_KEY;
+  if (!key) return EMPTY_PROVIDERS;
+  try {
+    const res = await fetch(`${BASE}/${media}/${id}/watch/providers?api_key=${key}`, {
+      next: { revalidate: 86400 },
+    });
+    if (!res.ok) return EMPTY_PROVIDERS;
+    const data = await res.json();
+    const local = data.results?.[region];
+    if (!local) return EMPTY_PROVIDERS;
+
+    return {
+      flatrate: mapProviders(local.flatrate),
+      rent: mapProviders(local.rent),
+      buy: mapProviders(local.buy),
+      link: (local.link as string) ?? "",
+    };
+  } catch {
+    return EMPTY_PROVIDERS;
   }
 }
 

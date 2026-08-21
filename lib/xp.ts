@@ -1,4 +1,4 @@
-const LEVELS = [
+export const LEVELS = [
   { level: 1, title: "Novice",          xp: 0 },
   { level: 2, title: "Spectateur",      xp: 100 },
   { level: 3, title: "Amateur",         xp: 300 },
@@ -38,6 +38,59 @@ export type LevelInfo = {
   totalXP:     number;
   percent:     number; // 0-100
 };
+
+export type RankRow = {
+  level: number;
+  title: string;
+  /** XP total nécessaire pour atteindre ce rang. */
+  xp: number;
+  reached: boolean;
+  /** Rang en cours (atteint, mais pas encore le suivant). */
+  current: boolean;
+};
+
+/**
+ * Tableau complet des rangs, pour l'écran de progression.
+ *
+ * Au-delà du dernier palier fixe, les niveaux sont générés à la volée (chaque
+ * palier coûte 50 % de plus que le précédent). On en montre quelques-uns
+ * d'avance : sans ça, un joueur au niveau maximum verrait une liste qui
+ * s'arrête sur lui, sans rien à viser.
+ */
+const LOOKAHEAD = 3;
+
+export function getRanks(totalXP: number): RankRow[] {
+  const current = getLevelInfo(totalXP);
+
+  const rows: RankRow[] = LEVELS.map((l) => ({
+    level: l.level,
+    title: l.title,
+    xp: l.xp,
+    reached: totalXP >= l.xp,
+    current: l.level === current.level,
+  }));
+
+  // Niveaux au-delà des paliers fixes : on continue la même progression que
+  // getLevelInfo pour que les seuils affichés correspondent au calcul réel.
+  let threshold = MAX_FIXED.xp;
+  let step = MAX_FIXED.xp * 0.5;
+  let level = MAX_FIXED.level;
+
+  while (level < current.level + LOOKAHEAD) {
+    threshold += step;
+    step = Math.round(step * 1.5);
+    level++;
+    rows.push({
+      level,
+      title: MAX_FIXED.title,
+      xp: threshold,
+      reached: totalXP >= threshold,
+      current: level === current.level,
+    });
+  }
+
+  return rows;
+}
 
 export function getLevelInfo(totalXP: number): LevelInfo {
   // Find the highest fixed level the user has reached

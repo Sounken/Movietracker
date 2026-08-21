@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { Search, X, ArrowUp, ArrowDown } from "lucide-react";
 import FilmGrid from "./FilmGrid";
 import type { TmdbFilmCard } from "@/lib/tmdb";
 import { useRatingScale } from "@/lib/rating-scale";
@@ -44,7 +45,20 @@ export default function CollectionClient({
   const [maxRating, setMaxRating] = useState<number | null>(null);
   const [yearFilter, setYearFilter] = useState<string>("");
   const [sortBy, setSortBy] = useState<SortKey>("recent");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [view, setView] = useState<"default" | "watchlist">("default");
+
+  // Recherche par titre : `query` suit la frappe, `search` est la valeur
+  // debouncée réellement envoyée à l'API (une requête par pause de frappe).
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [search, setSearch] = useState("");
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    const id = setTimeout(() => setSearch(query.trim()), 300);
+    return () => clearTimeout(id);
+  }, [query]);
 
   // true dès le mount : la première requête (métadonnées) part immédiatement
   const [loading, setLoading] = useState(true);
@@ -63,7 +77,13 @@ export default function CollectionClient({
     // Dès qu'un filtre / tri / la vue watchlist est actif, la liste affichée
     // vient de /api/collection et non du serveur : on ne l'écrase pas.
     const showsServerData =
-      view === "default" && sortBy === "recent" && minRating === null && maxRating === null && yearFilter === "";
+      view === "default" &&
+      sortBy === "recent" &&
+      sortDir === "desc" &&
+      search === "" &&
+      minRating === null &&
+      maxRating === null &&
+      yearFilter === "";
     if (showsServerData) {
       setFilms(initialFilms);
       setTotalCount(total);
@@ -80,6 +100,7 @@ export default function CollectionClient({
       const p = new URLSearchParams({
         type: currentType,
         sort: sortBy,
+        dir: sortDir,
         ratingField: currentRatingField,
         skip: String(skip),
         take: String(PAGE_SIZE),
@@ -88,9 +109,10 @@ export default function CollectionClient({
       if (minRating !== null) p.set("minRating", String(minRating));
       if (maxRating !== null) p.set("maxRating", String(maxRating));
       if (yearFilter) p.set("year", yearFilter);
+      if (search) p.set("q", search);
       return `/api/collection?${p.toString()}`;
     },
-    [currentType, sortBy, currentRatingField, userId, minRating, maxRating, yearFilter],
+    [currentType, sortBy, sortDir, currentRatingField, userId, minRating, maxRating, yearFilter, search],
   );
 
   // Quand tri/filtres changent, l'URL change → on repasse en chargement
@@ -175,9 +197,26 @@ export default function CollectionClient({
   function switchView(next: "default" | "watchlist") {
     setView(next);
     resetFilters(); // les filtres d'une liste n'ont pas de sens sur l'autre
+    closeSearch();
   }
 
-  const hasFilters = minRating !== null || maxRating !== null || yearFilter !== "";
+  function closeSearch() {
+    setSearchOpen(false);
+    setQuery("");
+    setSearch("");
+  }
+
+  // Re-cliquer sur le tri actif inverse le sens ; changer de critère repart
+  // sur l'ordre décroissant (le plus récent / la meilleure note en premier).
+  function toggleSort(next: SortKey) {
+    if (next === sortBy) setSortDir((d) => (d === "desc" ? "asc" : "desc"));
+    else {
+      setSortBy(next);
+      setSortDir("desc");
+    }
+  }
+
+  const hasFilters = minRating !== null || maxRating !== null || yearFilter !== "" || search !== "";
   const remaining = totalCount - films.length;
 
   return (
@@ -224,13 +263,72 @@ export default function CollectionClient({
         </div>
 
         <div className={styles.right}>
+          {/* Loupe : se déplie en champ de recherche, à gauche des tris */}
+          <div className={`${styles.searchWrap} ${searchOpen ? styles.searchOpen : ""}`}>
+            <button
+              type="button"
+              className={`${styles.sortBtn} ${styles.iconBtn} ${searchOpen ? styles.sortOn : ""}`}
+              onClick={() => {
+                if (searchOpen) closeSearch();
+                else {
+                  setSearchOpen(true);
+                  // le champ n'existe qu'une fois ouvert : on attend le rendu
+                  requestAnimationFrame(() => searchInputRef.current?.focus());
+                }
+              }}
+              aria-label={searchOpen ? "Fermer la recherche" : "Rechercher un film"}
+              aria-expanded={searchOpen}
+            >
+              <Search size={14} />
+            </button>
+            {searchOpen && (
+              <div className={styles.searchField}>
+                <input
+                  ref={searchInputRef}
+                  type="search"
+                  className={styles.searchInput}
+                  placeholder="Rechercher un titre…"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === "Escape" && closeSearch()}
+                />
+                {query && (
+                  <button
+                    type="button"
+                    className={styles.searchClear}
+                    onClick={() => {
+                      setQuery("");
+                      searchInputRef.current?.focus();
+                    }}
+                    aria-label="Effacer la recherche"
+                  >
+                    <X size={12} />
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
           {(["recent", "rating", "year"] as const).map((s) => (
             <button
               key={s}
               className={`${styles.sortBtn} ${sortBy === s ? styles.sortOn : ""}`}
-              onClick={() => setSortBy(s)}
+              onClick={() => toggleSort(s)}
+              title={
+                sortBy === s
+                  ? sortDir === "desc"
+                    ? "Trier par ordre croissant"
+                    : "Trier par ordre décroissant"
+                  : undefined
+              }
             >
               {s === "recent" ? "Récents" : s === "rating" ? "Notes" : "Année"}
+              {sortBy === s &&
+                (sortDir === "desc" ? (
+                  <ArrowDown size={11} className={styles.sortArrow} />
+                ) : (
+                  <ArrowUp size={11} className={styles.sortArrow} />
+                ))}
             </button>
           ))}
           {showWatchlist && (
@@ -251,7 +349,11 @@ export default function CollectionClient({
 
       {films.length === 0 && (hasFilters || loading) ? (
         <div className={styles.noResult}>
-          {loading ? "Chargement…" : "Aucun film ne correspond à ces filtres."}
+          {loading
+            ? "Chargement…"
+            : search
+              ? `Aucun film ne correspond à « ${search} ».`
+              : "Aucun film ne correspond à ces filtres."}
         </div>
       ) : (
         <FilmGrid

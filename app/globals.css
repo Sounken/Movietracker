@@ -58,3 +58,88 @@ a {
   color: inherit;
   text-decoration: none;
 }
+
+/* ——————————————————————————————————————————————————————————————
+   Motion — socle partagé
+   ——————————————————————————————————————————————————————————————
+   Une seule courbe d'accélération et deux durées pour tout le site : les
+   transitions se ressemblent d'un écran à l'autre au lieu d'être réglées au
+   cas par cas dans chaque module CSS. */
+:root {
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 0.18s;
+  --dur-base: 0.34s;
+}
+
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Entrée de page : appliquée par le `template.tsx` du groupe de routes, qui se
+   remonte à chaque navigation — d'où une animation rejouée à chaque écran. */
+.pageEnter {
+  animation: riseIn var(--dur-base) var(--ease-out) both;
+}
+
+/* Apparition en cascade : chaque enfant démarre légèrement après le précédent.
+   Plafonné à 12 pour qu'une grille de 200 affiches ne finisse pas par attendre
+   plusieurs secondes avant d'afficher ses dernières cartes. */
+.stagger > * {
+  animation: riseIn var(--dur-base) var(--ease-out) both;
+}
+
+.stagger > *:nth-child(1) { animation-delay: 0.02s; }
+.stagger > *:nth-child(2) { animation-delay: 0.04s; }
+.stagger > *:nth-child(3) { animation-delay: 0.06s; }
+.stagger > *:nth-child(4) { animation-delay: 0.08s; }
+.stagger > *:nth-child(5) { animation-delay: 0.10s; }
+.stagger > *:nth-child(6) { animation-delay: 0.12s; }
+.stagger > *:nth-child(7) { animation-delay: 0.14s; }
+.stagger > *:nth-child(8) { animation-delay: 0.16s; }
+.stagger > *:nth-child(9) { animation-delay: 0.18s; }
+.stagger > *:nth-child(10) { animation-delay: 0.20s; }
+.stagger > *:nth-child(11) { animation-delay: 0.22s; }
+.stagger > *:nth-child(n + 12) { animation-delay: 0.24s; }
+
+/* Squelette de chargement générique : le balayage indique que ça travaille,
+   là où un bloc gris fixe passe pour une erreur d'affichage. */
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+.skeletonBlock {
+  border-radius: var(--radius);
+  background: linear-gradient(
+    90deg,
+    var(--panel) 25%,
+    var(--hover-strong) 50%,
+    var(--panel) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+/* Respect du réglage système : plus aucun mouvement, seulement l'état final. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

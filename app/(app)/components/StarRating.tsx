@@ -47,6 +47,12 @@ type Props = {
   disabled?: boolean;
   /** Préfixe des aria-label, ex. « Saison 2 ». */
   label?: string;
+  /**
+   * Note survolée, ou `null` quand le curseur quitte la rangée. Permet à
+   * l'appelant d'afficher la prévisualisation ailleurs que dans `showValue`
+   * (la fiche film/série montre le chiffre dans son propre encart).
+   */
+  onHoverChange?: (value: number | null) => void;
 };
 
 /**
@@ -62,11 +68,18 @@ export default function StarRating({
   showValue = true,
   disabled = false,
   label,
+  onHoverChange,
 }: Props) {
   const scale = useRatingScale();
   // null = curseur hors de la rangée → on réaffiche la note enregistrée.
-  const [hover, setHover] = useState<number | null>(null);
+  const [hover, setHoverState] = useState<number | null>(null);
   const displayed = hover ?? value;
+
+  // Un seul point de mise à jour : l'appelant reste toujours synchronisé.
+  const setHover = (next: number | null) => {
+    setHoverState(next);
+    onHoverChange?.(next);
+  };
 
   /** Moitié gauche de l'étoile = demi-point. */
   const hoverValue = (e: React.MouseEvent<HTMLButtonElement>, n: number) => {

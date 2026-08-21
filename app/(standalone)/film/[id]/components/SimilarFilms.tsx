@@ -27,10 +27,13 @@ export default function SimilarFilms({
   films,
   title,
   subtitle,
+  hrefBase = "/film",
 }: {
   films: TmdbFilmCard[];
   title: string;
   subtitle?: string;
+  /** « /film » (défaut) ou « /series » — la fiche série réutilise cette grille. */
+  hrefBase?: string;
 }) {
   const [expanded, setExpanded] = useState(false);
   const visible = expanded ? films : films.slice(0, INITIAL_COUNT);
@@ -42,7 +45,7 @@ export default function SimilarFilms({
       {subtitle && <div className={styles.sagaSub}>{subtitle}</div>}
       <div className={styles.similarGrid}>
         {visible.map((s) => (
-          <Link key={s.id} href={`/film/${s.id}`} className={styles.similarCard}>
+          <Link key={s.id} href={`${hrefBase}/${s.id}`} className={styles.similarCard}>
             {s.posterUrl ? (
               <Image
                 src={s.posterUrl}

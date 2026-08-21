@@ -1,0 +1,96 @@
+/* Reprend la grille de .hero (film.module.css) pour que le contenu réel
+   n'occasionne aucun saut de mise en page. */
+.hero {
+  position: relative;
+  z-index: 2;
+  padding: 60px 52px 0;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 52px;
+  align-items: start;
+  max-width: 1560px;
+  margin: 0 auto;
+}
+
+.posterCol {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.poster {
+  width: 280px;
+  aspect-ratio: 2/3;
+  border-radius: 16px;
+}
+
+.action {
+  height: 40px;
+  border-radius: 10px;
+}
+
+.metaCol {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-bottom: 80px;
+}
+
+.tags {
+  display: flex;
+  gap: 7px;
+}
+
+.tag {
+  width: 90px;
+  height: 24px;
+  border-radius: 5px;
+}
+
+.title {
+  width: min(520px, 80%);
+  height: 52px;
+  margin-bottom: 8px;
+}
+
+.scores {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.score {
+  width: 116px;
+  height: 82px;
+  border-radius: 12px;
+}
+
+.widget {
+  height: 92px;
+  border-radius: 16px;
+  margin-bottom: 16px;
+}
+
+.line {
+  height: 14px;
+  border-radius: 6px;
+}
+
+.lineShort {
+  height: 14px;
+  width: 60%;
+  border-radius: 6px;
+}
+
+@media (max-width: 900px) {
+  .hero {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding: 28px 20px 0;
+  }
+
+  .poster {
+    width: 190px;
+  }
+}

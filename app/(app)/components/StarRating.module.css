@@ -65,11 +65,18 @@
   color: var(--accent);
 }
 
+/* Le chiffre change de largeur au survol (« — » → « 8.5/10 » → « 10/10 ») et
+   poussait les étoiles à chaque mouvement de souris : impossible de viser une
+   valeur précise. Largeur réservée + chiffres à chasse fixe = rangée stable. */
 .value {
   font-family: var(--font-geist-mono), monospace;
+  font-variant-numeric: tabular-nums;
   font-size: 13px;
   color: var(--gold);
   white-space: nowrap;
+  min-width: 6ch;
+  flex: none;
+  text-align: left;
 }
 
 :global([data-theme="light"]) .value {

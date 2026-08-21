@@ -59,6 +59,54 @@
   cursor: pointer;
 }
 
+/* ——— En-tête de fiche ——— */
+
+/* Titre original, quand il diffère du titre français */
+.originalName {
+  font-size: 14px;
+  color: var(--ink-mute);
+  font-style: italic;
+  margin-top: -20px;
+  margin-bottom: 10px;
+}
+
+.tagline {
+  font-family: var(--font-serif), serif;
+  font-size: 17px;
+  font-style: italic;
+  color: var(--ink-dim);
+  margin-bottom: 22px;
+}
+
+/* Unité accolée à un grand chiffre (« 42min ») */
+.unit {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 14px;
+  color: var(--ink-mute);
+  margin-left: 2px;
+}
+
+/* Prochain épisode annoncé : c'est l'information qu'on vient chercher sur une
+   série en cours, elle est donc mise en avant. */
+.nextEpisode {
+  color: var(--accent);
+}
+
+/* Diffuseur : même carte que les sociétés de production, mais non cliquable
+   (TMDB n'expose pas de page réseau exploitable). */
+.network {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
 /* ——— Progression globale ——— */
 .progressBox {
   background: var(--panel);
@@ -183,6 +231,9 @@
   gap: 12px;
   flex-wrap: wrap;
   padding-right: 6px;
+  /* Le fond du bouton au survol venait mordre sur le filet : on lui réserve
+     quelques pixels de respiration au-dessus de la bordure. */
+  padding-bottom: 6px;
   border-bottom: 1px solid var(--line);
   margin-bottom: 4px;
 }

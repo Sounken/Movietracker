@@ -105,6 +105,96 @@
   border-color: var(--ink);
 }
 
+/* Les boutons de tri portent maintenant une flèche de sens : on aligne. */
+.sortBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.sortArrow {
+  /* la flèche apparaît/disparaît au changement de tri : sans largeur réservée
+     le bouton sauterait d'une dizaine de pixels */
+  flex: none;
+  margin-right: -2px;
+}
+
+/* ——— Recherche ——— */
+.searchWrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.iconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 10px;
+}
+
+.searchField {
+  position: relative;
+  display: flex;
+  align-items: center;
+  /* déploiement depuis la loupe */
+  animation: searchIn 0.18s ease;
+}
+
+@keyframes searchIn {
+  from {
+    width: 0;
+    opacity: 0;
+  }
+  to {
+    width: 190px;
+    opacity: 1;
+  }
+}
+
+.searchInput {
+  width: 190px;
+  padding: 7px 26px 7px 12px;
+  border-radius: 8px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 12px;
+  font-family: var(--font-geist-mono), monospace;
+  transition: border-color 0.15s;
+}
+
+.searchInput::placeholder {
+  color: var(--ink-dim);
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* Chrome/Safari ajoutent leur propre croix sur input[type=search] */
+.searchInput::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+.searchClear {
+  position: absolute;
+  right: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border: none;
+  background: none;
+  color: var(--ink-dim);
+  cursor: pointer;
+}
+
+.searchClear:hover {
+  color: var(--ink);
+}
+
 /* ——— No result ——— */
 .noResult {
   padding: 40px;

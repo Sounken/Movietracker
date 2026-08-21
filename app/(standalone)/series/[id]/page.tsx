@@ -1,10 +1,21 @@
-import { notFound } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
+import { notFound } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import { fetchSeriesDetail, fetchSeriesLogo } from "@/lib/tmdb";
+import {
+  fetchSeriesDetail,
+  fetchSeriesLogo,
+  fetchSeriesCredits,
+  fetchSimilarSeries,
+  fetchWatchProviders,
+  formatRuntime,
+} from "@/lib/tmdb";
 import FilmTopbar from "../../film/[id]/components/FilmTopbar";
 import FilmTitleLogo from "../../film/[id]/components/FilmTitleLogo";
+import CastGrid from "../../film/[id]/components/CastGrid";
+import SimilarFilms from "../../film/[id]/components/SimilarFilms";
+import WatchProvidersSection from "../../components/WatchProvidersSection";
 import SeriesActions from "./SeriesActions";
 import SeasonTracker from "./SeasonTracker";
 import RatingWidget from "../../film/[id]/components/RatingWidget";
@@ -19,17 +30,51 @@ const STATUS_LABELS: Record<string, string> = {
   Canceled: "Annulée",
   "In Production": "En production",
   Planned: "Prévue",
+  Pilot: "Pilote",
 };
+
+// `type` TMDB : la nature du programme, utile pour distinguer une mini-série
+// d'une série au long cours ou d'une émission.
+const TYPE_LABELS: Record<string, string> = {
+  Scripted: "Fiction",
+  Miniseries: "Mini-série",
+  Documentary: "Documentaire",
+  Reality: "Télé-réalité",
+  "Talk Show": "Talk-show",
+  News: "Information",
+  Video: "Vidéo",
+};
+
+const LANG_NAMES: Record<string, string> = {
+  en: "Anglais", fr: "Français", es: "Espagnol", de: "Allemand", it: "Italien",
+  ja: "Japonais", ko: "Coréen", zh: "Chinois", pt: "Portugais", ru: "Russe",
+  ar: "Arabe", hi: "Hindi", nl: "Néerlandais", sv: "Suédois", da: "Danois",
+};
+
+const DATE_FMT = new Intl.DateTimeFormat("fr-FR", {
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
+
+function formatDate(iso: string): string {
+  if (!iso) return "";
+  const d = new Date(`${iso}T00:00:00`);
+  return Number.isNaN(d.getTime()) ? iso : DATE_FMT.format(d);
+}
 
 export default async function SeriesPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: idStr } = await params;
   const id = parseInt(idStr);
   if (isNaN(id)) notFound();
 
-  const [session, series, logoUrl] = await Promise.all([
+  const [session, series, logoUrl, credits, similar, providers] = await Promise.all([
     getSession(),
     fetchSeriesDetail(id),
     fetchSeriesLogo(id),
+    fetchSeriesCredits(id),
+    fetchSimilarSeries(id),
+    fetchWatchProviders("tv", id),
   ]);
 
   if (!series) notFound();
@@ -68,6 +113,19 @@ export default async function SeriesPage({ params }: { params: Promise<{ id: str
       : 0;
 
   const statusLabel = STATUS_LABELS[series.status] ?? series.status;
+  const typeLabel = TYPE_LABELS[series.type] ?? series.type;
+  const langLabel = LANG_NAMES[series.originalLanguage] ?? series.originalLanguage?.toUpperCase();
+  const showOriginalName = series.originalName && series.originalName !== series.name;
+
+  // Temps total que représente la série, si TMDB connaît la durée d'un épisode.
+  const totalMinutes = series.episodeRunTime
+    ? series.episodeRunTime * series.numberOfEpisodes
+    : null;
+
+  // Les créateurs priment sur les réalisateurs : sur une série, c'est le
+  // showrunner qui signe l'œuvre, pas le réalisateur d'un épisode donné.
+  const authors = series.createdBy.length > 0 ? series.createdBy : credits.directors;
+  const authorLabel = series.createdBy.length > 0 ? "Création" : "Réalisation";
 
   return (
     <>
@@ -111,10 +169,20 @@ export default async function SeriesPage({ params }: { params: Promise<{ id: str
             logoClassName={filmStyles.movieTitleLogo}
           />
 
+          {showOriginalName && (
+            <div className={styles.originalName}>{series.originalName}</div>
+          )}
+
+          {series.tagline && <div className={styles.tagline}>{series.tagline}</div>}
+
           <div className={filmStyles.scores}>
             <div className={`${filmStyles.scoreCard} ${filmStyles.scoreAccent}`}>
               <div className={`${filmStyles.scoreVal} ${filmStyles.scoreGold}`}>★ <Rating value={series.voteAverage} /></div>
               <div className={filmStyles.scoreLab}>Note TMDB</div>
+            </div>
+            <div className={filmStyles.scoreCard}>
+              <div className={filmStyles.scoreVal}>{series.voteCount.toLocaleString("fr")}</div>
+              <div className={filmStyles.scoreLab}>Votes</div>
             </div>
             <div className={filmStyles.scoreCard}>
               <div className={filmStyles.scoreVal}>{series.numberOfSeasons}</div>
@@ -124,10 +192,24 @@ export default async function SeriesPage({ params }: { params: Promise<{ id: str
               <div className={filmStyles.scoreVal}>{series.numberOfEpisodes}</div>
               <div className={filmStyles.scoreLab}>Épisodes</div>
             </div>
+            {series.episodeRunTime && (
+              <div className={filmStyles.scoreCard}>
+                <div className={filmStyles.scoreVal}>{series.episodeRunTime}<span className={styles.unit}>min</span></div>
+                <div className={filmStyles.scoreLab}>Par épisode</div>
+              </div>
+            )}
             {statusLabel && (
               <div className={filmStyles.scoreCard}>
-                <div className={filmStyles.scoreVal} style={{ fontSize: 18 }}>{statusLabel}</div>
+                {/* scoreValText : même hauteur de ligne que les chiffres, donc
+                    le libellé « Statut » s'aligne sur les autres. */}
+                <div className={`${filmStyles.scoreVal} ${filmStyles.scoreValText}`}>{statusLabel}</div>
                 <div className={filmStyles.scoreLab}>Statut</div>
+              </div>
+            )}
+            {series.year && (
+              <div className={filmStyles.scoreCard}>
+                <div className={filmStyles.scoreVal}>{series.year}</div>
+                <div className={filmStyles.scoreLab}>Début</div>
               </div>
             )}
           </div>
@@ -163,6 +245,12 @@ export default async function SeriesPage({ params }: { params: Promise<{ id: str
             </div>
           )}
 
+          <WatchProvidersSection
+            providers={providers}
+            sectionClassName={filmStyles.section}
+            titleClassName={filmStyles.sectionTitle}
+          />
+
           {/* Suivi par saison / épisode */}
           {series.seasons.length > 0 && (
             <div className={filmStyles.section}>
@@ -177,11 +265,156 @@ export default async function SeriesPage({ params }: { params: Promise<{ id: str
             </div>
           )}
 
+          {/* ——— Fiche technique, calquée sur celle des films ——— */}
+          <div className={filmStyles.section}>
+            <div className={filmStyles.sectionTitle}>Fiche technique</div>
+            <div className={filmStyles.facts}>
+              {authors.length > 0 && (
+                <div className={filmStyles.fact}>
+                  <div className={filmStyles.factLab}>{authorLabel}</div>
+                  <div className={filmStyles.factVal}>
+                    {authors.map((a, i) => (
+                      <span key={a.id}>
+                        {i > 0 && ", "}
+                        <Link href={`/actor/${a.id}`} className={filmStyles.crewLink}>{a.name}</Link>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {credits.writers.length > 0 && (
+                <div className={filmStyles.fact}>
+                  <div className={filmStyles.factLab}>Scénario</div>
+                  <div className={filmStyles.factVal}>
+                    {credits.writers.map((w, i) => (
+                      <span key={w.id}>
+                        {i > 0 && ", "}
+                        <Link href={`/actor/${w.id}`} className={filmStyles.crewLink}>{w.name}</Link>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {series.firstAirDate && (
+                <div className={filmStyles.fact}>
+                  <div className={filmStyles.factLab}>Première diffusion</div>
+                  <div className={filmStyles.factVal}>{formatDate(series.firstAirDate)}</div>
+                </div>
+              )}
+              {series.lastAirDate && (
+                <div className={filmStyles.fact}>
+                  <div className={filmStyles.factLab}>
+                    {series.inProduction ? "Dernier épisode diffusé" : "Dernière diffusion"}
+                  </div>
+                  <div className={filmStyles.factVal}>{formatDate(series.lastAirDate)}</div>
+                </div>
+              )}
+              {series.nextEpisode?.airDate && (
+                <div className={filmStyles.fact}>
+                  <div className={filmStyles.factLab}>Prochain épisode</div>
+                  <div className={`${filmStyles.factVal} ${styles.nextEpisode}`}>
+                    S{series.nextEpisode.seasonNumber}E{series.nextEpisode.episodeNumber}
+                    {series.nextEpisode.name && ` · ${series.nextEpisode.name}`}
+                    {" — "}
+                    {formatDate(series.nextEpisode.airDate)}
+                  </div>
+                </div>
+              )}
+              {typeLabel && (
+                <div className={filmStyles.fact}>
+                  <div className={filmStyles.factLab}>Format</div>
+                  <div className={filmStyles.factVal}>{typeLabel}</div>
+                </div>
+              )}
+              {series.episodeRunTime && (
+                <div className={filmStyles.fact}>
+                  <div className={filmStyles.factLab}>Durée d&apos;un épisode</div>
+                  <div className={filmStyles.factVal}>{formatRuntime(series.episodeRunTime)}</div>
+                </div>
+              )}
+              {totalMinutes && (
+                <div className={filmStyles.fact}>
+                  <div className={filmStyles.factLab}>Durée totale</div>
+                  <div className={filmStyles.factVal}>
+                    {Math.round(totalMinutes / 60)}h de programme
+                  </div>
+                </div>
+              )}
+              {langLabel && (
+                <div className={filmStyles.fact}>
+                  <div className={filmStyles.factLab}>Langue originale</div>
+                  <div className={filmStyles.factVal}>{langLabel}</div>
+                </div>
+              )}
+              {series.productionCountries.length > 0 && (
+                <div className={filmStyles.fact}>
+                  <div className={filmStyles.factLab}>Pays d&apos;origine</div>
+                  <div className={filmStyles.factVal}>
+                    {series.productionCountries.slice(0, 3).join(", ")}
+                  </div>
+                </div>
+              )}
+              {series.genres.length > 0 && (
+                <div className={filmStyles.fact}>
+                  <div className={filmStyles.factLab}>Genres</div>
+                  <div className={filmStyles.factVal}>{series.genres.join(", ")}</div>
+                </div>
+              )}
+              <div className={filmStyles.fact}>
+                <div className={filmStyles.factLab}>Popularité</div>
+                <div className={filmStyles.factVal}>{series.popularity}</div>
+              </div>
+            </div>
+          </div>
+
+          {credits.cast.length > 0 && <CastGrid cast={credits.cast} />}
+
           {series.networks.length > 0 && (
             <div className={filmStyles.section}>
-              <div className={filmStyles.sectionTitle}>Diffusion</div>
-              <div className={filmStyles.factVal}>{series.networks.join(", ")}</div>
+              <div className={filmStyles.sectionTitle}>Diffuseurs</div>
+              <div className={filmStyles.companies}>
+                {series.networks.map((n) => (
+                  <div key={n.id} className={styles.network}>
+                    {n.logoUrl && (
+                      <Image
+                        src={n.logoUrl}
+                        alt=""
+                        width={20}
+                        height={20}
+                        className={filmStyles.companyLogo}
+                      />
+                    )}
+                    {n.name}
+                  </div>
+                ))}
+              </div>
             </div>
+          )}
+
+          {series.productionCompanies.length > 0 && (
+            <div className={filmStyles.section}>
+              <div className={filmStyles.sectionTitle}>Sociétés de production</div>
+              <div className={filmStyles.companies}>
+                {series.productionCompanies.map((c) => (
+                  <Link key={c.id} href={`/company/${c.id}`} className={filmStyles.companyTag}>
+                    {c.logoUrl && (
+                      <Image
+                        src={c.logoUrl}
+                        alt=""
+                        width={20}
+                        height={20}
+                        className={filmStyles.companyLogo}
+                      />
+                    )}
+                    {c.name}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {similar.length > 0 && (
+            <SimilarFilms films={similar} title="Séries similaires" hrefBase="/series" />
           )}
         </div>
       </div>

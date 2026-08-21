@@ -23,10 +23,18 @@ export default function DiscoverGrid({
   initialFilms,
   category,
   genre,
+  minYear = "",
+  maxYear = "",
+  minRating = "",
+  emptyMessage,
 }: {
   initialFilms: TmdbDiscoverFilm[];
   category: string;
   genre: string;
+  minYear?: string;
+  maxYear?: string;
+  minRating?: string;
+  emptyMessage?: string;
 }) {
   const [films, setFilms] = useState(initialFilms);
   const [page, setPage] = useState(1);
@@ -42,6 +50,9 @@ export default function DiscoverGrid({
     const nextPage = page + 1;
     const params = new URLSearchParams({ category, page: String(nextPage) });
     if (genre) params.set("genre", genre);
+    if (minYear) params.set("minYear", minYear);
+    if (maxYear) params.set("maxYear", maxYear);
+    if (minRating) params.set("minRating", minRating);
 
     fetch(`/api/discover?${params}`)
       .then((r) => (r.ok ? r.json() : []))
@@ -54,7 +65,7 @@ export default function DiscoverGrid({
         loadingRef.current = false;
         setLoading(false);
       });
-  }, [category, genre, page]);
+  }, [category, genre, minYear, maxYear, minRating, page]);
 
   // Scroll infini : la carte « Afficher plus » se déclenche seule à l'approche
   const sentinelRef = useRef<HTMLButtonElement | null>(null);
@@ -73,11 +84,15 @@ export default function DiscoverGrid({
   }, [hasMore, loadMore]);
 
   if (films.length === 0) {
-    return <div className={styles.empty}>Aucun film trouvé pour ces filtres.</div>;
+    return (
+      <div className={styles.empty}>
+        {emptyMessage ?? "Aucun film trouvé pour ces filtres."}
+      </div>
+    );
   }
 
   return (
-    <div className={styles.grid}>
+    <div className={`${styles.grid} stagger`}>
       {films.map((film) => (
         <Link key={film.id} href={`/film/${film.id}`} className={styles.filmCard}>
           <div className={styles.poster}>

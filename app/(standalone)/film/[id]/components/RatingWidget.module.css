@@ -35,11 +35,14 @@
 /* Les étoiles sont désormais rendues par StarRating (composant partagé
    films / séries / saisons) : leurs styles vivent dans StarRating.module.css. */
 
+/* Le chiffre suit maintenant le survol des étoiles : chasse fixe et largeur
+   réservée pour que la prévisualisation ne fasse pas danser la mise en page. */
 .note {
   font-family: var(--font-geist-mono), monospace;
+  font-variant-numeric: tabular-nums;
   font-size: 22px;
   color: var(--gold);
-  min-width: 60px;
+  min-width: 7ch;
   display: flex;
   align-items: baseline;
   gap: 2px;

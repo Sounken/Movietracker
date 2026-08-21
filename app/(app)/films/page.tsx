@@ -198,7 +198,7 @@ async function CollectionSection({ userId }: { userId: string }) {
   return (
     <>
       {ratedEntries.length > 0 && (
-        <div className={styles.stats}>
+        <div className={`${styles.stats} stagger`}>
           <div className={styles.stat}>
             <div className={styles.statLab}>Films notés</div>
             <div className={styles.statVal}>{ratedEntries.length}</div>

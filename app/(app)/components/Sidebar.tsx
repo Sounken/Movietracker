@@ -172,8 +172,10 @@ export default function Sidebar({
         </div>
       </Link>
 
-      {/* Switch Films / Séries — deux mondes distincts */}
-      <div className={styles.sectionSwitch}>
+      {/* Switch Films / Séries — deux mondes distincts.
+          `data-side` pilote la pastille glissante (cf. .switchThumb). */}
+      <div className={styles.sectionSwitch} data-side={isSeries ? "series" : "films"}>
+        <span className={styles.switchThumb} aria-hidden="true" />
         <Link
           href="/films"
           className={`${styles.switchBtn} ${!isSeries ? styles.switchOn : ""}`}
@@ -267,7 +269,11 @@ export default function Sidebar({
           <div className={styles.sheet} onClick={(e) => e.stopPropagation()}>
             <div className={styles.sheetHandle} />
             {/* Switch Films / Séries (mobile) */}
-            <div className={styles.sectionSwitchSheet}>
+            <div
+              className={styles.sectionSwitchSheet}
+              data-side={isSeries ? "series" : "films"}
+            >
+              <span className={styles.switchThumb} aria-hidden="true" />
               <Link
                 href="/films"
                 className={`${styles.switchBtn} ${!isSeries ? styles.switchOn : ""}`}

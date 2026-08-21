@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { saveRating, deleteRating } from "@/app/actions/film";
-import { fetchFilmDetail, fetchFilmCredits, fetchSimilarFilms, fetchFilmKeywords, fetchFilmLogo, fetchFilmCollection, formatMoney, formatRuntime } from "@/lib/tmdb";
+import { fetchFilmDetail, fetchFilmCredits, fetchSimilarFilms, fetchFilmKeywords, fetchFilmLogo, fetchFilmCollection, fetchWatchProviders, formatMoney, formatRuntime } from "@/lib/tmdb";
+import WatchProvidersSection from "../../components/WatchProvidersSection";
 import FilmTopbar from "./components/FilmTopbar";
 import FilmTitleLogo from "./components/FilmTitleLogo";
 import PosterActions from "./components/PosterActions";
@@ -26,13 +27,14 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
   const id = parseInt(idStr);
   if (isNaN(id)) notFound();
 
-  const [session, film, credits, similar, keywords, logoUrl] = await Promise.all([
+  const [session, film, credits, similar, keywords, logoUrl, providers] = await Promise.all([
     getSession(),
     fetchFilmDetail(id),
     fetchFilmCredits(id),
     fetchSimilarFilms(id),
     fetchFilmKeywords(id),
     fetchFilmLogo(id),
+    fetchWatchProviders("movie", id),
   ]);
 
   if (!film) notFound();
@@ -197,6 +199,12 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
             </div>
           )}
 
+          <WatchProvidersSection
+            providers={providers}
+            sectionClassName={styles.section}
+            titleClassName={styles.sectionTitle}
+          />
+
           {friendFilms.length > 0 && (
             <FriendReviews
               reviews={friendFilms.map((f) => ({
@@ -303,7 +311,18 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
               <div className={styles.sectionTitle}>Sociétés de production</div>
               <div className={styles.companies}>
                 {film.productionCompanies.map((c) => (
-                  <div key={c} className={styles.companyTag}>{c}</div>
+                  <Link key={c.id} href={`/company/${c.id}`} className={styles.companyTag}>
+                    {c.logoUrl && (
+                      <Image
+                        src={c.logoUrl}
+                        alt=""
+                        width={20}
+                        height={20}
+                        className={styles.companyLogo}
+                      />
+                    )}
+                    {c.name}
+                  </Link>
                 ))}
               </div>
             </div>

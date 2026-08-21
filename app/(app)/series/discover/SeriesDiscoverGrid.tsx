@@ -12,10 +12,20 @@ export default function SeriesDiscoverGrid({
   initialSeries,
   category,
   anime,
+  genre = "",
+  minYear = "",
+  maxYear = "",
+  minRating = "",
+  emptyMessage,
 }: {
   initialSeries: TmdbDiscoverSeries[];
   category: string;
   anime: boolean;
+  genre?: string;
+  minYear?: string;
+  maxYear?: string;
+  minRating?: string;
+  emptyMessage?: string;
 }) {
   const [series, setSeries] = useState(initialSeries);
   const [page, setPage] = useState(1);
@@ -31,6 +41,10 @@ export default function SeriesDiscoverGrid({
     const nextPage = page + 1;
     const params = new URLSearchParams({ category, page: String(nextPage) });
     if (anime) params.set("anime", "1");
+    if (genre) params.set("genre", genre);
+    if (minYear) params.set("minYear", minYear);
+    if (maxYear) params.set("maxYear", maxYear);
+    if (minRating) params.set("minRating", minRating);
 
     fetch(`/api/discover/tv?${params}`)
       .then((r) => (r.ok ? r.json() : []))
@@ -43,7 +57,7 @@ export default function SeriesDiscoverGrid({
         loadingRef.current = false;
         setLoading(false);
       });
-  }, [category, anime, page]);
+  }, [category, anime, genre, minYear, maxYear, minRating, page]);
 
   const sentinelRef = useRef<HTMLButtonElement | null>(null);
   useEffect(() => {
@@ -60,11 +74,15 @@ export default function SeriesDiscoverGrid({
   }, [hasMore, loadMore]);
 
   if (series.length === 0) {
-    return <div className={styles.empty}>Aucune série trouvée pour ces filtres.</div>;
+    return (
+      <div className={styles.empty}>
+        {emptyMessage ?? "Aucune série trouvée pour ces filtres."}
+      </div>
+    );
   }
 
   return (
-    <div className={styles.grid}>
+    <div className={`${styles.grid} stagger`}>
       {series.map((s) => (
         <Link key={s.id} href={`/series/${s.id}`} className={styles.filmCard}>
           <div className={styles.poster}>

@@ -31,7 +31,9 @@ export default function FilmGrid({
   }
 
   return (
-    <div className={styles.grid}>
+    // `stagger` (globals.css) : les affiches apparaissent en cascade plutôt
+    // que d'un bloc — la grille se remplit au lieu de surgir.
+    <div className={`${styles.grid} stagger`}>
       {films.map((film) => (
         <Link key={film.id} href={`/film/${film.id}`} className={styles.film}>
           <div className={styles.poster}>
