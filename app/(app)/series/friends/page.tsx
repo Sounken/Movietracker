@@ -113,6 +113,7 @@ export default async function SeriesFriendsPage() {
         mediaBase="/series"
         countNoun="série"
         compareBase="/series/compare"
+        profileBase="/series/user"
       />
     </div>
   );

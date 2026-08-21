@@ -79,6 +79,7 @@ export default function FriendsClient({
   mediaBase = "/film",
   countNoun = "film",
   compareBase = "/compare",
+  profileBase = "/user",
 }: {
   following: FollowingUser[];
   followers: FollowerUser[];
@@ -89,6 +90,12 @@ export default function FriendsClient({
   countNoun?: string;
   /** « /compare » (défaut) ou « /series/compare » — base du lien de comparaison */
   compareBase?: string;
+  /**
+   * « /user » (défaut) ou « /series/user » — profil public à ouvrir. Depuis la
+   * page Amis du monde Séries, on doit atterrir sur la collection de séries,
+   * pas sur celle de films.
+   */
+  profileBase?: string;
 }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -164,7 +171,7 @@ export default function FriendsClient({
               const isFollowing = followingIds.has(u.id) || u.isFollowing;
               return (
                 <div key={u.id} className={styles.userCard}>
-                  <Link href={`/user/${u.id}`} className={styles.userLink}>
+                  <Link href={`${profileBase}/${u.id}`} className={styles.userLink}>
                     <Avatar url={u.avatarUrl} name={u.name} />
                     <div className={styles.userInfo}>
                       <div className={styles.userName}>{u.name}</div>
@@ -200,7 +207,7 @@ export default function FriendsClient({
               <div className={styles.userList}>
                 {initialFollowing.map((u) => (
                   <div key={u.id} className={styles.userCard}>
-                    <Link href={`/user/${u.id}`} className={styles.userLink}>
+                    <Link href={`${profileBase}/${u.id}`} className={styles.userLink}>
                       <Avatar url={u.avatarUrl} name={u.name} level={u.level} levelTitle={u.levelTitle} />
                       <div className={styles.userInfo}>
                         <div className={styles.userName}>{u.name}</div>
@@ -244,7 +251,7 @@ export default function FriendsClient({
               <div className={styles.userList}>
                 {followers.map((u) => (
                   <div key={u.id} className={styles.userCard}>
-                    <Link href={`/user/${u.id}`} className={styles.userLink}>
+                    <Link href={`${profileBase}/${u.id}`} className={styles.userLink}>
                       <Avatar url={u.avatarUrl} name={u.name} level={u.level} levelTitle={u.levelTitle} />
                       <div className={styles.userInfo}>
                         <div className={styles.userName}>{u.name}</div>
@@ -285,7 +292,7 @@ export default function FriendsClient({
                     <Avatar url={item.user.avatarUrl} name={item.user.name} size={34} />
                     <div className={styles.feedContent}>
                       <div className={styles.feedText}>
-                        <Link href={`/user/${item.user.id}`} className={styles.feedName}>
+                        <Link href={`${profileBase}/${item.user.id}`} className={styles.feedName}>
                           {item.user.name}
                         </Link>
                         {item.liked && !item.rating && " a aimé "}

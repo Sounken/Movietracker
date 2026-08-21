@@ -96,6 +96,8 @@ export default function TrendsClient({
   const [activeTab, setActiveTab] = useState<TabKey>("watched");
 
   const isSeries = media === "series";
+  // Les profils publics sont scindés par monde, comme les fiches.
+  const profileBase = isSeries ? "/series/user" : "/user";
   const labels = {
     topTitle: isSeries ? "Top séries" : "Top films",
     watchedStat: isSeries ? "Séries suivies" : "Films vus",
@@ -232,11 +234,11 @@ export default function TrendsClient({
                     )}
                     <div className={styles.reviewBody}>
                       <div className={styles.reviewTop}>
-                        <Link href={`/user/${r.user.id}`}>
+                        <Link href={`${profileBase}/${r.user.id}`}>
                           <Avatar url={r.user.avatarUrl} name={r.user.name} size={28} />
                         </Link>
                         <div className={styles.reviewMeta}>
-                          <Link href={`/user/${r.user.id}`} className={styles.reviewUser}>
+                          <Link href={`${profileBase}/${r.user.id}`} className={styles.reviewUser}>
                             {r.user.name}
                           </Link>
                           {" · "}
@@ -295,7 +297,7 @@ export default function TrendsClient({
             ) : (
               <div className={styles.userList}>
                 {activeUsers.map((u, i) => (
-                  <Link key={u.id} href={`/user/${u.id}`} className={styles.userCard}>
+                  <Link key={u.id} href={`${profileBase}/${u.id}`} className={styles.userCard}>
                     <span className={styles.userRank}>{i + 1}</span>
                     <Avatar url={u.avatarUrl} name={u.name} size={34} />
                     <div className={styles.userInfo}>
