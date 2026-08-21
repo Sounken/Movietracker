@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { fetchDiscover } from "@/lib/tmdb";
 import { fetchForYouFilms } from "@/lib/recommendations";
 import { getSession } from "@/lib/session";
+import { parseProviders } from "@/lib/watch-providers";
 
 export async function GET(request: NextRequest) {
   const p = request.nextUrl.searchParams;
@@ -23,6 +24,7 @@ export async function GET(request: NextRequest) {
     minYear: p.get("minYear") ?? undefined,
     maxYear: p.get("maxYear") ?? undefined,
     minRating: minRating ? Number(minRating) : undefined,
+    providers: parseProviders(p.get("providers")),
   });
   return NextResponse.json(films);
 }

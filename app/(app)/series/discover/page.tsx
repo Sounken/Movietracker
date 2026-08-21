@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { getSession } from "@/lib/session";
 import { fetchDiscoverSeries } from "@/lib/tmdb";
 import { fetchForYouSeries } from "@/lib/recommendations";
+import { parseProviders } from "@/lib/watch-providers";
 import Topbar from "../../components/Topbar";
 import SeriesDiscoverFilters from "./SeriesDiscoverFilters";
 import SeriesDiscoverGrid from "./SeriesDiscoverGrid";
@@ -17,6 +18,7 @@ export default async function SeriesDiscoverPage({
     minYear?: string;
     maxYear?: string;
     minRating?: string;
+    providers?: string;
   }>;
 }) {
   const [session, params] = await Promise.all([getSession(), searchParams]);
@@ -26,6 +28,7 @@ export default async function SeriesDiscoverPage({
   const minYear = params.minYear ?? "";
   const maxYear = params.maxYear ?? "";
   const minRating = params.minRating ?? "";
+  const providers = params.providers ?? "";
 
   // Sans compte, « Pour vous » n'a rien sur quoi se baser : on retombe sur Populaires.
   const requested = params.category ?? "popular";
@@ -40,6 +43,7 @@ export default async function SeriesDiscoverPage({
           minYear,
           maxYear,
           minRating: minRating ? Number(minRating) : undefined,
+          providers: parseProviders(providers),
         });
 
   const hour = new Date().getHours();
@@ -64,12 +68,13 @@ export default async function SeriesDiscoverPage({
           minYear={minYear}
           maxYear={maxYear}
           minRating={minRating}
+          providers={providers}
           showForYou={Boolean(session)}
         />
       </Suspense>
 
       <SeriesDiscoverGrid
-        key={`${category}-${genre}-${anime}-${minYear}-${maxYear}-${minRating}`}
+        key={`${category}-${genre}-${anime}-${minYear}-${maxYear}-${minRating}-${providers}`}
         initialSeries={series}
         category={category}
         genre={genre}
@@ -77,6 +82,7 @@ export default async function SeriesDiscoverPage({
         minYear={minYear}
         maxYear={maxYear}
         minRating={minRating}
+        providers={providers}
         emptyMessage={
           category === "for_you"
             ? "Notez quelques séries pour que l'on puisse vous en conseiller."

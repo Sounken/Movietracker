@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { getSession } from "@/lib/session";
 import { fetchDiscover, fetchNowPlaying, fetchFilmLogo } from "@/lib/tmdb";
 import { fetchForYouFilms } from "@/lib/recommendations";
+import { parseProviders } from "@/lib/watch-providers";
 import Topbar from "../../components/Topbar";
 import HeroCarousel from "../../components/HeroCarousel";
 import DiscoverFilters from "./DiscoverFilters";
@@ -17,6 +18,7 @@ export default async function DiscoverPage({
     minYear?: string;
     maxYear?: string;
     minRating?: string;
+    providers?: string;
   }>;
 }) {
   const [session, params] = await Promise.all([getSession(), searchParams]);
@@ -26,6 +28,7 @@ export default async function DiscoverPage({
   const minYear = params.minYear ?? "";
   const maxYear = params.maxYear ?? "";
   const minRating = params.minRating ?? "";
+  const providers = params.providers ?? "";
 
   // « Pour vous » n'a de sens qu'avec un compte : sinon on retombe sur Populaires.
   const requested = params.category ?? "popular";
@@ -43,6 +46,7 @@ export default async function DiscoverPage({
           minYear,
           maxYear,
           minRating: minRating ? Number(minRating) : undefined,
+          providers: parseProviders(providers),
         }),
     showHero ? fetchNowPlaying() : Promise.resolve([]),
   ]);
@@ -91,18 +95,20 @@ export default async function DiscoverPage({
           minYear={minYear}
           maxYear={maxYear}
           minRating={minRating}
+          providers={providers}
           showForYou={Boolean(session)}
         />
       </Suspense>
 
       <DiscoverGrid
-        key={`${category}-${genre}-${minYear}-${maxYear}-${minRating}`}
+        key={`${category}-${genre}-${minYear}-${maxYear}-${minRating}-${providers}`}
         initialFilms={films}
         category={category}
         genre={genre}
         minYear={minYear}
         maxYear={maxYear}
         minRating={minRating}
+        providers={providers}
         emptyMessage={
           category === "for_you"
             ? "Notez quelques films pour que l'on puisse vous en conseiller."

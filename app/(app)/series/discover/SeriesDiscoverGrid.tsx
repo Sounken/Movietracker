@@ -16,6 +16,7 @@ export default function SeriesDiscoverGrid({
   minYear = "",
   maxYear = "",
   minRating = "",
+  providers = "",
   emptyMessage,
 }: {
   initialSeries: TmdbDiscoverSeries[];
@@ -25,6 +26,7 @@ export default function SeriesDiscoverGrid({
   minYear?: string;
   maxYear?: string;
   minRating?: string;
+  providers?: string;
   emptyMessage?: string;
 }) {
   const [series, setSeries] = useState(initialSeries);
@@ -45,6 +47,7 @@ export default function SeriesDiscoverGrid({
     if (minYear) params.set("minYear", minYear);
     if (maxYear) params.set("maxYear", maxYear);
     if (minRating) params.set("minRating", minRating);
+    if (providers) params.set("providers", providers);
 
     fetch(`/api/discover/tv?${params}`)
       .then((r) => (r.ok ? r.json() : []))
@@ -57,7 +60,7 @@ export default function SeriesDiscoverGrid({
         loadingRef.current = false;
         setLoading(false);
       });
-  }, [category, anime, genre, minYear, maxYear, minRating, page]);
+  }, [category, anime, genre, minYear, maxYear, minRating, providers, page]);
 
   const sentinelRef = useRef<HTMLButtonElement | null>(null);
   useEffect(() => {

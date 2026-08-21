@@ -794,19 +794,72 @@ export type DiscoverOptions = {
   minRating?: number;
   /** Séries uniquement : restreint aux animes (animation japonaise). */
   anime?: boolean;
+  /**
+   * Identifiants de plateformes JustWatch (8 = Netflix, 119 = Prime…).
+   * Plusieurs valeurs = OU : « ce que je peux voir avec mes abonnements ».
+   */
+  providers?: number[];
 };
+
+/** Les plateformes se filtrent toujours pour une région donnée. */
+export const WATCH_REGION = "FR";
+
+/**
+ * Plateformes proposées dans les filtres.
+ *
+ * TMDB en renvoie plus de 100 pour la France, dont une longue traîne de
+ * micro-services : les lister toutes rendrait le filtre inutilisable. On garde
+ * celles qui ont un vrai catalogue, dans l'ordre d'usage réel.
+ */
+// Identifiants vérifiés le 21/08/2026 contre /watch/providers/{movie,tv}
+// pour watch_region=FR. Ne pas les deviner : plusieurs noms évidents pointent
+// ailleurs (415 est Animation Digital Network et non OCS, 234 est Arte et non
+// Paramount+). Les libellés sont ceux de TMDB, raccourcis quand ils sont longs.
+export const WATCH_PROVIDERS: Array<{ id: number; name: string }> = [
+  { id: 8, name: "Netflix" },
+  { id: 119, name: "Prime Video" },
+  { id: 337, name: "Disney+" },
+  { id: 1899, name: "HBO Max" },
+  { id: 350, name: "Apple TV+" },
+  { id: 381, name: "Canal+" },
+  { id: 531, name: "Paramount+" },
+  { id: 283, name: "Crunchyroll" },
+  { id: 234, name: "Arte" },
+  { id: 11, name: "MUBI" },
+  { id: 223, name: "Hayu" },
+  { id: 35, name: "Rakuten TV" },
+];
 
 const DISCOVER_PAGE_SIZE = 20; // taille d'une page TMDB, que l'on reproduit sur le vivier
 
-/** Bornes d'années + note plancher, communes aux deux médias. */
+/** Bornes d'années, note plancher et plateformes — communs aux deux médias. */
 function commonFilters(
-  { minYear, maxYear, minRating }: DiscoverOptions,
+  { minYear, maxYear, minRating, providers }: DiscoverOptions,
   dateField: "primary_release_date" | "first_air_date",
 ): string {
   let f = "";
   if (minYear) f += `&${dateField}.gte=${minYear}-01-01`;
   if (maxYear) f += `&${dateField}.lte=${maxYear}-12-31`;
+  // Note et plateformes sont déjà gérées par nonDateFilters : ne pas les
+  // répéter ici, TMDB recevrait deux fois le même paramètre.
+  return f + nonDateFilters({ minRating, providers });
+}
+
+/**
+ * Filtres qui ne touchent pas aux dates.
+ *
+ * « En salle », « À venir » et « En diffusion » imposent déjà leur propre
+ * fenêtre de dates : leur superposer les bornes de l'utilisateur donnerait un
+ * résultat vide. Ils appliquent donc seulement ceux-là.
+ */
+function nonDateFilters({ minRating, providers }: DiscoverOptions): string {
+  let f = "";
   if (minRating) f += `&vote_average.gte=${minRating}`;
+  if (providers?.length) {
+    // « | » = OU chez TMDB. `watch_region` est obligatoire : sans lui, le
+    // filtre de plateforme est ignoré en silence.
+    f += `&with_watch_providers=${providers.join("|")}&watch_region=${WATCH_REGION}`;
+  }
   return f;
 }
 
@@ -854,8 +907,11 @@ export async function fetchDiscover(
     if (genreId) extra += `&with_genres=${genreId}`;
     // « En salle » et « À venir » définissent déjà leur fenêtre de dates :
     // y superposer les bornes de l'utilisateur donnerait un résultat vide.
-    if (category !== "now_playing" && category !== "upcoming") extra += filters;
-    else if (opts.minRating) extra += `&vote_average.gte=${opts.minRating}`;
+    // On leur applique donc seulement les filtres hors dates.
+    extra +=
+      category === "now_playing" || category === "upcoming"
+        ? nonDateFilters(opts)
+        : filters;
 
     const url = `${BASE}/discover/movie?api_key=${key}&language=fr-FR&page=${page}${extra}`;
     const res = await fetch(url, { next: { revalidate: 3600 } });
@@ -928,8 +984,10 @@ export async function fetchDiscoverSeries(
 
     // Comme pour les films : ne pas écraser la fenêtre de dates des catégories
     // qui en imposent déjà une.
-    if (category !== "on_the_air" && category !== "upcoming") extra += filters;
-    else if (opts.minRating) extra += `&vote_average.gte=${opts.minRating}`;
+    extra +=
+      category === "on_the_air" || category === "upcoming"
+        ? nonDateFilters(opts)
+        : filters;
 
     const url = `${BASE}/discover/tv?api_key=${key}&language=fr-FR&page=${page}${extra}`;
     const res = await fetch(url, { next: { revalidate: 3600 } });

@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChevronDown, X } from "lucide-react";
+import { ChevronDown, X, Check } from "lucide-react";
+import { WATCH_PROVIDERS } from "@/lib/tmdb";
+import { parseProviders, serializeProviders } from "@/lib/watch-providers";
 import styles from "./discover.module.css";
 
 const CATEGORIES = [
@@ -101,6 +103,7 @@ export default function DiscoverFilters({
   minYear,
   maxYear,
   minRating,
+  providers,
   showForYou,
 }: {
   category: string;
@@ -108,6 +111,8 @@ export default function DiscoverFilters({
   minYear: string;
   maxYear: string;
   minRating: string;
+  /** Sélection de plateformes, telle qu'elle apparaît dans l'URL (« 8,119 »). */
+  providers: string;
   showForYou: boolean;
 }) {
   const router = useRouter();
@@ -133,7 +138,24 @@ export default function DiscoverFilters({
       ? `${minYear || "…"} – ${maxYear || "…"}`
       : "Période";
 
-  const hasFilters = Boolean(genre || minYear || maxYear || minRating);
+  // Multi-sélection : on bascule un identifiant sans fermer le panneau, pour
+  // pouvoir cocher Netflix puis Prime d'affilée.
+  const selectedProviders = parseProviders(providers) ?? [];
+  const toggleProvider = (id: number) => {
+    const next = selectedProviders.includes(id)
+      ? selectedProviders.filter((p) => p !== id)
+      : [...selectedProviders, id];
+    setParams({ providers: serializeProviders(next) });
+  };
+
+  const providerLabel =
+    selectedProviders.length === 0
+      ? "Plateforme"
+      : selectedProviders.length === 1
+        ? (WATCH_PROVIDERS.find((p) => p.id === selectedProviders[0])?.name ?? "Plateforme")
+        : `${selectedProviders.length} plateformes`;
+
+  const hasFilters = Boolean(genre || minYear || maxYear || minRating || providers);
 
   return (
     <div className={styles.filters}>
@@ -238,10 +260,41 @@ export default function DiscoverFilters({
           )}
         </Dropdown>
 
+        {/* ——— Plateformes (multi-sélection) ——— */}
+        <Dropdown label={providerLabel} active={selectedProviders.length > 0}>
+          {() => (
+            <div className={styles.dropdownList}>
+              <button
+                className={`${styles.dropdownItem} ${selectedProviders.length === 0 ? styles.dropdownItemOn : ""}`}
+                onClick={() => setParams({ providers: "" })}
+              >
+                Toutes les plateformes
+              </button>
+              {WATCH_PROVIDERS.map((p) => {
+                const on = selectedProviders.includes(p.id);
+                return (
+                  <button
+                    key={p.id}
+                    className={`${styles.dropdownItem} ${styles.checkItem} ${on ? styles.dropdownItemOn : ""}`}
+                    onClick={() => toggleProvider(p.id)}
+                  >
+                    <span className={`${styles.checkBox} ${on ? styles.checkBoxOn : ""}`}>
+                      {on && <Check size={10} strokeWidth={3} />}
+                    </span>
+                    {p.name}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </Dropdown>
+
         {hasFilters && (
           <button
             className={styles.clearFilters}
-            onClick={() => setParams({ genre: "", minYear: "", maxYear: "", minRating: "" })}
+            onClick={() =>
+              setParams({ genre: "", minYear: "", maxYear: "", minRating: "", providers: "" })
+            }
           >
             <X size={12} /> Effacer
           </button>

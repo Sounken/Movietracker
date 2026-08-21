@@ -26,6 +26,7 @@ export default function DiscoverGrid({
   minYear = "",
   maxYear = "",
   minRating = "",
+  providers = "",
   emptyMessage,
 }: {
   initialFilms: TmdbDiscoverFilm[];
@@ -34,6 +35,7 @@ export default function DiscoverGrid({
   minYear?: string;
   maxYear?: string;
   minRating?: string;
+  providers?: string;
   emptyMessage?: string;
 }) {
   const [films, setFilms] = useState(initialFilms);
@@ -53,6 +55,7 @@ export default function DiscoverGrid({
     if (minYear) params.set("minYear", minYear);
     if (maxYear) params.set("maxYear", maxYear);
     if (minRating) params.set("minRating", minRating);
+    if (providers) params.set("providers", providers);
 
     fetch(`/api/discover?${params}`)
       .then((r) => (r.ok ? r.json() : []))
@@ -65,7 +68,7 @@ export default function DiscoverGrid({
         loadingRef.current = false;
         setLoading(false);
       });
-  }, [category, genre, minYear, maxYear, minRating, page]);
+  }, [category, genre, minYear, maxYear, minRating, providers, page]);
 
   // Scroll infini : la carte « Afficher plus » se déclenche seule à l'approche
   const sentinelRef = useRef<HTMLButtonElement | null>(null);

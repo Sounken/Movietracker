@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { fetchDiscoverSeries } from "@/lib/tmdb";
 import { fetchForYouSeries } from "@/lib/recommendations";
 import { getSession } from "@/lib/session";
+import { parseProviders } from "@/lib/watch-providers";
 
 export async function GET(request: NextRequest) {
   const sp = request.nextUrl.searchParams;
@@ -23,6 +24,7 @@ export async function GET(request: NextRequest) {
     minYear: sp.get("minYear") ?? undefined,
     maxYear: sp.get("maxYear") ?? undefined,
     minRating: minRating ? Number(minRating) : undefined,
+    providers: parseProviders(sp.get("providers")),
   });
   return NextResponse.json(series);
 }
