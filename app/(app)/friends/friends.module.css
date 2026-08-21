@@ -125,7 +125,7 @@
   padding: 10px 20px;
   transition: background 0.15s;
 }
-.userCard:hover { background: rgba(217, 119, 66, 0.04); }
+.userCard:hover { background: rgba(var(--accent-rgb), 0.04); }
 
 .avatar {
   border-radius: 50%;
@@ -232,8 +232,8 @@
   align-items: center;
   font-size: 10px;
   color: var(--accent);
-  background: rgba(217, 119, 66, 0.1);
-  border: 1px solid rgba(217, 119, 66, 0.2);
+  background: rgba(var(--accent-rgb), 0.1);
+  border: 1px solid rgba(var(--accent-rgb), 0.2);
   border-radius: 999px;
   padding: 2px 8px;
   margin-top: 3px;
@@ -285,7 +285,7 @@
   padding: 12px 20px;
   transition: background 0.15s;
 }
-.feedItem:hover { background: rgba(217, 119, 66, 0.04); }
+.feedItem:hover { background: rgba(var(--accent-rgb), 0.04); }
 .feedContent { flex: 1; min-width: 0; }
 .feedText {
   font-size: 13px;

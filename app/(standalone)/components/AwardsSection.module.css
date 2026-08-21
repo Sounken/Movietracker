@@ -19,14 +19,9 @@
 
 /* Oscar, Palme, Emmy… : mises en avant par rapport aux prix techniques. */
 .major {
-  background: rgba(232, 201, 138, 0.09);
-  border-color: rgba(232, 201, 138, 0.28);
+  background: rgba(var(--gold-rgb), 0.09);
+  border-color: rgba(var(--gold-rgb), 0.28);
   color: var(--ink);
-}
-
-:global([data-theme="light"]) .major {
-  background: rgba(160, 112, 48, 0.08);
-  border-color: rgba(160, 112, 48, 0.28);
 }
 
 .icon {

@@ -25,11 +25,11 @@
 .actions button:hover {
   color: var(--ink);
   border-color: var(--accent);
-  background: rgba(217, 119, 66, 0.06);
+  background: rgba(var(--accent-rgb), 0.06);
 }
 
 .rated {
-  background: rgba(217, 119, 66, 0.1) !important;
+  background: rgba(var(--accent-rgb), 0.1) !important;
   border-color: var(--accent) !important;
   color: var(--accent) !important;
 }
@@ -57,7 +57,7 @@
 .listWrap > button:hover {
   color: var(--ink);
   border-color: var(--accent);
-  background: rgba(217, 119, 66, 0.06);
+  background: rgba(var(--accent-rgb), 0.06);
 }
 .dropdown {
   position: absolute;
@@ -94,7 +94,7 @@
   transition: background 0.15s;
 }
 .dropItem:last-child { border-bottom: 0; }
-.dropItem:hover { background: rgba(217, 119, 66, 0.06); color: var(--ink); }
+.dropItem:hover { background: rgba(var(--accent-rgb), 0.06); color: var(--ink); }
 .dropItemOn { color: var(--accent) !important; }
 .dropEmoji { font-size: 15px; flex-shrink: 0; }
 .dropName { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

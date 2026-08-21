@@ -142,7 +142,7 @@
   font-size: 10px;
   font-weight: 600;
   color: #fff;
-  box-shadow: 0 4px 10px rgba(217,119,66,0.4);
+  box-shadow: 0 4px 10px rgba(var(--accent-rgb),0.4);
 }
 
 /* ——— Name block ——— */
@@ -177,9 +177,9 @@
   border-radius: 999px;
   font-family: var(--font-geist-mono), monospace;
   font-size: 11px;
-  background: rgba(217,119,66,0.12);
+  background: rgba(var(--accent-rgb),0.12);
   color: var(--accent);
-  border: 1px solid rgba(217,119,66,0.22);
+  border: 1px solid rgba(var(--accent-rgb),0.22);
   white-space: nowrap;
   /* Devenu un bouton : ouvre le tableau des rangs */
   cursor: pointer;
@@ -187,7 +187,7 @@
 }
 
 .profileBadge:hover {
-  background: rgba(217,119,66,0.2);
+  background: rgba(var(--accent-rgb),0.2);
   border-color: var(--accent);
 }
 
@@ -195,7 +195,7 @@
 .profileBadgeLevel {
   padding-left: 7px;
   margin-left: 1px;
-  border-left: 1px solid rgba(217,119,66,0.3);
+  border-left: 1px solid rgba(var(--accent-rgb),0.3);
   opacity: 0.85;
 }
 
@@ -341,7 +341,7 @@
 
 .scaleBtnOn {
   border-color: var(--accent);
-  background: rgba(217, 119, 66, 0.1);
+  background: rgba(var(--accent-rgb), 0.1);
   color: var(--ink);
 }
 
@@ -393,7 +393,7 @@
   height: 100%;
   border-radius: 999px;
   background: linear-gradient(90deg, var(--accent), var(--accent-soft));
-  box-shadow: 0 0 8px rgba(217,119,66,0.5);
+  box-shadow: 0 0 8px rgba(var(--accent-rgb),0.5);
   transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
   min-width: 2px;
 }
@@ -437,7 +437,7 @@
 }
 
 .statCard:hover {
-  border-color: rgba(217,119,66,0.25);
+  border-color: rgba(var(--accent-rgb),0.25);
   transform: translateY(-2px);
 }
 
@@ -529,7 +529,7 @@
 
 .favSlot:hover {
   transform: translateY(-4px);
-  border-color: rgba(217,119,66,0.35);
+  border-color: rgba(var(--accent-rgb),0.35);
 }
 
 .favBg {
@@ -810,7 +810,7 @@
 }
 
 .pickerItem:hover {
-  background: rgba(217,119,66,0.07);
+  background: rgba(var(--accent-rgb),0.07);
 }
 
 .pickerPoster {
@@ -1082,9 +1082,9 @@
 .modalError {
   margin: 16px 24px 0;
   padding: 10px 12px;
-  border: 1px solid rgba(194,65,44,0.35);
+  border: 1px solid rgba(var(--red-rgb),0.35);
   border-radius: 10px;
-  background: rgba(194,65,44,0.1);
+  background: rgba(var(--red-rgb),0.1);
   color: #e58a78;
   font-size: 13px;
   line-height: 1.4;

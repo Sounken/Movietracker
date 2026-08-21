@@ -29,7 +29,7 @@
 
 .search:focus-within {
   border-color: var(--accent);
-  box-shadow: 0 0 0 4px rgba(217, 119, 66, 0.12);
+  box-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.12);
 }
 
 .search svg {
@@ -85,7 +85,7 @@
 }
 
 .result:hover {
-  background: rgba(217, 119, 66, 0.07);
+  background: rgba(var(--accent-rgb), 0.07);
 }
 
 .thumb {

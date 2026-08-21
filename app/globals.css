@@ -12,13 +12,21 @@
   --red: #c2412c;
   --green: #6a8a5a;
   --radius: 14px;
+  /* Composantes RVB des couleurs de marque, pour les fonds et bordures
+     translucides : `rgba(var(--accent-rgb), 0.12)`. Sans elles, ces teintes
+     étaient écrites en dur avec les valeurs du thème sombre et ne suivaient
+     donc pas le passage en clair — le fond restait orange foncé sous un texte
+     devenu brique. */
+  --accent-rgb: 217, 119, 66;
+  --gold-rgb: 232, 201, 138;
+  --red-rgb: 194, 65, 44;
   /* Surfaces de survol / pistes : voile clair sur fond sombre */
   --hover: rgba(255, 255, 255, 0.05);
   --hover-strong: rgba(255, 255, 255, 0.09);
   --track: rgba(255, 255, 255, 0.08);
 }
 
-/* Thème clair — contrastes vérifiés WCAG AA (≥ 4,5:1 pour le texte sur fond blanc) */
+/* Thème clair — contrastes vérifiés WCAG AA (≥ 4,5:1) sur --bg ET sur --panel */
 :root[data-theme="light"] {
   --bg: #f5f4f2;
   --bg-2: #eeece8;
@@ -26,11 +34,20 @@
   --line: #d9d3ca; /* bordures un peu plus marquées pour délimiter les cartes */
   --ink: #111110; /* ~19:1 */
   --ink-dim: #6b6157; /* ~6:1  (était #b4b4b4 → 2,1:1, illisible) */
-  --ink-mute: #7d7266; /* ~4,7:1 (était #c8c4bc → 1,7:1, quasi invisible) */
-  --accent: #b85a28; /* ~4,6:1 (l'orange du thème sombre tombait à 3,2:1) */
-  --accent-soft: #9c4f22; /* ~5,9:1 (était #f0a978 → 2:1) */
-  --gold: #a07030;
-  --green: #3a6a2a;
+  /* Les ratios ci-dessous sont mesurés sur --bg (#f5f4f2), le fond réel des
+     pages, et non sur du blanc pur : les trois premières valeurs étaient
+     calées sur #ffffff et retombaient donc sous 4,5:1 une fois posées sur la
+     page. Elles sont assombries du strict minimum, teinte conservée. */
+  --ink-mute: #796e63; /* 4,52:1 (était #7d7266 → 4,27:1 sur --bg) */
+  --accent: #b15626; /* 4,52:1 (était #b85a28 → 4,22:1 sur --bg) */
+  --accent-soft: #9c4f22; /* 5,7:1 */
+  --gold: #94672c; /* 4,51:1 (était #a07030 → 3,94:1, sous le seuil) */
+  --green: #3a6a2a; /* 5,8:1 */
+  --red: #a8351f; /* 5,98:1 — #c2412c passait déjà (4,68), mais de justesse */
+  /* Mêmes teintes translucides, dérivées des couleurs claires ci-dessus. */
+  --accent-rgb: 177, 86, 38;
+  --gold-rgb: 148, 103, 44;
+  --red-rgb: 168, 53, 31;
   /* en thème clair, le voile doit être sombre (un blanc translucide serait invisible) */
   --hover: rgba(0, 0, 0, 0.05);
   --hover-strong: rgba(0, 0, 0, 0.09);

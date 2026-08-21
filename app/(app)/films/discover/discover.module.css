@@ -88,7 +88,7 @@
 }
 
 .pillOn {
-  background: rgba(217, 119, 66, 0.12);
+  background: rgba(var(--accent-rgb), 0.12);
   border-color: var(--accent);
   color: var(--accent);
 }
@@ -126,7 +126,7 @@
 }
 
 .dropdownOn {
-  background: rgba(217, 119, 66, 0.12);
+  background: rgba(var(--accent-rgb), 0.12);
   border-color: var(--accent);
   color: var(--accent);
 }
@@ -239,8 +239,8 @@
   gap: 5px;
   padding: 7px 12px;
   border-radius: 8px;
-  background: rgba(217, 119, 66, 0.08);
-  border: 1px solid rgba(217, 119, 66, 0.3);
+  background: rgba(var(--accent-rgb), 0.08);
+  border: 1px solid rgba(var(--accent-rgb), 0.3);
   color: var(--accent);
   font-size: 12px;
   font-family: var(--font-geist-mono), monospace;
@@ -249,7 +249,7 @@
 }
 
 .clearFilters:hover {
-  background: rgba(217, 119, 66, 0.15);
+  background: rgba(var(--accent-rgb), 0.15);
 }
 
 /* ——— Film grid ——— */

@@ -271,7 +271,7 @@
 /* Désaccord marqué (> 2 points) */
 .gapBig {
   color: var(--accent);
-  background: rgba(217, 119, 66, 0.12);
+  background: rgba(var(--accent-rgb), 0.12);
 }
 
 .empty {

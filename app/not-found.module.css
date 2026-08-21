@@ -73,7 +73,7 @@
   height: 600px;
   top: -200px;
   right: -100px;
-  background: radial-gradient(circle, rgba(217, 119, 66, 0.07) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(var(--accent-rgb), 0.07) 0%, transparent 70%);
   animation-delay: 0s;
 }
 .ambCircle:nth-child(2) {
@@ -89,7 +89,7 @@
   height: 300px;
   top: 40%;
   left: 40%;
-  background: radial-gradient(circle, rgba(217, 119, 66, 0.04) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(var(--accent-rgb), 0.04) 0%, transparent 70%);
   animation-delay: -12s;
 }
 @keyframes drift {
@@ -162,7 +162,7 @@
   font-size: clamp(120px, 22vw, 240px);
   font-style: italic;
   letter-spacing: -0.06em;
-  background: linear-gradient(135deg, rgba(217, 119, 66, 0.25) 0%, rgba(240, 169, 120, 0.08) 50%, rgba(217, 119, 66, 0.15) 100%);
+  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.25) 0%, rgba(240, 169, 120, 0.08) 50%, rgba(var(--accent-rgb), 0.15) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -223,8 +223,8 @@
   bottom: 0;
   left: 18px;
   right: 18px;
-  background: rgba(217, 119, 66, 0.08);
-  border-top: 1px solid rgba(217, 119, 66, 0.15);
+  background: rgba(var(--accent-rgb), 0.08);
+  border-top: 1px solid rgba(var(--accent-rgb), 0.15);
   padding: 4px 8px;
   font-family: var(--font-geist-mono, monospace);
   font-size: 9px;
@@ -295,7 +295,7 @@
   display: flex;
   align-items: center;
   gap: 9px;
-  box-shadow: 0 4px 20px rgba(217, 119, 66, 0.35);
+  box-shadow: 0 4px 20px rgba(var(--accent-rgb), 0.35);
   transition: all 0.2s;
 }
 .btnHome:hover { filter: brightness(1.1); transform: translateY(-1px); }

@@ -185,7 +185,7 @@
 }
 
 .navItem.active {
-  background: linear-gradient(90deg, rgba(217, 119, 66, 0.14), rgba(217, 119, 66, 0.03));
+  background: linear-gradient(90deg, rgba(var(--accent-rgb), 0.14), rgba(var(--accent-rgb), 0.03));
   color: var(--ink);
 }
 
@@ -512,7 +512,7 @@ button.navItem {
 
   .navItem.active {
     box-shadow: none;
-    background: rgba(217, 119, 66, 0.12);
+    background: rgba(var(--accent-rgb), 0.12);
   }
 
   .navItem svg {
