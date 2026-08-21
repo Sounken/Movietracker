@@ -407,15 +407,14 @@
   flex: 0 0 auto;
 }
 
-/* Moyenne TMDB de la saison, à gauche de « Ma note » */
-.tmdbSeasonScore {
+/* Moyenne TMDB de la saison, dans l'en-tête replié : elle sert justement à
+   décider quelle saison ouvrir. */
+.seasonAvg {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--ink-mute);
   white-space: nowrap;
-  padding-right: 10px;
-  margin-right: 2px;
-  border-right: 1px solid var(--line);
+  flex: 0 0 auto;
 }
 
 /* Date de diffusion à venir : mise en avant par rapport à la simple année. */

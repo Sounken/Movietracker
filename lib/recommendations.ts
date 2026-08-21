@@ -3,6 +3,8 @@ import {
   GENRES,
   TV_GENRES,
   IMG,
+  COMPILATION_KEYWORDS,
+  weightedRating,
   type TmdbDiscoverFilm,
   type TmdbDiscoverSeries,
 } from "@/lib/tmdb";
@@ -17,6 +19,57 @@ const SEED_COUNT = 6;
 const LIKED_THRESHOLD = 7;
 // Il faut un minimum de matière pour que le profil de goûts veuille dire quelque chose.
 const MIN_RATINGS = 3;
+
+/**
+ * Plancher de qualité, en note pondérée (cf. weightedRating).
+ *
+ * Découvrir n'excuse pas de proposer n'importe quoi. Sur les cas remontés,
+ * The Electric State plafonne à 6,62, Paycheck à 6,50, Légionnaire à 6,56 —
+ * tous sous ce seuil, alors qu'Oppenheimer atteint 7,76 et Everything
+ * Everywhere 7,44. Le seuil laisse encore passer la moitié d'un catalogue de
+ * genre populaire : il écrème, il n'assèche pas.
+ */
+const MIN_QUALITY = { movie: 7.0, tv: 7.0 };
+
+/** Poids de l'écart de qualité au-dessus du plancher dans le score final. */
+const QUALITY_WEIGHT = 4;
+
+/**
+ * Profil temporel : au-delà de cet écart (en années) avec l'époque que la
+ * personne regarde, un titre ne reçoit plus aucun bonus de proximité.
+ */
+const ERA_SPAN = 25;
+const ERA_WEIGHT = 4;
+
+/** Année médiane des titres aimés — l'époque que la personne regarde vraiment. */
+function medianYear(years: number[]): number | null {
+  const clean = years.filter((y) => y > 1900).sort((a, b) => a - b);
+  if (clean.length === 0) return null;
+  const mid = Math.floor(clean.length / 2);
+  return clean.length % 2 === 0 ? Math.round((clean[mid - 1] + clean[mid]) / 2) : clean[mid];
+}
+
+/**
+ * Bonus de proximité d'époque, de ERA_WEIGHT (même époque) à 0 (au-delà de
+ * ERA_SPAN).
+ *
+ * C'est volontairement un bonus et non un filtre : quelqu'un qui note surtout
+ * des sorties récentes doit voir des sorties récentes, sans que Le Parrain
+ * devienne pour autant impossible à recommander s'il coche tout le reste.
+ * Et le repère étant la médiane de SES notes, un amateur de classiques obtient
+ * exactement l'inverse.
+ */
+function eraBonus(year: number | null, reference: number | null): number {
+  if (!year || !reference) return 0;
+  const distance = Math.abs(year - reference);
+  return Math.max(0, 1 - distance / ERA_SPAN) * ERA_WEIGHT;
+}
+
+function yearOf(raw: Record<string, unknown>): number | null {
+  const date = (raw.release_date ?? raw.first_air_date) as string | undefined;
+  const y = date ? parseInt(date.slice(0, 4)) : NaN;
+  return Number.isFinite(y) ? y : null;
+}
 
 // Le cache local stocke les genres en clair (« Science-Fiction ») alors que
 // l'API TMDB les filtre par identifiant : on inverse la table de correspondance.
@@ -77,12 +130,21 @@ async function buildRecommendations(
   seedIds: number[],
   genreIds: number[],
   excluded: Set<number>,
+  /** Époque de référence : année médiane des titres que la personne a aimés. */
+  referenceYear: number | null,
 ): Promise<RawItem[]> {
   const key = process.env.TMDB_API_KEY;
   if (!key) return [];
 
   const topGenres = genreIds.slice(0, 3);
   const genreQuery = topGenres.join("|"); // « | » = OU chez TMDB (« , » = ET)
+  const floor = MIN_QUALITY[media];
+
+  // Le vivier de genre est déjà filtré à la source : ce que TMDB peut écarter
+  // lui-même, ce sont autant de mauvais candidats qu'on n'aura pas à noter.
+  const discoverFilters =
+    `&sort_by=popularity.desc&vote_count.gte=400` +
+    `&without_keywords=${COMPILATION_KEYWORDS.join(",")}`;
 
   const [seedLists, genreLists] = await Promise.all([
     Promise.all(
@@ -95,7 +157,7 @@ async function buildRecommendations(
           [1, 2].map((page) =>
             tmdbJson(
               `${BASE}/discover/${media}?api_key=${key}&language=fr-FR&page=${page}` +
-                `&with_genres=${genreQuery}&sort_by=popularity.desc&vote_count.gte=200`,
+                `&with_genres=${genreQuery}${discoverFilters}`,
             ),
           ),
         )
@@ -108,6 +170,16 @@ async function buildRecommendations(
     const id = raw.id as number;
     if (!raw.poster_path || excluded.has(id)) return;
 
+    // Plancher de qualité, sur la note PONDÉRÉE et non sur la note brute :
+    // c'est ce qui écarte à la fois les films tièdes très vus et les titres
+    // obscurs à moyenne flatteuse.
+    const quality = weightedRating(
+      (raw.vote_average as number) ?? 0,
+      (raw.vote_count as number) ?? 0,
+      media,
+    );
+    if (quality < floor) return;
+
     // Affinité de genre : un titre qui coche le genre préféré vaut plus qu'un
     // titre qui n'effleure que le troisième.
     const ids = (raw.genre_ids as number[]) ?? [];
@@ -116,14 +188,22 @@ async function buildRecommendations(
       return rank === -1 ? sum : sum + (3 - rank);
     }, 0);
 
-    const existing = scored.get(id);
-    const score = points + affinity + (raw.vote_average as number) / 2;
+    const score =
+      points +
+      affinity +
+      (quality - floor) * QUALITY_WEIGHT +
+      eraBonus(yearOf(raw), referenceYear);
+
     // Un titre vu des deux côtés cumule : c'est là tout l'intérêt du croisement.
+    const existing = scored.get(id);
     if (existing) existing.score += score;
     else scored.set(id, { raw, score });
   };
 
-  for (const list of seedLists) list.slice(0, 10).forEach((raw) => add(raw, 6));
+  // Les suggestions directes de TMDB restent le signal le plus personnel, mais
+  // elles sont bruitées : leur avance sur le vivier de genre est modérée, de
+  // sorte que la qualité et l'époque puissent renverser l'ordre.
+  for (const list of seedLists) list.slice(0, 10).forEach((raw) => add(raw, 4));
   for (const list of genreLists) list.forEach((raw) => add(raw, 2));
 
   return [...scored.values()].sort((a, b) => b.score - a.score).map((s) => s.raw);
@@ -151,9 +231,14 @@ export async function fetchForYouFilms(
 
   const films = await prisma.film.findMany({
     where: { tmdbId: { in: entries.map((e) => e.tmdbId) } },
-    select: { tmdbId: true, genres: true },
+    select: { tmdbId: true, genres: true, year: true },
   });
   const genresById = new Map(films.map((f) => [f.tmdbId, f.genres]));
+
+  // Époque de référence : l'année médiane de ce que la personne aime. Quelqu'un
+  // qui note surtout des sorties récentes ne doit pas se voir proposer un
+  // catalogue des années 90.
+  const reference = medianYear(films.map((f) => parseInt(f.year)));
 
   const genreIds = rankGenres(
     entries.map((e) => ({ rating: e.rating!, genres: genresById.get(e.tmdbId) ?? [] })),
@@ -165,6 +250,7 @@ export async function fetchForYouFilms(
     entries.slice(0, SEED_COUNT).map((e) => e.tmdbId),
     genreIds,
     excluded,
+    reference,
   );
 
   return ranked.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((m) => ({
@@ -196,9 +282,11 @@ export async function fetchForYouSeries(
 
   const rows = await prisma.series.findMany({
     where: { tmdbId: { in: entries.map((e) => e.tmdbId) } },
-    select: { tmdbId: true, genres: true },
+    select: { tmdbId: true, genres: true, year: true },
   });
   const genresById = new Map(rows.map((r) => [r.tmdbId, r.genres]));
+
+  const reference = medianYear(rows.map((r) => parseInt(r.year)));
 
   const genreIds = rankGenres(
     entries.map((e) => ({ rating: e.rating!, genres: genresById.get(e.tmdbId) ?? [] })),
@@ -210,6 +298,7 @@ export async function fetchForYouSeries(
     entries.slice(0, SEED_COUNT).map((e) => e.tmdbId),
     genreIds,
     excluded,
+    reference,
   );
 
   return ranked.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((m) => ({

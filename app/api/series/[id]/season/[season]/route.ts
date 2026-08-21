@@ -11,10 +11,7 @@ export async function GET(
   const seriesId = parseInt(id);
   const seasonNumber = parseInt(season);
   if (isNaN(seriesId) || isNaN(seasonNumber)) {
-    return NextResponse.json(
-      { episodes: [], watched: [], rating: null, tmdbRating: 0 },
-      { status: 400 },
-    );
+    return NextResponse.json({ episodes: [], watched: [], rating: null }, { status: 400 });
   }
 
   const session = await getSession();
@@ -41,7 +38,5 @@ export async function GET(
     episodes: season_.episodes,
     watched: watchedRows.map((r) => r.episodeNumber),
     rating: seasonRow?.rating ?? null,
-    // Moyenne TMDB de la saison, affichée à côté de la note personnelle.
-    tmdbRating: season_.voteAverage,
   });
 }

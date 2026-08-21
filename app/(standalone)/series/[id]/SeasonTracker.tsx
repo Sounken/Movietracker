@@ -6,7 +6,6 @@ import { Check, ChevronDown, Loader2 } from "lucide-react";
 import type { TmdbSeasonSummary, TmdbEpisode } from "@/lib/tmdb";
 import { toggleEpisode, setSeasonWatched, saveSeasonRating } from "@/app/actions/series";
 import StarRating from "@/app/(app)/components/StarRating";
-import EpisodeRatingChart from "./EpisodeRatingChart";
 import { Rating } from "@/lib/rating-scale";
 import styles from "./series.module.css";
 
@@ -14,8 +13,6 @@ type SeasonState = {
   episodes: TmdbEpisode[];
   watched: Set<number>;
   loaded: boolean;
-  /** Moyenne TMDB de la saison, pour situer sa propre note. */
-  tmdbRating: number;
 };
 
 /**
@@ -77,7 +74,6 @@ export default function SeasonTracker({
           episodes: data.episodes,
           watched: new Set<number>(data.watched),
           loaded: true,
-          tmdbRating: data.tmdbRating ?? 0,
         },
       }));
       // Resynchronise la note au cas où elle aurait changé ailleurs.
@@ -187,6 +183,13 @@ export default function SeasonTracker({
                 className={`${styles.chevron} ${isOpen ? styles.chevronOpen : ""}`}
               />
               <span className={styles.seasonName}>{season.name}</span>
+              {/* Moyenne TMDB de la saison. Elle vient de la liste des saisons
+                  de /tv/{id}, donc elle est connue sans déplier ni requête. */}
+              {season.voteAverage > 0 && (
+                <span className={styles.seasonAvg}>
+                  Moyenne saison · ★ <Rating value={season.voteAverage} />
+                </span>
+              )}
               {(ratings[season.seasonNumber] ?? 0) > 0 && (
                 <span className={styles.seasonScore}>
                   ★ <Rating value={ratings[season.seasonNumber]} />
@@ -208,16 +211,6 @@ export default function SeasonTracker({
                   </div>
                 ) : (
                   <>
-                    {/* Courbe des notes TMDB, épisode par épisode. Les données
-                        arrivent dans la même réponse que la liste ci-dessous :
-                        aucun appel réseau supplémentaire. */}
-                    {s?.episodes && (
-                      <EpisodeRatingChart
-                        episodes={s.episodes}
-                        seasonNumber={season.seasonNumber}
-                      />
-                    )}
-
                     <div className={styles.seasonToolbar}>
                       <button
                         className={styles.markSeason}
@@ -228,13 +221,6 @@ export default function SeasonTracker({
                       {/* Note propre à la saison, indépendante de celle de la
                           série. Recliquer la même valeur la retire. */}
                       <div className={styles.seasonRating}>
-                        {/* Repère : la moyenne TMDB de la saison, pour situer
-                            sa propre note par rapport au public. */}
-                        {(s?.tmdbRating ?? 0) > 0 && (
-                          <span className={styles.tmdbSeasonScore} title="Moyenne TMDB de la saison">
-                            TMDB ★ <Rating value={s!.tmdbRating} />
-                          </span>
-                        )}
                         <span className={styles.seasonRatingLabel}>Ma note</span>
                         <StarRating
                           value={ratings[season.seasonNumber] ?? 0}

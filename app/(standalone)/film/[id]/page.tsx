@@ -219,11 +219,6 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
             />
           )}
 
-          <WatchProvidersSection
-            providers={providers}
-            sectionClassName={styles.section}
-            titleClassName={styles.sectionTitle}
-          />
 
           {friendFilms.length > 0 && (
             <FriendReviews
@@ -374,6 +369,14 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
               </div>
             </div>
           )}
+
+          {/* Placé juste avant les suggestions : le bloc est haut, il repoussait
+              le reste de la fiche quand il était sous le synopsis. */}
+          <WatchProvidersSection
+            providers={providers}
+            sectionClassName={styles.section}
+            titleClassName={styles.sectionTitle}
+          />
 
           {sagaFilms.length > 0 && (
             <SimilarFilms

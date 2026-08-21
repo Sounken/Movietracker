@@ -346,6 +346,8 @@ export type TmdbSeasonSummary = {
   episodeCount: number;
   posterUrl: string;
   year: string;
+  /** Moyenne TMDB de la saison — présente dès la liste des saisons de /tv/{id}. */
+  voteAverage: number;
 };
 
 /** Chaîne ou plateforme de diffusion, avec son logo. */
@@ -515,6 +517,7 @@ function mapSeriesDetail(m: any): TmdbSeriesDetail {
           episodeCount: s.episode_count as number,
           posterUrl: s.poster_path ? `${IMG}/w185${s.poster_path}` : "",
           year: typeof s.air_date === "string" ? s.air_date.slice(0, 4) : "",
+          voteAverage: s.vote_average ? Math.round((s.vote_average as number) * 10) / 10 : 0,
         })),
     };
   }
@@ -782,6 +785,36 @@ function bayesianScore(raw: Record<string, unknown>, m: number): number {
   const v = (raw.vote_count as number) ?? 0;
   return (v / (v + m)) * R + (m / (v + m)) * BAYES_C;
 }
+
+/**
+ * Note pondérée d'un titre, sur 10 — la même que celle du classement
+ * « Mieux notés », exposée pour que les recommandations s'appuient dessus.
+ *
+ * Indispensable pour juger la qualité : la note brute récompense les titres
+ * obscurs à forte moyenne. Demon Slayer – Sibling's Bond affiche 7,9 sur 257
+ * votes (donc WR 6,79) là où Oppenheimer affiche 8,0 sur 12 282 (WR 7,76) :
+ * classer sur la note brute mettait le premier devant.
+ */
+export function weightedRating(
+  voteAverage: number,
+  voteCount: number,
+  media: "movie" | "tv" = "movie",
+): number {
+  const m = media === "movie" ? BAYES_M_MOVIE : BAYES_M_TV;
+  return (voteCount / (voteCount + m)) * voteAverage + (m / (voteCount + m)) * BAYES_C;
+}
+
+/**
+ * Mots-clés TMDB qui marquent un film de compilation — un montage d'épisodes
+ * de série déjà diffusés. Ils n'ont aucun intérêt en recommandation : on
+ * propose la « saison 1 remontée » de quelque chose que la personne connaît
+ * déjà, ou pire, un résumé qui divulgâche la série.
+ */
+export const COMPILATION_KEYWORDS = [
+  12197, // compilation
+  194008, // edited from tv series
+  274909, // recap
+];
 
 /**
  * Construit un vivier de candidats puis le reclasse au score bayésien.
