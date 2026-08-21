@@ -25,6 +25,7 @@ export async function GET(
       minYear: sp.get("minYear") ?? undefined,
       maxYear: sp.get("maxYear") ?? undefined,
       minRating: minRating ? Number(minRating) : undefined,
+      media: sp.get("media") === "tv" ? "tv" : "movie",
     }),
   );
 }

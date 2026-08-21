@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { usePathname } from "next/navigation";
 import SearchBox from "./SearchBox";
 import styles from "./Topbar.module.css";
 
@@ -33,6 +34,10 @@ function subscribeTheme(onChange: () => void) {
 }
 
 export default function Topbar({ greeting, userName }: Props) {
+  // Monde courant : la recherche s'y adapte (mêmes règles que la Sidebar).
+  const pathname = usePathname();
+  const isSeries = pathname === "/series" || pathname.startsWith("/series/");
+
   const isDark = useSyncExternalStore(
     subscribeTheme,
     () => localStorage.getItem("mt-theme") !== "light",
@@ -68,7 +73,7 @@ export default function Topbar({ greeting, userName }: Props) {
         </h1>
       </div>
 
-      <SearchBox />
+      <SearchBox scope={isSeries ? "series" : "films"} />
 
       <button className={styles.iconBtn} title={isDark ? "Passer en clair" : "Passer en sombre"} onClick={toggleTheme}>
         {isDark ? <SunIcon /> : <MoonIcon />}

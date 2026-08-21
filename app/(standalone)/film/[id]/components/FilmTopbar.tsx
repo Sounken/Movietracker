@@ -18,6 +18,10 @@ const BackIcon = () => (
  * `/films` : depuis une série on retombait donc toujours sur les films.
  */
 export default function FilmTopbar({ fallbackHref = "/films" }: { fallbackHref?: string }) {
+  // La fiche série passe fallbackHref="/series" : c'est aussi ce qui indique
+  // dans quel monde la recherche doit chercher.
+  const scope = fallbackHref.startsWith("/series") ? "series" : "films";
+
   const router = useRouter();
 
   // Décidé au clic (et non au montage) : pas d'état à synchroniser, et
@@ -39,7 +43,7 @@ export default function FilmTopbar({ fallbackHref = "/films" }: { fallbackHref?:
       </Link>
       {/* Même recherche que l'accueil, calée à droite de la barre. */}
       <div className={styles.searchSlot}>
-        <SearchBox compact placeholder="Chercher un film, une série…" />
+        <SearchBox compact scope={scope} />
       </div>
     </div>
   );

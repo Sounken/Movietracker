@@ -27,6 +27,7 @@ export default async function CompanyPage({
     minYear?: string;
     maxYear?: string;
     minRating?: string;
+    media?: string;
   }>;
 }) {
   const [{ id: idStr }, sp] = await Promise.all([params, searchParams]);
@@ -41,8 +42,9 @@ export default async function CompanyPage({
   const minYear = sp.minYear ?? "";
   const maxYear = sp.maxYear ?? "";
   const minRating = sp.minRating ?? "";
+  const media: "movie" | "tv" = sp.media === "tv" ? "tv" : "movie";
 
-  const [company, films] = await Promise.all([
+  const [company, films, seriesProbe] = await Promise.all([
     fetchCompanyDetail(id),
     fetchCompanyFilms(id, {
       sort,
@@ -50,7 +52,14 @@ export default async function CompanyPage({
       minYear,
       maxYear,
       minRating: minRating ? Number(minRating) : undefined,
+      media,
     }),
+    // Sonde : le studio a-t-il des séries ? Sans ça, la bascule Films/Séries
+    // s'afficherait sur des sociétés qui ne font que du cinéma, pour
+    // n'ouvrir qu'une page vide.
+    media === "movie"
+      ? fetchCompanyFilms(id, { media: "tv", sort: "popular" })
+      : Promise.resolve([]),
   ]);
 
   if (!company) notFound();
@@ -58,6 +67,7 @@ export default async function CompanyPage({
   // Répété tel quel sur les pages suivantes du scroll infini. Une chaîne
   // plutôt qu'un objet : sa référence reste stable côté client.
   const q = new URLSearchParams();
+  if (media === "tv") q.set("media", "tv");
   if (sort !== "recent") q.set("sort", sort);
   if (genre) q.set("genre", genre);
   if (minYear) q.set("minYear", minYear);
@@ -129,7 +139,9 @@ export default async function CompanyPage({
         )}
 
         <div className={styles.section}>
-          <div className={styles.sectionTitle}>Filmographie</div>
+          <div className={styles.sectionTitle}>
+          {media === "tv" ? "Séries produites" : "Filmographie"}
+        </div>
 
           <Suspense fallback={null}>
             <CompanyFilters
@@ -138,14 +150,17 @@ export default async function CompanyPage({
               minYear={minYear}
               maxYear={maxYear}
               minRating={minRating}
+              media={media}
+              hasSeries={media === "tv" || seriesProbe.length > 0}
             />
           </Suspense>
 
           <CompanyFilmsGrid
-            key={`${sort}-${genre}-${minYear}-${maxYear}-${minRating}`}
+            key={`${media}-${sort}-${genre}-${minYear}-${maxYear}-${minRating}`}
             companyId={id}
             initialFilms={films}
             query={query}
+            media={media}
           />
         </div>
       </div>

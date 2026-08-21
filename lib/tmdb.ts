@@ -1279,9 +1279,18 @@ export type CompanyFilmsOptions = {
   minYear?: string;
   maxYear?: string;
   minRating?: number;
+  /** « movie » (défaut) ou « tv » — un studio produit souvent les deux. */
+  media?: "movie" | "tv";
 };
 
-/** Films d'une société de production. */
+/**
+ * Catalogue d'une société de production, films ou séries.
+ *
+ * Les deux médias n'ont pas les mêmes noms de champs chez TMDB : le titre est
+ * `title` ou `name`, la date `release_date` ou `first_air_date`, et le filtre
+ * de date `primary_release_date` ou `first_air_date`. On renvoie un
+ * TmdbFilmCard dans les deux cas pour partager la grille d'affichage.
+ */
 export async function fetchCompanyFilms(
   companyId: number,
   opts: CompanyFilmsOptions = {},
@@ -1289,26 +1298,36 @@ export async function fetchCompanyFilms(
   const key = process.env.TMDB_API_KEY;
   if (!key) return [];
 
-  const { page = 1, sort = "recent", genreId, minYear, maxYear, minRating } = opts;
+  const { page = 1, sort = "recent", genreId, minYear, maxYear, minRating, media = "movie" } = opts;
+  const isTv = media === "tv";
+  const dateField = isTv ? "first_air_date" : "primary_release_date";
 
-  let extra = `&sort_by=${COMPANY_SORT_SQL[sort] ?? COMPANY_SORT_SQL.recent}`;
+  // Le tri par date porte sur un champ différent selon le média.
+  const sortBy = (COMPANY_SORT_SQL[sort] ?? COMPANY_SORT_SQL.recent).replace(
+    "primary_release_date",
+    dateField,
+  );
+
+  let extra = `&sort_by=${sortBy}`;
   if (genreId) extra += `&with_genres=${genreId}`;
-  if (minYear) extra += `&primary_release_date.gte=${minYear}-01-01`;
-  if (maxYear) extra += `&primary_release_date.lte=${maxYear}-12-31`;
+  if (minYear) extra += `&${dateField}.gte=${minYear}-01-01`;
+  if (maxYear) extra += `&${dateField}.lte=${maxYear}-12-31`;
   if (minRating) extra += `&vote_average.gte=${minRating}`;
 
   // Trier par date fait remonter les projets annoncés sans date fiable, et
-  // trier par note fait remonter des films à 10/10 sur 2 votes. Un plancher de
-  // votes règle les deux, sauf quand on veut justement les plus anciens.
+  // trier par note fait remonter des titres à 10/10 sur 2 votes. Un plancher
+  // de votes règle le second, une borne à aujourd'hui le premier.
   if (sort === "rating") extra += "&vote_count.gte=50";
-  if (sort === "recent") {
+  if (sort === "recent" && !maxYear) {
     const today = new Date().toISOString().split("T")[0];
-    extra += `&primary_release_date.lte=${today}`;
+    extra += `&${dateField}.lte=${today}`;
   }
+
+  const genreTable = isTv ? TV_GENRES : GENRES;
 
   try {
     const res = await fetch(
-      `${BASE}/discover/movie?api_key=${key}&language=fr-FR&page=${page}` +
+      `${BASE}/discover/${media}?api_key=${key}&language=fr-FR&page=${page}` +
         `&with_companies=${companyId}${extra}`,
       { next: { revalidate: 86400 } },
     );
@@ -1316,14 +1335,20 @@ export async function fetchCompanyFilms(
     const data = await res.json();
     return ((data.results ?? []) as Record<string, unknown>[])
       .filter((m) => m.poster_path)
-      .map((m) => ({
-        id: m.id as number,
-        title: (m.title as string) ?? "",
-        posterUrl: `${IMG}/w342${m.poster_path}`,
-        year: typeof m.release_date === "string" ? m.release_date.slice(0, 4) : "",
-        genres: ((m.genre_ids as number[]) ?? []).slice(0, 2).map((g) => GENRES[g]).filter(Boolean),
-        voteAverage: m.vote_average ? Math.round((m.vote_average as number) * 10) / 10 : 0,
-      }));
+      .map((m) => {
+        const date = (isTv ? m.first_air_date : m.release_date) as string | undefined;
+        return {
+          id: m.id as number,
+          title: ((isTv ? m.name : m.title) as string) ?? "",
+          posterUrl: `${IMG}/w342${m.poster_path}`,
+          year: typeof date === "string" ? date.slice(0, 4) : "",
+          genres: ((m.genre_ids as number[]) ?? [])
+            .slice(0, 2)
+            .map((g) => genreTable[g])
+            .filter(Boolean),
+          voteAverage: m.vote_average ? Math.round((m.vote_average as number) * 10) / 10 : 0,
+        };
+      });
   } catch {
     return [];
   }

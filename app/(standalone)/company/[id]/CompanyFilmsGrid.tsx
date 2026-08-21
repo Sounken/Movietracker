@@ -12,11 +12,13 @@ export default function CompanyFilmsGrid({
   companyId,
   initialFilms,
   query,
+  media,
 }: {
   companyId: number;
   initialFilms: TmdbFilmCard[];
   /** Tri et filtres courants (query string), à répéter sur les pages suivantes. */
   query: string;
+  media: "movie" | "tv";
 }) {
   const [films, setFilms] = useState(initialFilms);
   const [page, setPage] = useState(1);
@@ -61,13 +63,23 @@ export default function CompanyFilmsGrid({
   }, [hasMore, loadMore]);
 
   if (films.length === 0) {
-    return <div className={styles.empty}>Aucun film référencé pour cette société.</div>;
+    return (
+      <div className={styles.empty}>
+        {media === "tv"
+          ? "Aucune série ne correspond à ces filtres."
+          : "Aucun film ne correspond à ces filtres."}
+      </div>
+    );
   }
 
   return (
     <div className={`${styles.grid} stagger`}>
       {films.map((film) => (
-        <Link key={film.id} href={`/film/${film.id}`} className={styles.filmCard}>
+        <Link
+          key={film.id}
+          href={`${media === "tv" ? "/series" : "/film"}/${film.id}`}
+          className={styles.filmCard}
+        >
           <div className={styles.poster}>
             {film.posterUrl && (
               <Image

@@ -109,6 +109,23 @@
   object-fit: cover;
 }
 
+/* Logo de studio : format libre, sur fond neutre — ce n'est ni une affiche
+   ni un portrait. Les logos TMDB étant noirs sur transparent, on les inverse
+   en thème sombre. */
+.thumbCompany {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  background: var(--hover);
+  padding: 4px;
+  object-fit: contain;
+  filter: invert(1) grayscale(1) brightness(1.7);
+}
+
+:global([data-theme="light"]) .thumbCompany {
+  filter: grayscale(1);
+}
+
 .resultInfo {
   min-width: 0;
 }

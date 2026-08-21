@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { ChevronDown, X } from "lucide-react";
-import { GENRES, type CompanySort } from "@/lib/tmdb";
+import { GENRES, TV_GENRES, type CompanySort } from "@/lib/tmdb";
 import styles from "../../../(app)/films/discover/discover.module.css";
 
 const SORTS: Array<{ id: CompanySort; label: string }> = [
@@ -13,9 +13,14 @@ const SORTS: Array<{ id: CompanySort; label: string }> = [
   { id: "rating", label: "Mieux notés" },
 ];
 
-const GENRE_LIST = Object.entries(GENRES)
-  .map(([id, name]) => ({ id: Number(id), name }))
-  .sort((a, b) => a.name.localeCompare(b.name, "fr"));
+// Les deux médias ont des nomenclatures de genres distinctes chez TMDB.
+const genreList = (table: Record<number, string>) =>
+  Object.entries(table)
+    .map(([id, name]) => ({ id: Number(id), name }))
+    .sort((a, b) => a.name.localeCompare(b.name, "fr"));
+
+const MOVIE_GENRES = genreList(GENRES);
+const SERIES_GENRES = genreList(TV_GENRES);
 
 function decades(): Array<{ label: string; min: string; max: string }> {
   const current = Math.floor(new Date().getFullYear() / 10) * 10;
@@ -78,12 +83,17 @@ export default function CompanyFilters({
   minYear,
   maxYear,
   minRating,
+  media,
+  hasSeries,
 }: {
   sort: CompanySort;
   genre: string;
   minYear: string;
   maxYear: string;
   minRating: string;
+  media: "movie" | "tv";
+  /** Masque la bascule quand le studio n'a produit aucune série. */
+  hasSeries: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -99,6 +109,7 @@ export default function CompanyFilters({
     router.push(`${pathname}${q ? `?${q}` : ""}`);
   };
 
+  const GENRE_LIST = media === "tv" ? SERIES_GENRES : MOVIE_GENRES;
   const genreName = GENRE_LIST.find((g) => String(g.id) === genre)?.name;
   const activeDecade = DECADES.find((d) => d.min === minYear && d.max === maxYear);
   const periodLabel = activeDecade
@@ -111,6 +122,26 @@ export default function CompanyFilters({
 
   return (
     <div className={styles.filters}>
+      {hasSeries && (
+        <div className={styles.categoryTabs}>
+          {([
+            { id: "movie", label: "Films" },
+            { id: "tv", label: "Séries" },
+          ] as const).map((m) => (
+            <button
+              key={m.id}
+              className={`${styles.tab} ${media === m.id ? styles.tabOn : ""}`}
+              // Changer de média invalide le genre : les tables d'identifiants
+              // ne se recoupent pas (18 = Drame des deux côtés, mais 28 = Action
+              // n'existe pas en TV).
+              onClick={() => setParams({ media: m.id === "movie" ? "" : m.id, genre: "" })}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className={styles.categoryTabs}>
         {SORTS.map((s) => (
           <button

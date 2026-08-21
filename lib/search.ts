@@ -80,7 +80,14 @@ export function relevance(
 }
 
 /** À pertinence égale, on privilégie les films, puis les séries. */
-export const MEDIA_PRIORITY: Record<string, number> = { movie: 0, tv: 1, person: 2 };
+export const MEDIA_PRIORITY: Record<string, number> = {
+  movie: 0,
+  tv: 1,
+  person: 2,
+  // Un studio est rarement ce qu'on cherche en tapant un titre : à pertinence
+  // égale, il passe derrière les œuvres et les personnes.
+  company: 3,
+};
 
 /**
  * Une œuvre confidentielle ou un homonyme inconnu ne doit pas coiffer une

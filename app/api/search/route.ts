@@ -17,7 +17,7 @@ const DEPT_LABELS: Record<string, string> = {
 
 type Row = {
   id: number;
-  mediaType: "movie" | "tv" | "person";
+  mediaType: "movie" | "tv" | "person" | "company";
   title: string;
   year: string;
   posterUrl: string;
@@ -31,7 +31,10 @@ type Row = {
 
 export async function GET(request: NextRequest) {
   const q = request.nextUrl.searchParams.get("q");
-  const type = request.nextUrl.searchParams.get("type"); // "multi" = films + séries + personnes
+  // "multi"        = films + séries + personnes + studios (monde Films)
+  // "series-multi"  = séries + personnes ayant travaillé en série + studios
+  // "movie" / "tv"  = un seul média (pickers de favoris)
+  const type = request.nextUrl.searchParams.get("type");
   if (!q || q.trim().length < 2) return NextResponse.json([]);
 
   const key = process.env.TMDB_API_KEY;
@@ -90,6 +93,66 @@ export async function GET(request: NextRequest) {
     score: relevance([s.name as string, s.original_name as string], q),
   });
 
+  const toCompany = (c: Record<string, unknown>): Row => ({
+    id: c.id as number,
+    mediaType: "company",
+    title: (c.name as string) ?? "",
+    year: "",
+    // Les logos TMDB sont en PNG noir sur transparent ; l'affichage les inverse.
+    posterUrl: c.logo_path ? `${IMG}${c.logo_path}` : "",
+    voteAverage: null,
+    subtitle: "Studio",
+    popularity: 0,
+    votes: 0,
+    score: relevance([c.name as string], q),
+  });
+
+  /** Studios correspondant à la requête, les mieux dotés d'abord. */
+  const searchCompanies = async (): Promise<Row[]> => {
+    const raw = await searchAll("company");
+    return raw
+      .map(toCompany)
+      .filter((r) => r.score > 0)
+      // TMDB renvoie beaucoup de coquilles vides homonymes ; celles qui ont un
+      // logo sont quasi toujours les vraies.
+      .sort((a, b) => Number(Boolean(b.posterUrl)) - Number(Boolean(a.posterUrl)) || b.score - a.score)
+      .slice(0, 2);
+  };
+
+  /** Une personne, avec son métier et ses œuvres notables. */
+  const toPerson = (p: Record<string, unknown>): Row => {
+    const knownFor = ((p.known_for ?? []) as Record<string, unknown>[]);
+    const titles = knownFor
+      .map((k) => (k.title as string) ?? (k.name as string))
+      .filter(Boolean)
+      .slice(0, 2);
+    const dept = DEPT_LABELS[p.known_for_department as string] ?? "Cinéma";
+    return {
+      id: p.id as number,
+      mediaType: "person",
+      title: (p.name as string) ?? "",
+      year: "",
+      posterUrl: p.profile_path ? `${PROFILE_IMG}${p.profile_path}` : "",
+      voteAverage: null,
+      subtitle: titles.length > 0 ? `${dept} · ${titles.join(", ")}` : dept,
+      popularity: (p.popularity as number) ?? 0,
+      votes: 0,
+      score: relevance([p.name as string], q, true),
+    };
+  };
+
+  /**
+   * A-t-elle travaillé en série ?
+   *
+   * Dans le monde Séries, chercher « nolan » ne doit pas proposer une fiche
+   * qui ne contient que des films. `known_for` porte le type de chaque œuvre
+   * notable : c'est une heuristique — il n'en liste que trois — mais elle ne
+   * coûte aucun appel supplémentaire, là où vérifier les crédits TV réels
+   * demanderait une requête par personne.
+   */
+  const hasTvWork = (p: Record<string, unknown>): boolean =>
+    ((p.known_for ?? []) as Record<string, unknown>[]).some((k) => k.media_type === "tv");
+
   // Tri commun : pertinence (corrigée de la notoriété) d'abord, film avant
   // série à égalité, puis popularité.
   const byRelevance = (a: Row, b: Row) =>
@@ -113,39 +176,43 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(rows.sort(byRelevance).slice(0, 6).map(strip));
   }
 
+  // ——— Monde Séries : séries + gens de série + studios ———
+  if (type === "series-multi") {
+    const [tvRaw, personRaw, companies] = await Promise.all([
+      searchAll("tv"),
+      searchAll("person"),
+      searchCompanies(),
+    ]);
+
+    const series = tvRaw.map(toSeries).filter((r) => r.score > 0).sort(byRelevance).slice(0, 8);
+
+    const people = personRaw
+      .filter(hasTvWork)
+      .map(toPerson)
+      .filter((r) => r.score > 0)
+      .sort(byRelevance)
+      .slice(0, 3);
+
+    const merged = [...series, ...people, ...companies].sort(byRelevance).slice(0, 10);
+    return NextResponse.json(merged.map(strip));
+  }
+
   // ——— Films uniquement (picker « films préférés ») ———
   if (type !== "multi") {
     const rows = (await searchAll("movie")).map(toMovie).filter((r) => r.score > 0);
     return NextResponse.json(rows.sort(byRelevance).slice(0, 6).map(strip));
   }
 
-  // ——— Recherche globale : films + séries + personnes ———
-  const [movieRaw, tvRaw, personRaw] = await Promise.all([
+  // ——— Recherche globale : films + séries + personnes + studios ———
+  const [movieRaw, tvRaw, personRaw, companies] = await Promise.all([
     searchAll("movie"),
     searchAll("tv"),
     searchAll("person"),
+    searchCompanies(),
   ]);
 
-  const people: Row[] = personRaw
-    .map((p): Row => {
-      const knownFor = ((p.known_for ?? []) as Record<string, unknown>[])
-        .map((k) => (k.title as string) ?? (k.name as string))
-        .filter(Boolean)
-        .slice(0, 2);
-      const dept = DEPT_LABELS[p.known_for_department as string] ?? "Cinéma";
-      return {
-        id: p.id as number,
-        mediaType: "person",
-        title: (p.name as string) ?? "",
-        year: "",
-        posterUrl: p.profile_path ? `${PROFILE_IMG}${p.profile_path}` : "",
-        voteAverage: null,
-        subtitle: knownFor.length > 0 ? `${dept} · ${knownFor.join(", ")}` : dept,
-        popularity: (p.popularity as number) ?? 0,
-        votes: 0,
-        score: relevance([p.name as string], q, true),
-      };
-    })
+  const people = personRaw
+    .map(toPerson)
     .filter((r) => r.score > 0)
     .sort(byRelevance)
     // Plafonnées : sans ça, une recherche de titre courant noierait les films
@@ -157,7 +224,7 @@ export async function GET(request: NextRequest) {
     .sort(byRelevance)
     .slice(0, 8);
 
-  const merged = [...titles, ...people].sort(byRelevance).slice(0, 10);
+  const merged = [...titles, ...people, ...companies].sort(byRelevance).slice(0, 10);
 
   return NextResponse.json(merged.map(strip));
 }

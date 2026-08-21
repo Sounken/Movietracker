@@ -15,7 +15,7 @@ const SearchIcon = () => (
 
 type SearchResult = {
   id: number;
-  mediaType?: "movie" | "tv" | "person";
+  mediaType?: "movie" | "tv" | "person" | "company";
   title: string;
   year: string;
   posterUrl: string;
@@ -24,17 +24,27 @@ type SearchResult = {
   subtitle?: string;
 };
 
+const SCOPE_PLACEHOLDER = {
+  films: "Chercher un film, une série, un réalisateur…",
+  series: "Chercher une série, un studio, une personnalité…",
+} as const;
+
 /**
- * Recherche films / séries, extraite de la Topbar d'accueil pour être
- * réutilisable telle quelle sur les fiches film et série.
+ * Recherche globale, réutilisée par la Topbar et les fiches.
+ *
+ * `scope` détermine ce qu'on interroge : dans le monde Séries on ne propose
+ * pas de films, ni les gens qui n'ont fait que du cinéma — proposer Nolan
+ * pour renvoyer vers une filmographie 100 % films n'a aucun sens là-bas.
  * `compact` réduit la largeur pour tenir dans la barre d'une fiche.
  */
 export default function SearchBox({
-  placeholder = "Chercher un film, une série, un réalisateur…",
+  placeholder,
   compact = false,
+  scope = "films",
 }: {
   placeholder?: string;
   compact?: boolean;
+  scope?: "films" | "series";
 }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
@@ -47,7 +57,8 @@ export default function SearchBox({
     if (query.length < 2) return;
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/search?type=multi&q=${encodeURIComponent(query)}`);
+        const type = scope === "series" ? "series-multi" : "multi";
+        const res = await fetch(`/api/search?type=${type}&q=${encodeURIComponent(query)}`);
         const data: SearchResult[] = await res.json();
         setResults(data);
         setOpen(data.length > 0);
@@ -56,7 +67,7 @@ export default function SearchBox({
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, scope]);
 
   // Fermeture au clic extérieur
   useEffect(() => {
@@ -73,6 +84,7 @@ export default function SearchBox({
     const href =
       mediaType === "tv" ? `/series/${id}`
       : mediaType === "person" ? `/actor/${id}`
+      : mediaType === "company" ? `/company/${id}`
       : `/film/${id}`;
     router.push(href);
   };
@@ -90,8 +102,8 @@ export default function SearchBox({
           }}
           onFocus={() => results.length > 0 && setOpen(true)}
           onKeyDown={(e) => { if (e.key === "Escape") setOpen(false); }}
-          placeholder={placeholder}
-          aria-label="Rechercher un film, une série ou une personnalité"
+          placeholder={placeholder ?? SCOPE_PLACEHOLDER[scope]}
+          aria-label={placeholder ?? SCOPE_PLACEHOLDER[scope]}
           className={styles.searchInput}
         />
       </div>
@@ -109,20 +121,20 @@ export default function SearchBox({
                   src={m.posterUrl}
                   alt=""
                   // Portrait rond pour une personne, affiche pour une œuvre.
-                  className={`${styles.thumb} ${m.mediaType === "person" ? styles.thumbPerson : ""}`}
+                  className={`${styles.thumb} ${m.mediaType === "person" ? styles.thumbPerson : ""} ${m.mediaType === "company" ? styles.thumbCompany : ""}`}
                   width={36}
                   height={54}
-                  style={{ objectFit: "cover" }}
+                  style={{ objectFit: m.mediaType === "company" ? "contain" : "cover" }}
                 />
               ) : (
                 <div
-                  className={`${styles.thumb} ${styles.thumbEmpty} ${m.mediaType === "person" ? styles.thumbPerson : ""}`}
+                  className={`${styles.thumb} ${styles.thumbEmpty} ${m.mediaType === "person" ? styles.thumbPerson : ""} ${m.mediaType === "company" ? styles.thumbCompany : ""}`}
                 />
               )}
               <div className={styles.resultInfo}>
                 <div className={styles.resultTitle}>{m.title}</div>
                 <div className={styles.resultMeta}>
-                  {m.mediaType === "person"
+                  {m.mediaType === "person" || m.mediaType === "company"
                     ? (m.subtitle ?? "Personnalité")
                     : `${m.mediaType === "tv" ? "Série" : "Film"}${m.year ? ` · ${m.year}` : ""}`}
                 </div>
