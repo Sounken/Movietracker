@@ -15,6 +15,15 @@ const PAGE_SIZE = 20;
 // Nombre de titres notés dont on tire les recommandations TMDB directes.
 // Au-delà, on paie des appels réseau pour des goûts déjà couverts par les genres.
 const SEED_COUNT = 6;
+
+/**
+ * Profondeur du vivier, par source.
+ *
+ * « Pour vous » doit se dérouler au scroll comme les autres listes. Avec deux
+ * pages de découverte, le plancher de qualité et l'exclusion de la collection
+ * ne laissaient qu'une quarantaine de titres — deux écrans, puis plus rien.
+ */
+const POOL_PAGES = 5;
 // En dessous de cette note (sur 10) un titre ne dit pas ce qu'on aime.
 const LIKED_THRESHOLD = 7;
 // Il faut un minimum de matière pour que le profil de goûts veuille dire quelque chose.
@@ -33,6 +42,12 @@ const MIN_QUALITY = { movie: 7.0, tv: 7.0 };
 
 /** Poids de l'écart de qualité au-dessus du plancher dans le score final. */
 const QUALITY_WEIGHT = 4;
+
+/**
+ * Volume de votes à partir duquel un titre est un classique reconnu, et non
+ * une curiosité bien notée par une poignée de gens.
+ */
+const ACCLAIMED_VOTES = { movie: 1500, tv: 500 };
 
 /**
  * Profil temporel : au-delà de cet écart (en années) avec l'époque que la
@@ -139,14 +154,13 @@ async function buildRecommendations(
   const topGenres = genreIds.slice(0, 3);
   const genreQuery = topGenres.join("|"); // « | » = OU chez TMDB (« , » = ET)
   const floor = MIN_QUALITY[media];
+  const pages = Array.from({ length: POOL_PAGES }, (_, i) => i + 1);
 
-  // Le vivier de genre est déjà filtré à la source : ce que TMDB peut écarter
-  // lui-même, ce sont autant de mauvais candidats qu'on n'aura pas à noter.
-  const discoverFilters =
-    `&sort_by=popularity.desc&vote_count.gte=400` +
-    `&without_keywords=${COMPILATION_KEYWORDS.join(",")}`;
+  // Ce que TMDB peut écarter lui-même, ce sont autant de mauvais candidats
+  // qu'on n'aura pas à noter.
+  const noCompilations = `&without_keywords=${COMPILATION_KEYWORDS.join(",")}`;
 
-  const [seedLists, genreLists] = await Promise.all([
+  const [seedLists, genreLists, acclaimedLists] = await Promise.all([
     Promise.all(
       seedIds.map((id) =>
         tmdbJson(`${BASE}/${media}/${id}/recommendations?api_key=${key}&language=fr-FR&page=1`),
@@ -154,14 +168,28 @@ async function buildRecommendations(
     ),
     genreQuery
       ? Promise.all(
-          [1, 2].map((page) =>
+          pages.map((page) =>
             tmdbJson(
               `${BASE}/discover/${media}?api_key=${key}&language=fr-FR&page=${page}` +
-                `&with_genres=${genreQuery}${discoverFilters}`,
+                `&with_genres=${genreQuery}&sort_by=popularity.desc&vote_count.gte=400` +
+                noCompilations,
             ),
           ),
         )
       : Promise.resolve([]),
+    // Troisième source, sans contrainte de genre : les titres unanimement
+    // reconnus. C'est le volet « découverte » proprement dit — il fait sortir
+    // des trois genres favoris sans jamais descendre en qualité, et il donne
+    // au scroll de quoi se dérouler bien au-delà du goût déjà connu.
+    Promise.all(
+      pages.map((page) =>
+        tmdbJson(
+          `${BASE}/discover/${media}?api_key=${key}&language=fr-FR&page=${page}` +
+            `&sort_by=vote_average.desc&vote_count.gte=${ACCLAIMED_VOTES[media]}` +
+            noCompilations,
+        ),
+      ),
+    ),
   ]);
 
   const scored = new Map<number, { raw: RawItem; score: number }>();
@@ -202,9 +230,12 @@ async function buildRecommendations(
 
   // Les suggestions directes de TMDB restent le signal le plus personnel, mais
   // elles sont bruitées : leur avance sur le vivier de genre est modérée, de
-  // sorte que la qualité et l'époque puissent renverser l'ordre.
+  // sorte que la qualité et l'époque puissent renverser l'ordre. Les classiques
+  // hors genre partent de plus bas — ils remplissent la traîne du scroll plutôt
+  // que de coiffer les suggestions personnalisées.
   for (const list of seedLists) list.slice(0, 10).forEach((raw) => add(raw, 4));
   for (const list of genreLists) list.forEach((raw) => add(raw, 2));
+  for (const list of acclaimedLists) list.forEach((raw) => add(raw, 1));
 
   return [...scored.values()].sort((a, b) => b.score - a.score).map((s) => s.raw);
 }
