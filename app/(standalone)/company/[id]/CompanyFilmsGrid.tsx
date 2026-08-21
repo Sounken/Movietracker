@@ -11,9 +11,12 @@ import styles from "../../../(app)/films/discover/discover.module.css";
 export default function CompanyFilmsGrid({
   companyId,
   initialFilms,
+  query,
 }: {
   companyId: number;
   initialFilms: TmdbFilmCard[];
+  /** Tri et filtres courants (query string), à répéter sur les pages suivantes. */
+  query: string;
 }) {
   const [films, setFilms] = useState(initialFilms);
   const [page, setPage] = useState(1);
@@ -30,7 +33,9 @@ export default function CompanyFilmsGrid({
     setLoading(true);
 
     const nextPage = page + 1;
-    fetch(`/api/company/${companyId}?page=${nextPage}`)
+    const params = new URLSearchParams(query);
+    params.set("page", String(nextPage));
+    fetch(`/api/company/${companyId}?${params}`)
       .then((r) => (r.ok ? r.json() : []))
       .then((more: TmdbFilmCard[]) => {
         setFilms((prev) => [...prev, ...more]);
@@ -41,7 +46,7 @@ export default function CompanyFilmsGrid({
         loadingRef.current = false;
         setLoading(false);
       });
-  }, [companyId, page]);
+  }, [companyId, page, query]);
 
   const sentinelRef = useRef<HTMLButtonElement | null>(null);
   useEffect(() => {

@@ -1,7 +1,9 @@
+import { Suspense } from "react";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { fetchCompanyDetail, fetchCompanyFilms } from "@/lib/tmdb";
+import { fetchCompanyDetail, fetchCompanyFilms, type CompanySort } from "@/lib/tmdb";
 import ActorTopbar from "../../actor/[id]/ActorTopbar";
+import CompanyFilters from "./CompanyFilters";
 import CompanyFilmsGrid from "./CompanyFilmsGrid";
 import styles from "../../actor/[id]/actor.module.css";
 import companyStyles from "./company.module.css";
@@ -12,23 +14,62 @@ const COUNTRY_NAMES: Record<string, string> = {
   IN: "Inde", AU: "Australie", SE: "Suède", DK: "Danemark", NZ: "Nouvelle-Zélande",
 };
 
-export default async function CompanyPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id: idStr } = await params;
+const SORTS = new Set<CompanySort>(["recent", "oldest", "popular", "rating"]);
+
+export default async function CompanyPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{
+    sort?: string;
+    genre?: string;
+    minYear?: string;
+    maxYear?: string;
+    minRating?: string;
+  }>;
+}) {
+  const [{ id: idStr }, sp] = await Promise.all([params, searchParams]);
   const id = parseInt(idStr);
   if (isNaN(id)) notFound();
 
+  // Défaut : chronologique décroissant — les sorties récentes du studio d'abord.
+  const sort: CompanySort = SORTS.has(sp.sort as CompanySort)
+    ? (sp.sort as CompanySort)
+    : "recent";
+  const genre = sp.genre ?? "";
+  const minYear = sp.minYear ?? "";
+  const maxYear = sp.maxYear ?? "";
+  const minRating = sp.minRating ?? "";
+
   const [company, films] = await Promise.all([
     fetchCompanyDetail(id),
-    fetchCompanyFilms(id, 1),
+    fetchCompanyFilms(id, {
+      sort,
+      genreId: genre ? parseInt(genre) : null,
+      minYear,
+      maxYear,
+      minRating: minRating ? Number(minRating) : undefined,
+    }),
   ]);
 
   if (!company) notFound();
+
+  // Répété tel quel sur les pages suivantes du scroll infini. Une chaîne
+  // plutôt qu'un objet : sa référence reste stable côté client.
+  const q = new URLSearchParams();
+  if (sort !== "recent") q.set("sort", sort);
+  if (genre) q.set("genre", genre);
+  if (minYear) q.set("minYear", minYear);
+  if (maxYear) q.set("maxYear", maxYear);
+  if (minRating) q.set("minRating", minRating);
+  const query = q.toString();
 
   const country = COUNTRY_NAMES[company.originCountry] ?? company.originCountry;
 
   return (
     <>
-      {/* Le fond reprend l'affiche du film le plus populaire de la société */}
+      {/* Le fond reprend l'affiche du premier film de la liste courante */}
       {films[0]?.posterUrl && (
         <div className={styles.backdrop}>
           <Image
@@ -89,7 +130,23 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
 
         <div className={styles.section}>
           <div className={styles.sectionTitle}>Filmographie</div>
-          <CompanyFilmsGrid companyId={id} initialFilms={films} />
+
+          <Suspense fallback={null}>
+            <CompanyFilters
+              sort={sort}
+              genre={genre}
+              minYear={minYear}
+              maxYear={maxYear}
+              minRating={minRating}
+            />
+          </Suspense>
+
+          <CompanyFilmsGrid
+            key={`${sort}-${genre}-${minYear}-${maxYear}-${minRating}`}
+            companyId={id}
+            initialFilms={films}
+            query={query}
+          />
         </div>
       </div>
     </>

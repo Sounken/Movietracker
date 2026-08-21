@@ -69,7 +69,7 @@ Légende : `[ ]` à faire · `[x]` fait · `[?]` besoin d'une décision de Damie
 - [x] **G2** — Motion UI : transitions de chargement, navigation sidebar, bascule Films/Séries (animation plutôt qu'un simple changement de couleur), ouverture des fiches film/série.
 - [x] **G3** — Animations d'apparition sur certaines sections (stagger sur les grilles, fade-in des stats).
 
-- [ ] 
+- [ ] G4 — Rework du theme clair car la il explose les yeux, le contrast n'est pas forcément super, surtout sur le hero caroussel. Aussi ajouter une belle transition motion entre le mode clair et le mode sombre.
 
 ---
 

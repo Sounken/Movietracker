@@ -1260,17 +1260,56 @@ export async function fetchCompanyDetail(id: number): Promise<TmdbCompanyDetail 
   }
 }
 
-/** Films d'une société, des plus populaires aux moins. */
+/** Critères de tri proposés sur une page société. */
+export type CompanySort = "recent" | "oldest" | "popular" | "rating";
+
+const COMPANY_SORT_SQL: Record<CompanySort, string> = {
+  // Défaut : du plus récent au plus ancien — on veut voir ce que le studio
+  // sort en ce moment, pas son film le plus populaire de tous les temps.
+  recent: "primary_release_date.desc",
+  oldest: "primary_release_date.asc",
+  popular: "popularity.desc",
+  rating: "vote_average.desc",
+};
+
+export type CompanyFilmsOptions = {
+  page?: number;
+  sort?: CompanySort;
+  genreId?: number | null;
+  minYear?: string;
+  maxYear?: string;
+  minRating?: number;
+};
+
+/** Films d'une société de production. */
 export async function fetchCompanyFilms(
   companyId: number,
-  page: number = 1,
+  opts: CompanyFilmsOptions = {},
 ): Promise<TmdbFilmCard[]> {
   const key = process.env.TMDB_API_KEY;
   if (!key) return [];
+
+  const { page = 1, sort = "recent", genreId, minYear, maxYear, minRating } = opts;
+
+  let extra = `&sort_by=${COMPANY_SORT_SQL[sort] ?? COMPANY_SORT_SQL.recent}`;
+  if (genreId) extra += `&with_genres=${genreId}`;
+  if (minYear) extra += `&primary_release_date.gte=${minYear}-01-01`;
+  if (maxYear) extra += `&primary_release_date.lte=${maxYear}-12-31`;
+  if (minRating) extra += `&vote_average.gte=${minRating}`;
+
+  // Trier par date fait remonter les projets annoncés sans date fiable, et
+  // trier par note fait remonter des films à 10/10 sur 2 votes. Un plancher de
+  // votes règle les deux, sauf quand on veut justement les plus anciens.
+  if (sort === "rating") extra += "&vote_count.gte=50";
+  if (sort === "recent") {
+    const today = new Date().toISOString().split("T")[0];
+    extra += `&primary_release_date.lte=${today}`;
+  }
+
   try {
     const res = await fetch(
       `${BASE}/discover/movie?api_key=${key}&language=fr-FR&page=${page}` +
-        `&with_companies=${companyId}&sort_by=popularity.desc`,
+        `&with_companies=${companyId}${extra}`,
       { next: { revalidate: 86400 } },
     );
     if (!res.ok) return [];
