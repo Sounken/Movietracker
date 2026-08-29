@@ -37,6 +37,12 @@ COPY --from=build /app/package.json ./package.json
 # Requis au runtime : `next start` recharge la config (images.remotePatterns…)
 # et retombe sur les valeurs par défaut si le fichier est absent.
 COPY --from=build /app/next.config.ts ./next.config.ts
+# `images.loaderFile` est vérifié sur le disque à chaque démarrage, pas
+# seulement au build : Next lève `Specified images.loaderFile does not exist`
+# et le conteneur meurt en boucle si `lib/` n'est pas là. Le code du loader est
+# certes déjà compilé dans `.next`, mais la config relue au runtime exige que
+# le fichier source existe encore.
+COPY --from=build /app/lib ./lib
 
 EXPOSE 3000
 # Applique les migrations Prisma (DATABASE_URL fourni par Coolify) puis démarre l'app.
