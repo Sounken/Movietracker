@@ -6,10 +6,16 @@
   margin: 0 auto;
 }
 
+/* `margin-inline: auto` : `.main` est l'élément de grille de la colonne `1fr`,
+   qui s'élargit avec l'écran, mais son `max-width` le plafonne. Sans marges
+   auto il restait calé au départ de sa colonne et tout le mou s'accumulait à
+   droite — jusqu'à 320px de vide sur un 2560px. Les marges auto répartissent
+   ce mou des deux côtés et recentrent le contenu sous la barre latérale. */
 .main {
   padding: 36px 48px 80px;
   max-width: 1400px;
   width: 100%;
+  margin-inline: auto;
   overflow-x: hidden;
 }
 

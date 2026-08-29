@@ -20,34 +20,50 @@
   --accent-rgb: 217, 119, 66;
   --gold-rgb: 232, 201, 138;
   --red-rgb: 194, 65, 44;
+  /* Surfaces en composantes RVB : les voiles posés sur une photo (carrousel)
+     doivent suivre le thème. Ils étaient écrits en dur avec les valeurs du
+     thème sombre et ne bougeaient donc pas au passage en clair. */
+  --bg-rgb: 13, 11, 10;
+  --bg-2-rgb: 21, 17, 15;
+  --panel-rgb: 26, 22, 20;
   /* Surfaces de survol / pistes : voile clair sur fond sombre */
   --hover: rgba(255, 255, 255, 0.05);
   --hover-strong: rgba(255, 255, 255, 0.09);
   --track: rgba(255, 255, 255, 0.08);
 }
 
-/* Thème clair — contrastes vérifiés WCAG AA (≥ 4,5:1) sur --bg ET sur --panel */
+/* Thème clair — « papier chaud » plutôt que blanc clinique.
+ *
+ * L'ancienne palette partait d'un panneau blanc pur (#ffffff, luminance 1,0)
+ * posé sur un fond quasi blanc (#f5f4f2, 0,905), sous un texte à 19:1 : d'où
+ * l'éblouissement. Les surfaces descendent ici à 0,882 / 0,802 / 0,726, ce qui
+ * suffit à calmer l'ensemble sans virer au gris sale, et les cartes se
+ * détachent enfin du fond au lieu de s'y fondre.
+ *
+ * Contrastes revérifiés sur les TROIS surfaces (--bg, --bg-2 ET --panel), et
+ * non plus sur --bg seul : mesurés sur --bg-2, le plus sombre des trois,
+ * --ink-mute, --accent et --gold retombaient à 4,20-4,21:1, donc sous le seuil
+ * AA. Tout passe désormais ≥ 4,5:1, ratios notés par token (pire des trois). */
 :root[data-theme="light"] {
-  --bg: #f5f4f2;
-  --bg-2: #eeece8;
-  --panel: #ffffff;
-  --line: #d9d3ca; /* bordures un peu plus marquées pour délimiter les cartes */
-  --ink: #111110; /* ~19:1 */
-  --ink-dim: #6b6157; /* ~6:1  (était #b4b4b4 → 2,1:1, illisible) */
-  /* Les ratios ci-dessous sont mesurés sur --bg (#f5f4f2), le fond réel des
-     pages, et non sur du blanc pur : les trois premières valeurs étaient
-     calées sur #ffffff et retombaient donc sous 4,5:1 une fois posées sur la
-     page. Elles sont assombries du strict minimum, teinte conservée. */
-  --ink-mute: #796e63; /* 4,52:1 (était #7d7266 → 4,27:1 sur --bg) */
-  --accent: #b15626; /* 4,52:1 (était #b85a28 → 4,22:1 sur --bg) */
-  --accent-soft: #9c4f22; /* 5,7:1 */
-  --gold: #94672c; /* 4,51:1 (était #a07030 → 3,94:1, sous le seuil) */
-  --green: #3a6a2a; /* 5,8:1 */
-  --red: #a8351f; /* 5,98:1 — #c2412c passait déjà (4,68), mais de justesse */
+  --bg: #ebe7e0;
+  --bg-2: #e2ddd4;
+  --panel: #f4f1ec;
+  --line: #d5cec3; /* bordures un peu plus marquées pour délimiter les cartes */
+  --ink: #1a1714; /* 13,2:1 */
+  --ink-dim: #574e44; /* 6,0:1 */
+  --ink-mute: #665c50; /* 4,8:1 */
+  --accent: #9a461a; /* 4,76:1 */
+  --accent-soft: #8c3f18; /* 5,5:1 */
+  --gold: #7f5620; /* 4,77:1 */
+  --green: #335c1e; /* 5,8:1 */
+  --red: #94301a; /* 5,8:1 */
   /* Mêmes teintes translucides, dérivées des couleurs claires ci-dessus. */
-  --accent-rgb: 177, 86, 38;
-  --gold-rgb: 148, 103, 44;
-  --red-rgb: 168, 53, 31;
+  --accent-rgb: 154, 70, 26;
+  --gold-rgb: 127, 86, 32;
+  --red-rgb: 148, 48, 26;
+  --bg-rgb: 235, 231, 224;
+  --bg-2-rgb: 226, 221, 212;
+  --panel-rgb: 244, 241, 236;
   /* en thème clair, le voile doit être sombre (un blanc translucide serait invisible) */
   --hover: rgba(0, 0, 0, 0.05);
   --hover-strong: rgba(0, 0, 0, 0.09);
@@ -104,17 +120,58 @@ a {
   to { opacity: 1; }
 }
 
+/* ——————————————————————————————————————————————————————————————
+   Bascule clair / sombre
+
+   Le fondu enchaîné natif des View Transitions ne demande qu'un calage de
+   durée : le défaut du navigateur est trop rapide pour un changement qui
+   repeint toute la page, et l'à-coup se voit. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.42s;
+  animation-timing-function: var(--ease-out);
+}
+
+/* Repli pour les navigateurs sans View Transitions (Firefox). L'attribut n'est
+   posé que le temps de la bascule : une transition laissée en permanence sur
+   `*` ferait traîner chaque survol de la page. */
+:root[data-theme-switching] *,
+:root[data-theme-switching] *::before,
+:root[data-theme-switching] *::after {
+  transition:
+    background-color 0.35s var(--ease-out),
+    border-color 0.35s var(--ease-out),
+    color 0.35s var(--ease-out) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+}
+
+/* `backwards` et non `both` : avec `forwards`, l'animation reste éternellement
+   en état de remplissage sur `transform`, et le navigateur maintient donc un
+   bloc conteneur sur l'élément. Toute descendance en `position: fixed` (nos
+   modales, leurs voiles) se positionnait alors par rapport au contenu de la
+   page — haut de plusieurs milliers de pixels — au lieu du viewport, d'où des
+   modales ouvertes hors écran qu'il fallait aller chercher au scroll.
+   L'état final de `riseIn` (opacity 1, transform none) est déjà l'état au
+   repos : abandonner `forwards` ne change rien à l'animation, et `backwards`
+   conserve l'état initial pendant le délai — indispensable à la cascade. */
+
 /* Entrée de page : appliquée par le `template.tsx` du groupe de routes, qui se
    remonte à chaque navigation — d'où une animation rejouée à chaque écran. */
 .pageEnter {
-  animation: riseIn var(--dur-base) var(--ease-out) both;
+  animation: riseIn var(--dur-base) var(--ease-out) backwards;
 }
 
 /* Apparition en cascade : chaque enfant démarre légèrement après le précédent.
    Plafonné à 12 pour qu'une grille de 200 affiches ne finisse pas par attendre
    plusieurs secondes avant d'afficher ses dernières cartes. */
 .stagger > * {
-  animation: riseIn var(--dur-base) var(--ease-out) both;
+  animation: riseIn var(--dur-base) var(--ease-out) backwards;
 }
 
 .stagger > *:nth-child(1) { animation-delay: 0.02s; }

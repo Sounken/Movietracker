@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { flushSync } from "react-dom";
 import { usePathname } from "next/navigation";
 import SearchBox from "./SearchBox";
 import styles from "./Topbar.module.css";
@@ -47,12 +48,35 @@ export default function Topbar({ greeting, userName }: Props) {
   function toggleTheme() {
     const next = isDark ? "light" : "dark";
     localStorage.setItem("mt-theme", next);
-    if (next === "light") {
-      document.documentElement.setAttribute("data-theme", "light");
-    } else {
-      document.documentElement.removeAttribute("data-theme");
+
+    // `flushSync` : sans lui, la mise à jour de l'icône soleil/lune part dans
+    // le rendu concurrent et arrive après la capture de la transition, qui
+    // fige alors l'ancienne icône le temps du fondu.
+    const apply = () =>
+      flushSync(() => {
+        const root = document.documentElement;
+        if (next === "light") root.setAttribute("data-theme", "light");
+        else root.removeAttribute("data-theme");
+        window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
+      });
+
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // Chrome/Safari : fondu enchaîné natif sur toute la page, bien plus propre
+    // qu'une transition CSS qui laisserait chaque élément changer à son rythme.
+    if (!reduced && typeof document.startViewTransition === "function") {
+      document.startViewTransition(apply);
+      return;
     }
-    window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
+
+    // Firefox et bascule sans animation : on n'anime les couleurs que pendant
+    // le basculement, via un attribut retiré juste après (cf. globals.css).
+    if (!reduced) {
+      const root = document.documentElement;
+      root.setAttribute("data-theme-switching", "");
+      window.setTimeout(() => root.removeAttribute("data-theme-switching"), 400);
+    }
+    apply();
   }
 
   return (

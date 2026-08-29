@@ -210,16 +210,10 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
             </div>
           )}
 
-          {extras.video && (
-            <TrailerSection
-              video={extras.video}
-              title={film.title}
-              sectionClassName={styles.section}
-              titleClassName={styles.sectionTitle}
-            />
-          )}
-
-
+          {/* Les avis des amis passent avant la bande-annonce : c'est le
+              contenu propre au réseau de l'utilisateur, et le seul qu'il ne
+              trouvera pas ailleurs. La bande-annonce, elle, reste consultable
+              plus bas sans rien perdre. */}
           {friendFilms.length > 0 && (
             <FriendReviews
               reviews={friendFilms.map((f) => ({
@@ -230,6 +224,15 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
                 review: f.review,
                 date: f.updatedAt.toLocaleDateString("fr-FR"),
               }))}
+            />
+          )}
+
+          {extras.video && (
+            <TrailerSection
+              video={extras.video}
+              title={film.title}
+              sectionClassName={styles.section}
+              titleClassName={styles.sectionTitle}
             />
           )}
 

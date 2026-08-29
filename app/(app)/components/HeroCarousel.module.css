@@ -30,13 +30,18 @@
   );
 }
 
+/* Le voile suit désormais --bg au lieu de reprendre en dur l'ancien #f5f4f2 :
+   c'est ce décalage qui faisait ressortir une bande blanche sur un fond de
+   page devenu plus chaud. La marche est aussi adoucie en fin de course (0,05
+   → 0,18) : à 5% d'opacité la photo repartait à pleine intensité juste à côté
+   d'un voile à 98%, et c'est ce contraste brutal qui piquait les yeux. */
 :global([data-theme="light"]) .bg::after {
   background: linear-gradient(
     105deg,
-    rgba(245, 244, 242, 0.98) 0%,
-    rgba(245, 244, 242, 0.92) 36%,
-    rgba(245, 244, 242, 0.55) 65%,
-    rgba(245, 244, 242, 0.05) 100%
+    rgba(var(--bg-rgb), 0.97) 0%,
+    rgba(var(--bg-rgb), 0.9) 36%,
+    rgba(var(--bg-rgb), 0.55) 65%,
+    rgba(var(--bg-rgb), 0.18) 100%
   );
 }
 
@@ -49,7 +54,7 @@
 }
 
 :global([data-theme="light"]) .bg::before {
-  background: linear-gradient(0deg, rgba(230, 224, 214, 0.9) 0%, transparent 32%);
+  background: linear-gradient(0deg, rgba(var(--bg-2-rgb), 0.92) 0%, transparent 32%);
 }
 
 /* ——— Content ——— */
@@ -122,9 +127,20 @@
   filter: drop-shadow(0 2px 12px rgba(0, 0, 0, 0.55));
 }
 
-:global([data-theme="light"]) .title {
-  color: #111;
+/* En thème clair, un logo blanc sur un voile clair disparaissait purement et
+   simplement — l'ombre diffuse d'origine ne rattrapait rien. Trois ombres
+   serrées le détourent façon liseré. Une inversion aurait été plus simple mais
+   aurait massacré les logos déjà colorés, qui sont nombreux. */
+:global([data-theme="light"]) .titleLogo {
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.6)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45))
+    drop-shadow(0 3px 12px rgba(0, 0, 0, 0.28));
 }
+
+/* Les surcharges claires de `.title`, `.meta` et `.synopsis` ont disparu :
+   elles figeaient #111 / #666 / #444 en dehors du système de tokens, ne
+   suivaient donc aucun ajustement de palette (et le #666 du `.meta` frôlait le
+   seuil AA). Les règles de base pointent déjà sur --ink / --ink-dim, qui
+   basculent tout seuls avec le thème. */
 
 .meta {
   display: flex;
@@ -134,10 +150,6 @@
   color: var(--ink-dim);
   margin-bottom: 18px;
   flex-wrap: wrap;
-}
-
-:global([data-theme="light"]) .meta {
-  color: #666;
 }
 
 .sep {
@@ -172,10 +184,6 @@
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-
-:global([data-theme="light"]) .synopsis {
-  color: #444;
 }
 
 .actions {
@@ -226,7 +234,7 @@
 :global([data-theme="light"]) .btnGhost {
   background: rgba(0, 0, 0, 0.05);
   border-color: rgba(0, 0, 0, 0.15);
-  color: #111;
+  color: var(--ink);
 }
 
 .btnGhost:hover {
@@ -328,7 +336,7 @@
 :global([data-theme="light"]) .arrow {
   background: rgba(0, 0, 0, 0.06);
   border-color: rgba(0, 0, 0, 0.14);
-  color: #111;
+  color: var(--ink);
 }
 
 .arrow:hover {
