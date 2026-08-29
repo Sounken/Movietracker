@@ -1,13 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // `standalone` : la sortie ne contient que les modules réellement importés,
-  // tracés par Next. L'image runtime embarquait jusqu'ici les 766 Mo de
-  // `node_modules` — dont les binaires SWC et les moteurs Prisma de toutes les
-  // plateformes, et les dépendances de développement. Sur un serveur dont le
-  // disque est déjà saturé, chaque déploiement en rajoutait une couche.
-  output: "standalone",
-
   images: {
     // Notre optimiseur ne voit plus que nos propres fichiers (avatars,
     // bannières) : les visuels TMDB partent directement vers leur CDN, cf.
