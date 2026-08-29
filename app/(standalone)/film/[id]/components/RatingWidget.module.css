@@ -207,3 +207,26 @@
     text-align: right;
   }
 }
+
+/* Bouton d'assistance à la notation. Discret par défaut — il propose, il ne
+   s'impose pas — mais assez visible pour être trouvé au moment de l'hésitation. */
+.assistBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 15px;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--accent-rgb), 0.32);
+  background: rgba(var(--accent-rgb), 0.1);
+  color: var(--accent);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s;
+}
+
+.assistBtn:hover {
+  background: rgba(var(--accent-rgb), 0.18);
+  border-color: rgba(var(--accent-rgb), 0.5);
+}

@@ -2,8 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Check } from "lucide-react";
+import { Check, Sparkles } from "lucide-react";
 import StarRating from "@/app/(app)/components/StarRating";
+import RatingAssistant from "./RatingAssistant";
 import { useRatingScale } from "@/lib/rating-scale";
 import { toDisplayRating, toStoredRating, formatRating } from "@/lib/rating";
 import styles from "./RatingWidget.module.css";
@@ -40,6 +41,7 @@ export default function RatingWidget({
   // Prévisualisation : le chiffre suit les étoiles survolées, et revient à la
   // note enregistrée dès que le curseur quitte la rangée.
   const [hover, setHover] = useState<number | null>(null);
+  const [assistantOpen, setAssistantOpen] = useState(false);
 
   const displayed = hover ?? rating;
 
@@ -125,7 +127,34 @@ export default function RatingWidget({
             {displayed > 0 ? `${formatRating(displayed, scale)}/10` : "—"}
           </div>
         )}
+
+        {/* Assistant : hésiter sur un chiffre est le cas courant, mais rien ne
+            l'impose — la note reste modifiable aux étoiles juste après. */}
+        <button
+          type="button"
+          className={styles.assistBtn}
+          onClick={() => {
+            if (!isAuthenticated) { router.push("/login"); return; }
+            setAssistantOpen(true);
+          }}
+          title="Se faire aider pour fixer la note"
+        >
+          <Sparkles size={14} />
+          M&apos;aider à noter
+        </button>
       </div>
+
+      {assistantOpen && (
+        <RatingAssistant
+          scale={scale}
+          title={title}
+          onClose={() => setAssistantOpen(false)}
+          onApply={(value) => {
+            setAssistantOpen(false);
+            handleRate(value);
+          }}
+        />
+      )}
 
       {rating > 0 && (
         <div className={styles.reviewBlock}>
