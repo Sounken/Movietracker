@@ -47,7 +47,7 @@
    en dessous, l'utilisateur sait pourquoi il a ouvert l'assistant. */
 .title {
   font-family: var(--font-serif), serif;
-  font-size: 24px;
+  font-size: 26px;
   font-weight: 400;
   line-height: 1.15;
   color: var(--ink);
@@ -57,8 +57,8 @@
 .close {
   margin-left: auto;
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   border: 0;
   background: var(--hover);
@@ -119,7 +119,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 13px 14px;
+  padding: 14px 16px;
   border: 0;
   background: transparent;
   color: var(--ink);
@@ -133,20 +133,20 @@
 }
 
 .groupName {
-  font-size: 12.5px;
+  font-size: 14px;
   font-weight: 600;
 }
 
 .groupMeta {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 9.5px;
+  font-size: 11px;
   color: var(--ink-mute);
 }
 
 .groupScore {
   margin-left: auto;
   font-family: var(--font-geist-mono), monospace;
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 400;
   color: var(--gold);
 }
@@ -197,7 +197,7 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 11.5px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--ink);
   margin-bottom: 8px;
@@ -215,7 +215,7 @@
 .hint {
   margin-left: auto;
   font-family: var(--font-geist-mono), monospace;
-  font-size: 9px;
+  font-size: 10.5px;
   font-weight: 400;
   color: var(--ink-mute);
 }
@@ -228,13 +228,19 @@
 
 /* `--level` est la couleur pastel du niveau, posée en style inline. Au repos
    elle n'est qu'un voile : c'est la sélection qui la révèle en aplat. */
+/* Police proportionnelle et non monospace, contrairement au reste des petits
+   libellés : c'est ce qui permet de passer de 9 à 11,5px sans que
+   « Exceptionnel », le plus long des cinq niveaux, ne déborde de son segment
+   une fois la grille en deux colonnes. Le gain de lisibilité est double, la
+   taille et le dessin de la lettre. */
 .segment {
   border: 0;
   border-radius: 5px;
-  min-height: 42px;
-  padding: 7px 2px;
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 9px;
+  min-height: 46px;
+  padding: 8px 3px;
+  font-family: inherit;
+  font-size: 11.5px;
+  line-height: 1.25;
   cursor: pointer;
   color: var(--ink-dim);
   background: color-mix(in srgb, var(--level) 10%, var(--panel));
@@ -242,7 +248,7 @@
 }
 
 .segment:last-child {
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
 }
 
 .segment:hover {
@@ -296,8 +302,8 @@
 }
 
 .sign {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border-radius: 8px;
   display: grid;
   place-items: center;
@@ -318,12 +324,12 @@
 
 .adjustTitle b {
   display: block;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .adjustTitle small {
   display: block;
-  font-size: 8.5px;
+  font-size: 10.5px;
   color: var(--ink-mute);
   margin-top: 2px;
 }
@@ -331,7 +337,7 @@
 .adjustTotal {
   margin-left: auto;
   font-family: var(--font-geist-mono), monospace;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .malus .adjustTotal {
@@ -355,21 +361,21 @@
 }
 
 .preset {
-  min-height: 40px;
+  min-height: 44px;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: var(--bg-2);
   color: var(--ink-dim);
-  padding: 7px 11px;
+  padding: 8px 13px;
   font-family: inherit;
-  font-size: 9.5px;
+  font-size: 11.5px;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 
 .presetWeight {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 8.5px;
+  font-size: 10.5px;
   color: var(--ink-mute);
   margin-left: 4px;
 }
@@ -395,7 +401,7 @@
 }
 
 .custom label {
-  font-size: 9.5px;
+  font-size: 11.5px;
   color: var(--ink-dim);
   margin-right: auto;
 }
@@ -424,7 +430,7 @@
   background: transparent;
   color: var(--ink);
   font-family: var(--font-geist-mono), monospace;
-  font-size: 14px;
+  font-size: 16px;
   text-align: center;
   appearance: textfield;
   -moz-appearance: textfield;
@@ -438,7 +444,7 @@
 
 .limit {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 8.5px;
+  font-size: 10.5px;
   color: var(--ink-mute);
 }
 
@@ -449,7 +455,7 @@
   background: transparent;
   color: var(--ink-mute);
   font-family: inherit;
-  font-size: 9.5px;
+  font-size: 11.5px;
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
@@ -461,7 +467,7 @@
 
 .notice {
   margin: 10px 2px 0;
-  font-size: 10.5px;
+  font-size: 12px;
   color: var(--gold);
 }
 
@@ -483,7 +489,7 @@
 
 .breakdown div {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 9px;
+  font-size: 10.5px;
   color: var(--ink-mute);
   text-transform: uppercase;
 }
@@ -491,7 +497,7 @@
 .breakdown b {
   display: block;
   font-family: var(--font-serif), serif;
-  font-size: 18px;
+  font-size: 21px;
   font-weight: 400;
   color: var(--ink);
   margin-top: 2px;
@@ -505,24 +511,24 @@
 
 .score {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 30px;
+  font-size: 36px;
   color: var(--gold);
   line-height: 1;
 }
 
 .scoreScale {
-  font-size: 13px;
+  font-size: 15px;
   color: var(--ink-mute);
 }
 
 .apply {
-  padding: 12px 20px;
+  padding: 13px 22px;
   border-radius: 10px;
   border: 0;
   background: var(--accent);
   color: #fff;
   font-family: inherit;
-  font-size: 13px;
+  font-size: 14.5px;
   font-weight: 500;
   cursor: pointer;
   transition: filter 0.18s;
