@@ -38,9 +38,14 @@ export const CRITERIA: readonly Criterion[] = [
   { id: "revoir", label: "Envie de revoir", hint: "trace", group: "heart" },
 ];
 
+/**
+ * « L'œuvre » plutôt que « Fabrication » : on juge ici ce que le film est en
+ * lui-même, indépendamment de soi — le pendant naturel de « L'expérience »,
+ * qui recueille ce qu'on en a vécu.
+ */
 export const GROUPS = {
-  head: { label: "Fabrication", weight: 0.58 },
-  heart: { label: "Expérience", weight: 0.42 },
+  head: { label: "L'œuvre", weight: 0.58 },
+  heart: { label: "L'expérience", weight: 0.42 },
 } as const;
 
 /** Ajustements proposés en un clic, sous les deux accordéons. */
@@ -158,11 +163,14 @@ export function computeAssistant(state: AssistantState): AssistantResult {
 }
 
 /**
- * Ramène la note calculée à la granularité réellement saisissable dans
- * l'échelle de l'utilisateur : au demi-point sur /10 (contrainte des étoiles),
- * au dixième sur /100 où le champ libre accepte l'entier. Sans ça, le bouton
- * annoncerait 7,3 pour enregistrer 7,5.
+ * Ramène la note au dixième, dans les deux échelles.
+ *
+ * On arrondissait au demi-point sur /10 pour coller aux étoiles, mais c'était
+ * gâcher la précision de huit critères : l'assistant calcule 6,1 ou 6,2, et
+ * rien n'empêche de les stocker — la note est un Float, et un 6,1 s'affiche
+ * très bien à côté d'étoiles qui, elles, restent au demi-cran. Les étoiles
+ * contraignent la saisie à la souris, pas ce que l'assistant peut produire.
  */
-export function snapToScale(score: number, scale: 10 | 100): number {
-  return scale === 100 ? Math.round(score * 10) / 10 : Math.round(score * 2) / 2;
+export function snapToScale(score: number): number {
+  return Math.round(score * 10) / 10;
 }

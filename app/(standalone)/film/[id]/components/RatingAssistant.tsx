@@ -34,13 +34,14 @@ const fmt1 = (v: number) => v.toFixed(1);
 
 export default function RatingAssistant({ scale, title, onApply, onClose }: Props) {
   const [state, setState] = useState<AssistantState>(initialState);
-  // Les deux groupes de critères sont dépliés d'entrée : c'est le cœur de la
-  // saisie. Les ajustements, eux, sont optionnels — on ne les impose pas.
-  const [openGroups, setOpenGroups] = useState<CriterionGroup[]>(["head", "heart"]);
+  // On ouvre le premier groupe seulement : la modale tient à l'écran, et
+  // l'enchaînement œuvre → expérience se fait naturellement. Les ajustements
+  // restent fermés, ils sont optionnels.
+  const [openGroups, setOpenGroups] = useState<CriterionGroup[]>(["head"]);
   const [openAdjust, setOpenAdjust] = useState<AdjustmentKind[]>([]);
 
   const result = computeAssistant(state);
-  const snapped = snapToScale(result.score, scale);
+  const snapped = snapToScale(result.score);
 
   // Échap ferme, et la page derrière ne défile plus : sans ça, la molette
   // continue de faire glisser la fiche film sous la modale.
@@ -98,12 +99,9 @@ export default function RatingAssistant({ scale, title, onApply, onClose }: Prop
     >
       <div className={styles.modal}>
         <header className={styles.head}>
-          <div>
-            <h2 id="assistant-title" className={styles.title}>
-              Votre film en huit regards
-            </h2>
-            <p className={styles.subtitle}>{title}</p>
-          </div>
+          <h2 id="assistant-title" className={styles.title}>
+            {title}
+          </h2>
           <button className={styles.close} onClick={onClose} aria-label="Fermer l'assistant">
             <X size={16} />
           </button>

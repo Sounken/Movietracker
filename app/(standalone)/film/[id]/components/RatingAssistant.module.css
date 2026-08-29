@@ -20,9 +20,11 @@
   }
 }
 
+/* Assez large pour deux critères par ligne : cinq segments côte à côte
+   demandent environ 260px, plus les gouttières et le rembourrage. */
 .modal {
   width: 100%;
-  max-width: 620px;
+  max-width: 900px;
   max-height: min(88vh, 860px);
   display: flex;
   flex-direction: column;
@@ -35,24 +37,21 @@
 /* ——— En-tête ——— */
 .head {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 16px;
-  padding: 22px 24px 16px;
+  padding: 20px 24px 16px;
   border-bottom: 1px solid var(--line);
 }
 
+/* Le titre de la modale, c'est le film qu'on note : il n'y a rien à ajouter
+   en dessous, l'utilisateur sait pourquoi il a ouvert l'assistant. */
 .title {
   font-family: var(--font-serif), serif;
   font-size: 24px;
   font-weight: 400;
+  line-height: 1.15;
   color: var(--ink);
   margin: 0;
-}
-
-.subtitle {
-  font-size: 12px;
-  color: var(--ink-mute);
-  margin: 4px 0 0;
 }
 
 .close {
@@ -76,10 +75,31 @@
 }
 
 /* ——— Corps défilant ——— */
+/* Ascenseur discret, aux couleurs de l'app : celui du système posait une
+   gouttière claire en plein milieu d'une modale sombre. */
 .body {
   padding: 18px 24px;
   overflow-y: auto;
   flex: 1;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+.body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.body::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 999px;
+}
+
+.body::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-mute);
 }
 
 /* ——— Accordéons de critères ——— */
@@ -142,10 +162,27 @@
   transform: rotate(180deg);
 }
 
+/* `:not([hidden])` est indispensable : une règle d'auteur `display: grid`
+   l'emporte sur le `display: none` que le navigateur applique à `[hidden]`,
+   et le panneau restait donc ouvert quoi qu'on clique. En conditionnant la
+   règle, on rend la main à la feuille de style du navigateur au repli.
+   Deux critères par ligne dès qu'il y a la place, comme dans la maquette. */
+.groupBody:not([hidden]) {
+  display: grid;
+}
+
 .groupBody {
   padding: 0 12px 12px;
-  display: grid;
   gap: 8px;
+}
+
+/* Deux critères par ligne seulement quand la modale atteint sa pleine largeur.
+   Plus tôt, chaque colonne descendrait sous ~300px et « Exceptionnel » ne
+   tiendrait plus dans son segment. */
+@media (min-width: 940px) {
+  .groupBody:not([hidden]) {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 /* ——— Un critère ——— */
@@ -222,9 +259,13 @@
 }
 
 /* ——— Accordéons bonus / malus ——— */
+/* `align-items: start` : sans lui les deux colonnes s'étirent sur la hauteur
+   de la plus haute, et déplier Malus faisait grandir la carte Bonus restée
+   fermée. Chacune garde maintenant sa propre hauteur. */
 .adjustments {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  align-items: start;
   gap: 8px;
   margin-top: 10px;
 }
