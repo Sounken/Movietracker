@@ -3,6 +3,22 @@ import { unstable_cache } from "next/cache";
 const BASE = "https://api.themoviedb.org/3";
 export const IMG = "https://image.tmdb.org/t/p";
 
+/**
+ * Taille des images d'arrière-plan.
+ *
+ * `original` sert des JPEG de 2000 à 3800px de large, soit 1 à 3 Mo pièce. Le
+ * carrousel d'accueil les passait à l'optimiseur Next, qui doit les décoder en
+ * bitmap brut avant de les réencoder : un 3840×2160 pèse 33 Mo en mémoire, et
+ * l'accueil en enchaîne un par film affiché. Sur les fiches film/série, où le
+ * backdrop est posé en `background-image`, c'est le navigateur du visiteur qui
+ * encaissait ces mégaoctets.
+ *
+ * `w1280` couvre la quasi-totalité des écrans, et l'image est de toute façon
+ * soit floutée (fiches) soit recadrée en `cover` (carrousel) : la différence
+ * est invisible, le poids divisé par cinq à dix.
+ */
+const BACKDROP_SIZE = "w1280";
+
 export type TmdbMovie = {
   id: number;
   title: string;
@@ -176,7 +192,7 @@ export async function fetchNowPlaying(): Promise<TmdbMovie[]> {
       title: m.title,
       overview: m.overview,
       posterUrl: m.poster_path ? `${IMG}/w500${m.poster_path}` : "",
-      backdropUrl: m.backdrop_path ? `${IMG}/original${m.backdrop_path}` : "",
+      backdropUrl: m.backdrop_path ? `${IMG}/${BACKDROP_SIZE}${m.backdrop_path}` : "",
       year: typeof m.release_date === "string" ? m.release_date.slice(0, 4) : "",
       voteAverage: Math.round((m.vote_average as number) * 10) / 10,
       genreIds: (m.genre_ids as number[]) ?? [],
@@ -248,7 +264,7 @@ export async function fetchOnTheAirSeries(): Promise<TmdbMovie[]> {
         title: m.name,
         overview: m.overview,
         posterUrl: m.poster_path ? `${IMG}/w500${m.poster_path}` : "",
-        backdropUrl: m.backdrop_path ? `${IMG}/original${m.backdrop_path}` : "",
+        backdropUrl: m.backdrop_path ? `${IMG}/${BACKDROP_SIZE}${m.backdrop_path}` : "",
         year: typeof m.first_air_date === "string" ? m.first_air_date.slice(0, 4) : "",
         voteAverage: Math.round((m.vote_average as number) * 10) / 10,
         genreIds: (m.genre_ids as number[]) ?? [],
@@ -301,7 +317,7 @@ export async function fetchFilmDetail(id: number): Promise<TmdbFilmDetail | null
       originalTitle: m.original_title ?? "",
       overview: m.overview ?? "",
       posterUrl: m.poster_path ? `${IMG}/w500${m.poster_path}` : "",
-      backdropUrl: m.backdrop_path ? `${IMG}/original${m.backdrop_path}` : "",
+      backdropUrl: m.backdrop_path ? `${IMG}/${BACKDROP_SIZE}${m.backdrop_path}` : "",
       releaseDate: m.release_date ?? "",
       year: m.release_date?.slice(0, 4) ?? "",
       runtime: m.runtime ?? null,
@@ -471,7 +487,7 @@ function mapSeriesDetail(m: any): TmdbSeriesDetail {
       tagline: m.tagline ?? "",
       overview: m.overview ?? "",
       posterUrl: m.poster_path ? `${IMG}/w500${m.poster_path}` : "",
-      backdropUrl: m.backdrop_path ? `${IMG}/original${m.backdrop_path}` : "",
+      backdropUrl: m.backdrop_path ? `${IMG}/${BACKDROP_SIZE}${m.backdrop_path}` : "",
       year: m.first_air_date?.slice(0, 4) ?? "",
       firstAirDate: m.first_air_date ?? "",
       lastAirDate: m.last_air_date ?? "",

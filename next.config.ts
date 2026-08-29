@@ -2,6 +2,38 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
+    // Notre optimiseur ne voit plus que nos propres fichiers (avatars,
+    // bannières) : les visuels TMDB partent directement vers leur CDN, cf.
+    // `lib/tmdb-image-loader.ts`.
+    loaderFile: "./lib/tmdb-image-loader.ts",
+
+    // Aucune image servie par nous ne dépasse 1600px (largeur de sortie du
+    // recadrage de bannière). Les paliers 2048 et 3840 par défaut ne
+    // produisaient que des variantes que personne ne demande.
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+
+    // Les uploads portent un `?v=…` renouvelé à chaque enregistrement : leur
+    // contenu ne change jamais à URL constante, on peut donc les garder en
+    // cache bien plus longtemps que les 4h par défaut.
+    minimumCacheTTL: 2_592_000, // 30 jours
+
+    /**
+     * Plafond du cache disque des images. **À ne jamais laisser implicite.**
+     *
+     * Non renseigné, Next dimensionne son LRU à « 50% de l'espace disque
+     * disponible » mesuré au démarrage (`disk-lru-cache.external.js` :
+     * `maxSize = Math.floor(bavail * bsize / 2)`). Il n'évince donc rien tant
+     * que ce budget n'est pas atteint : sur notre serveur, `/app/.next/cache`
+     * est monté jusqu'à 19 Go, à raison d'environ 1 Go par heure. Le calcul
+     * étant fait au démarrage et le disque partagé avec l'autre app, Next
+     * s'octroyait la moitié de ce qui était libre sans rien savoir du voisin.
+     *
+     * 256 Mo suffisent très largement depuis que les visuels TMDB et les
+     * vignettes YouTube partent vers leurs CDN respectifs : il ne reste à
+     * optimiser que nos propres avatars et bannières.
+     */
+    maximumDiskCacheSize: 256 * 1024 * 1024,
+
     remotePatterns: [
       {
         protocol: "https",
