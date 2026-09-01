@@ -24,10 +24,13 @@ x-environment: &default-environment
   # lui les transactions fonctionnent, mais on perd le détail par span.
   GLITCHTIP_ENABLE_DUCKDB: "True"
 
-  # Fermé après la création du premier compte : sans ça, l'instance est
-  # ouverte à l'inscription de n'importe qui sur Internet.
-  ENABLE_USER_REGISTRATION: "False"
-  ENABLE_ORGANIZATION_CREATION: "False"
+  # Piloté depuis Coolify plutôt que figé ici : il faut ouvrir l'inscription le
+  # temps de créer le premier compte, puis la refermer. En variable, ça se fait
+  # en deux clics ; en dur, il faudrait éditer le fichier et redéployer deux
+  # fois. Laissé fermé par défaut — une instance ouverte sur Internet se fait
+  # peupler de comptes indésirables.
+  ENABLE_USER_REGISTRATION: ${ENABLE_USER_REGISTRATION:-False}
+  ENABLE_ORGANIZATION_CREATION: ${ENABLE_ORGANIZATION_CREATION:-False}
 
   ENABLE_ADMIN: "False"
   ENABLE_OPENAPI: "False"
