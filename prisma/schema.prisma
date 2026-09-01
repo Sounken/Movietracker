@@ -8,22 +8,22 @@ datasource db {
 }
 
 model User {
-  id             String              @id @default(cuid())
+  id             String               @id @default(cuid())
   name           String?
-  email          String              @unique
+  email          String               @unique
   passwordHash   String
   avatarUrl      String?
   bannerUrl      String?
   bio            String?
   /// Échelle d'affichage des notes : 10 (défaut) ou 100. Les notes restent
   /// stockées sur 10 dans UserFilm/UserSeries, seul l'affichage change.
-  ratingScale    Int                 @default(10)
-  createdAt      DateTime            @default(now())
+  ratingScale    Int                  @default(10)
+  createdAt      DateTime             @default(now())
   films          UserFilm[]
   favoriteFilms  UserFavoriteFilm[]
   lists          UserList[]
-  following      UserFollow[]        @relation("follower")
-  followers      UserFollow[]        @relation("following")
+  following      UserFollow[]         @relation("follower")
+  followers      UserFollow[]         @relation("following")
   series         UserSeries[]
   episodes       UserEpisode[]
   seasons        UserSeason[]
@@ -102,17 +102,17 @@ model Series {
 
 // Rapport d'un utilisateur à une série (note / avis / watchlist / like), au niveau série.
 model UserSeries {
-  id        String    @id @default(cuid())
+  id        String   @id @default(cuid())
   userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   tmdbId    Int
   rating    Float?
   review    String?
-  watchlist Boolean   @default(false)
-  liked     Boolean   @default(false)
-  watched   Boolean   @default(false)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  watchlist Boolean  @default(false)
+  liked     Boolean  @default(false)
+  watched   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([userId, tmdbId])
   @@index([userId, updatedAt])
@@ -166,9 +166,9 @@ model Film {
 }
 
 model UserFilm {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   tmdbId    Int
   rating    Float?
   review    String?
@@ -186,4 +186,43 @@ model UserFilm {
   @@index([userId, watchlist])
   @@index([tmdbId])
   @@index([updatedAt])
+}
+
+/// Mesure de performance perçue, envoyée par le navigateur du visiteur.
+///
+/// GlitchTip couvre les erreurs et les temps de réponse serveur, mais s'arrête
+/// aux transactions : il ne remonte pas les Core Web Vitals. Ce modèle comble
+/// ce manque sans dépendance ni service supplémentaire — les métriques
+/// atterrissent dans la base que l'application utilise déjà.
+model WebVital {
+  id String @id @default(cuid())
+
+  /// Motif de route et non URL réelle : « /film/[id] » plutôt que
+  /// « /film/550 ». Sans cette normalisation, chaque film créerait sa propre
+  /// ligne d'agrégat et les moyennes ne voudraient plus rien dire.
+  route String
+
+  /// LCP, INP, CLS, TTFB, FCP.
+  metric String
+
+  /// Millisecondes, sauf pour CLS qui est un score sans unité.
+  value Float
+
+  /// Verdict du seuil, calculé par la bibliothèque : good, needs-improvement, poor.
+  rating String
+
+  /// « navigate », « reload », « back-forward », « prerender ». Une navigation
+  /// arrière profite du cache et n'est pas comparable à une visite initiale.
+  navigationType String?
+
+  /// Renseigné pour les visiteurs identifiés, nul sinon. Aucune donnée
+  /// personnelle n'est stockée au-delà de cette référence.
+  userId String?
+
+  createdAt DateTime @default(now())
+
+  /// L'index porte la requête d'agrégation : percentile par route et par
+  /// métrique sur une fenêtre de temps.
+  @@index([metric, route, createdAt])
+  @@index([createdAt])
 }

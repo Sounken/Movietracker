@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs/config";
 
 const nextConfig: NextConfig = {
   images: {
@@ -75,4 +76,42 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+/**
+ * L'envoi des source maps n'a lieu que si un jeton est fourni. Sans cette
+ * condition, un build sans `SENTRY_AUTH_TOKEN` — la CI, ou un build local —
+ * échouerait ou perdrait du temps à tenter un envoi voué à l'échec.
+ *
+ * Sans source maps, GlitchTip afficherait des piles d'appel pointant vers du
+ * code minifié : « a.b is not a function » à la ligne 1, colonne 48213.
+ */
+const uploadSourceMaps = Boolean(process.env.SENTRY_AUTH_TOKEN);
+
+export default withSentryConfig(nextConfig, {
+  // On vise notre instance GlitchTip, pas sentry.io.
+  sentryUrl: process.env.SENTRY_URL,
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+
+  sourcemaps: {
+    disable: !uploadSourceMaps,
+    // Les source maps sont envoyées à GlitchTip puis retirées de la sortie :
+    // les laisser publierait le code source de l'app sur le domaine.
+    deleteSourcemapsAfterUpload: true,
+  },
+
+  // Pas de statistiques d'usage renvoyées à Sentry : on s'auto-héberge
+  // précisément pour que rien ne sorte du serveur.
+  telemetry: false,
+  silent: !process.env.CI,
+
+  // Route le trafic du SDK par notre domaine, ce qui le rend insensible aux
+  // bloqueurs de publicité — ils filtrent les requêtes vers les domaines de
+  // supervision connus, et on perdrait une partie des erreurs sans le savoir.
+  tunnelRoute: "/monitoring",
+
+  // `disableLogger` est déprécié, et son remplaçant
+  // (`webpack.treeshake.removeDebugLogging`) ne s'applique pas sous Turbopack,
+  // que Next 16 utilise par défaut. On s'en passe : le surcoût est le
+  // maintien des journaux de débogage du SDK dans le bundle.
+});

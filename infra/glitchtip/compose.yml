@@ -1,0 +1,92 @@
+# GlitchTip — suivi des erreurs et des performances, auto-hébergé.
+#
+# Dérivé du compose officiel (https://glitchtip.com/assets/compose.sample.yml),
+# avec quatre écarts documentés plus bas. À déployer comme ressource Docker
+# Compose dans Coolify, sur son propre sous-domaine.
+#
+# Les valeurs `changeme` doivent être remplacées avant le premier démarrage —
+# voir README.md.
+
+x-environment: &default-environment
+  DATABASE_URL: postgres://glitchtip:${POSTGRES_PASSWORD}@postgres:5432/glitchtip
+  VALKEY_URL: redis://valkey:6379
+  SECRET_KEY: ${SECRET_KEY}
+  GLITCHTIP_DOMAIN: ${GLITCHTIP_DOMAIN}
+  DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL}
+  EMAIL_URL: ${EMAIL_URL}
+
+  # Le serveur MCP, la raison pour laquelle on a choisi GlitchTip : il expose
+  # 17 outils sur https://<domaine>/mcp — incidents, transactions, spans,
+  # détection de N+1, logs, disponibilité.
+  GLITCHTIP_ENABLE_MCP: "True"
+
+  # Requis par l'analyse de spans et la détection de tendances du MCP. Sans
+  # lui les transactions fonctionnent, mais on perd le détail par span.
+  GLITCHTIP_ENABLE_DUCKDB: "True"
+
+  # Fermé après la création du premier compte : sans ça, l'instance est
+  # ouverte à l'inscription de n'importe qui sur Internet.
+  ENABLE_USER_REGISTRATION: "False"
+  ENABLE_ORGANIZATION_CREATION: "False"
+
+  ENABLE_ADMIN: "False"
+  ENABLE_OPENAPI: "False"
+
+services:
+  postgres:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: glitchtip
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: glitchtip
+    # `max_locks_per_transaction` : absent du compose d'exemple, mais le
+    # compose de développement de GlitchTip précise que la documentation
+    # d'installation le recommande aux auto-hébergeurs. Une requête que
+    # Postgres ne peut pas restreindre à une seule partition verrouille
+    # toutes les partitions et tous leurs index ; le défaut de 64 est trop bas
+    # et finit par faire échouer des requêtes une fois les données accumulées.
+    command:
+      - postgres
+      - -c
+      - max_locks_per_transaction=512
+    volumes:
+      - pg-data:/var/lib/postgresql
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  valkey:
+    image: valkey/valkey:9
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+  web:
+    image: glitchtip/glitchtip:6
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - valkey
+    environment:
+      <<: *default-environment
+      SERVER_ROLE: all_in_one
+    ports:
+      - "8000:8000"
+    volumes:
+      - uploads:/code/uploads
+    # Plafond mémoire explicite. Le VPS tourne déjà à saturation et a connu
+    # deux incidents cette semaine : un service de supervision qui ferait
+    # tomber l'application qu'il supervise serait un comble. 1 Go laisse de la
+    # marge à la configuration tout-en-un tout en bornant le risque.
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+volumes:
+  pg-data:
+  uploads:

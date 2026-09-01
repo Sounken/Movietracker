@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist_Mono } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
+import WebVitalsReporter from "./(app)/components/WebVitalsReporter";
 
 /**
  * Blauer Nue (Webhance Studio) remplace Geist pour le texte courant, New Kansas
@@ -94,7 +95,13 @@ export default function RootLayout({
         {/* suppressHydrationWarning: browser extensions (e.g. Browsec) inject attributes on this tag */}
         <script suppressHydrationWarning dangerouslySetInnerHTML={{ __html: `(function(){try{if(localStorage.getItem('mt-theme')==='light')document.documentElement.setAttribute('data-theme','light')}catch(e){}})()` }} />
       </head>
-      <body suppressHydrationWarning>{children}</body>
+      <body suppressHydrationWarning>
+        {children}
+        {/* Monté à la racine et non dans le groupe (app) : la fiche film vit
+            dans (standalone), et c'est justement la page dont le LCP compte le
+            plus — grande affiche, backdrop en fond. */}
+        <WebVitalsReporter />
+      </body>
     </html>
   );
 }
