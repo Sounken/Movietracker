@@ -70,11 +70,40 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Projet invalide" }, { status: 400 });
   }
 
-  const upstream = await fetch(`${target.origin}/api/${projectId}/envelope/`, {
-    method: "POST",
-    body: envelope,
-    headers: { "Content-Type": "application/x-sentry-envelope" },
-  });
+  /**
+   * Les paramètres d'authentification sont reconstruits depuis le DSN.
+   *
+   * Le navigateur les plaçait dans l'URL — `?sentry_version=7&sentry_key=…` —
+   * et les omettre faisait refuser l'enveloppe par GlitchTip. La clé publique
+   * est la partie « utilisateur » du DSN : `https://<clé>@hôte/<projet>`.
+   */
+  const endpoint = new URL(`${target.origin}/api/${projectId}/envelope/`);
+  endpoint.searchParams.set("sentry_version", "7");
+  endpoint.searchParams.set("sentry_key", target.username);
 
-  return new NextResponse(null, { status: upstream.ok ? 204 : 502 });
+  let upstream: Response;
+  try {
+    upstream = await fetch(endpoint, {
+      method: "POST",
+      body: envelope,
+      headers: { "Content-Type": "application/x-sentry-envelope" },
+    });
+  } catch (error) {
+    // Le conteneur doit joindre GlitchTip par son URL publique, ce qui suppose
+    // que le VPS accepte de reboucler sur sa propre IP depuis Docker. Si ce
+    // n'est pas le cas, l'échec se manifeste ici.
+    console.error("[tunnel] injoignable :", error);
+    return new NextResponse(null, { status: 502 });
+  }
+
+  if (!upstream.ok) {
+    // Le corps de la réponse porte le motif du refus. Journalisé côté serveur
+    // plutôt que renvoyé au navigateur : c'est une information de diagnostic,
+    // elle n'a rien à faire dans une réponse publique.
+    const detail = await upstream.text().catch(() => "");
+    console.error(`[tunnel] refus ${upstream.status} de GlitchTip :`, detail.slice(0, 500));
+    return new NextResponse(null, { status: 502 });
+  }
+
+  return new NextResponse(null, { status: 204 });
 }
