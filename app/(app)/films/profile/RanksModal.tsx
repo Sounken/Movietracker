@@ -53,7 +53,7 @@ export default function RanksModal({
           <div className={styles.currentXp}>
             {levelInfo.currentXP.toLocaleString("fr")} / {levelInfo.nextLevelXP.toLocaleString("fr")} XP
             <span className={styles.currentTotal}>
-              · {levelInfo.totalXP.toLocaleString("fr")} XP au total
+              • {levelInfo.totalXP.toLocaleString("fr")} XP au total
             </span>
           </div>
           <div className={styles.bar}>

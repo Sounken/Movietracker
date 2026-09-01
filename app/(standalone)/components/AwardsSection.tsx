@@ -37,7 +37,7 @@ export default function AwardsSection({
 
       <div className={styles.foot}>
         {hidden > 0 && <span>+ {hidden} autre{hidden > 1 ? "s" : ""} distinction{hidden > 1 ? "s" : ""}</span>}
-        {majorCount > 0 && hidden > 0 && <span className={styles.sep}>·</span>}
+        {majorCount > 0 && hidden > 0 && <span className={styles.sep}>•</span>}
         {/* Wikidata est sous licence CC0, mais citer la source reste correct
             — et permet de savoir d'où vient une donnée fausse. */}
         <span className={styles.source}>Source : Wikidata</span>

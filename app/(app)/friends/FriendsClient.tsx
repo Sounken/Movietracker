@@ -64,7 +64,7 @@ function Avatar({
       {picture}
       <span
         className={styles.levelBadge}
-        title={levelTitle ? `${levelTitle} · niveau ${level}` : `Niveau ${level}`}
+        title={levelTitle ? `${levelTitle} • niveau ${level}` : `Niveau ${level}`}
       >
         {level}
       </span>
@@ -161,7 +161,7 @@ export default function FriendsClient({
       {query.length >= 2 && (
         <div className={styles.section}>
           <div className={styles.sectionTitle}>
-            Résultats{results.length > 0 ? ` · ${results.length}` : ""}
+            Résultats{results.length > 0 ? ` • ${results.length}` : ""}
           </div>
           {results.length === 0 && !searching && (
             <div className={styles.empty}>Aucun utilisateur trouvé pour « {query} »</div>
@@ -213,7 +213,7 @@ export default function FriendsClient({
                         <div className={styles.userName}>{u.name}</div>
                         <div className={styles.userMeta}>
                           {u.filmCount} {countNoun}{u.filmCount !== 1 ? "s" : ""}
-                          {u.avgRating != null && <> · ★ <Rating value={u.avgRating} /></>}
+                          {u.avgRating != null && <> • ★ <Rating value={u.avgRating} /></>}
                         </div>
                       </div>
                     </Link>

@@ -69,7 +69,7 @@ export default function FilmGridInfinite({
           <button className={styles.btn} onClick={loadMore} disabled={loading}>
             {loading
               ? "Chargement…"
-              : `Charger ${Math.min(remaining, PAGE_SIZE)} film${Math.min(remaining, PAGE_SIZE) > 1 ? "s" : ""} de plus · ${remaining} restant${remaining > 1 ? "s" : ""}`}
+              : `Charger ${Math.min(remaining, PAGE_SIZE)} film${Math.min(remaining, PAGE_SIZE) > 1 ? "s" : ""} de plus • ${remaining} restant${remaining > 1 ? "s" : ""}`}
           </button>
         </div>
       )}

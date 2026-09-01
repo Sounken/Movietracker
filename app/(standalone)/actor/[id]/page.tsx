@@ -18,10 +18,10 @@ function age(birthday: string, deathday: string | null): number | null {
 }
 
 const DEPT_LABELS: Record<string, string> = {
-  Acting: "Acteur · Actrice",
-  Directing: "Réalisateur·ice",
+  Acting: "Acteur • Actrice",
+  Directing: "Réalisateur•ice",
   Writing: "Scénariste",
-  Production: "Producteur·ice",
+  Production: "Producteur•ice",
   "Visual Effects": "Effets visuels",
   Camera: "Chef opérateur",
   Sound: "Son",
@@ -98,7 +98,7 @@ export default async function ActorPage({ params }: { params: Promise<{ id: stri
                 <div className={styles.sideStatVal}>
                   {new Date(person.birthday).toLocaleDateString("fr-FR")}
                   {personAge !== null && !person.deathday && (
-                    <span className={styles.sideStatSub}> · {personAge} ans</span>
+                    <span className={styles.sideStatSub}> • {personAge} ans</span>
                   )}
                 </div>
               </div>
@@ -109,7 +109,7 @@ export default async function ActorPage({ params }: { params: Promise<{ id: stri
                 <div className={styles.sideStatVal}>
                   {new Date(person.deathday).toLocaleDateString("fr-FR")}
                   {personAge !== null && (
-                    <span className={styles.sideStatSub}> · {personAge} ans</span>
+                    <span className={styles.sideStatSub}> • {personAge} ans</span>
                   )}
                 </div>
               </div>
@@ -207,7 +207,7 @@ export default async function ActorPage({ params }: { params: Promise<{ id: stri
                       <div className={styles.top4Title}>{film.title}</div>
                       <div className={styles.top4Meta}>
                         {film.year}
-                        {film.character && <> · <span className={styles.top4Role}>{film.character}</span></>}
+                        {film.character && <> • <span className={styles.top4Role}>{film.character}</span></>}
                       </div>
                       {film.voteAverage > 0 && (
                         <div className={styles.top4Score}>★ <Rating value={film.voteAverage} /></div>

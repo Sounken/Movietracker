@@ -243,7 +243,7 @@ export default async function SeriesPage({ params }: { params: Promise<{ id: str
             <div className={styles.progressBox}>
               <div className={styles.progressTop}>
                 <span>Ma progression</span>
-                <span>{totalWatched}/{series.numberOfEpisodes} épisodes · {globalPct}%</span>
+                <span>{totalWatched}/{series.numberOfEpisodes} épisodes • {globalPct}%</span>
               </div>
               <div className={styles.progressTrack}>
                 <div className={styles.progressFill} style={{ width: `${globalPct}%` }} />
@@ -336,7 +336,7 @@ export default async function SeriesPage({ params }: { params: Promise<{ id: str
                   <div className={filmStyles.factLab}>Prochain épisode</div>
                   <div className={`${filmStyles.factVal} ${styles.nextEpisode}`}>
                     S{series.nextEpisode.seasonNumber}E{series.nextEpisode.episodeNumber}
-                    {series.nextEpisode.name && ` · ${series.nextEpisode.name}`}
+                    {series.nextEpisode.name && ` • ${series.nextEpisode.name}`}
                     {" — "}
                     {formatDate(series.nextEpisode.airDate)}
                   </div>

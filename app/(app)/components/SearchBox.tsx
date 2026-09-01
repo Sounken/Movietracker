@@ -136,7 +136,7 @@ export default function SearchBox({
                 <div className={styles.resultMeta}>
                   {m.mediaType === "person" || m.mediaType === "company"
                     ? (m.subtitle ?? "Personnalité")
-                    : `${m.mediaType === "tv" ? "Série" : "Film"}${m.year ? ` · ${m.year}` : ""}`}
+                    : `${m.mediaType === "tv" ? "Série" : "Film"}${m.year ? ` • ${m.year}` : ""}`}
                 </div>
               </div>
               {m.voteAverage != null && m.voteAverage > 0 && (

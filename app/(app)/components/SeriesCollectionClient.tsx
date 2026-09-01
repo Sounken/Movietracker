@@ -347,7 +347,7 @@ export default function SeriesCollectionClient({
           <button className={loadMoreStyles.btn} onClick={loadMore} disabled={loading}>
             {loading
               ? "Chargement…"
-              : `Charger ${Math.min(remaining, PAGE_SIZE)} série${Math.min(remaining, PAGE_SIZE) > 1 ? "s" : ""} de plus · ${remaining} restante${remaining > 1 ? "s" : ""}`}
+              : `Charger ${Math.min(remaining, PAGE_SIZE)} série${Math.min(remaining, PAGE_SIZE) > 1 ? "s" : ""} de plus • ${remaining} restante${remaining > 1 ? "s" : ""}`}
           </button>
         </div>
       )}

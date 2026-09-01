@@ -84,7 +84,7 @@ export default function Topbar({ greeting, userName }: Props) {
       <div className={styles.greet}>
         <div className={styles.hello}>
           <span className={styles.dot} />
-          En ligne · {greeting.toLowerCase()}
+          En ligne • {greeting.toLowerCase()}
         </div>
         <h1 className={styles.title}>
           {userName ? (

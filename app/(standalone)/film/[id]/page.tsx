@@ -385,7 +385,7 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
             <SimilarFilms
               films={sagaFilms}
               title={film.collectionName || "La saga"}
-              subtitle={`${sagaFilms.length + 1} films · dans l'ordre de sortie`}
+              subtitle={`${sagaFilms.length + 1} films • dans l'ordre de sortie`}
             />
           )}
 

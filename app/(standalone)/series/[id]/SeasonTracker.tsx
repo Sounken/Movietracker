@@ -187,7 +187,7 @@ export default function SeasonTracker({
                   de /tv/{id}, donc elle est connue sans déplier ni requête. */}
               {season.voteAverage > 0 && (
                 <span className={styles.seasonAvg}>
-                  Moyenne saison · ★ <Rating value={season.voteAverage} />
+                  Moyenne saison • ★ <Rating value={season.voteAverage} />
                 </span>
               )}
               {(ratings[season.seasonNumber] ?? 0) > 0 && (
@@ -250,7 +250,7 @@ export default function SeasonTracker({
                             {ep.name || `Épisode ${ep.episodeNumber}`}
                             {ep.directors.length > 0 && (
                               <span className={styles.epDirector}>
-                                {" "}· {ep.directors.map((d) => d.name).join(", ")}
+                                {" "}• {ep.directors.map((d) => d.name).join(", ")}
                               </span>
                             )}
                           </span>

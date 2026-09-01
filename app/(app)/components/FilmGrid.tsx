@@ -59,9 +59,9 @@ export default function FilmGrid({
             <div className={styles.title}>{film.title}</div>
             <div className={styles.meta}>
               {film.year && <span>{film.year}</span>}
-              {film.year && film.genres[0] && <span>·</span>}
+              {film.year && film.genres[0] && <span>•</span>}
               {film.genres[0] && <span>{film.genres[0]}</span>}
-              {film.rating !== null && <span>·</span>}
+              {film.rating !== null && <span>•</span>}
               {film.rating !== null && (
                 <span className={styles.stars}>★ <Rating value={film.rating} outOf /></span>
               )}

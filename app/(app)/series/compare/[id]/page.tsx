@@ -60,7 +60,7 @@ export default async function SeriesComparePage({
           <div className={styles.sideName}>{myName}</div>
           <div className={styles.sideAvg}>
             {result.myTotal} séries
-            {result.myAverage !== null && <> · ★ <Rating value={result.myAverage} /></>}
+            {result.myAverage !== null && <> • ★ <Rating value={result.myAverage} /></>}
           </div>
         </div>
 
@@ -71,7 +71,7 @@ export default async function SeriesComparePage({
           <div className={styles.sideName}>{theirName}</div>
           <div className={styles.sideAvg}>
             {result.theirTotal} séries
-            {result.theirAverage !== null && <> · ★ <Rating value={result.theirAverage} /></>}
+            {result.theirAverage !== null && <> • ★ <Rating value={result.theirAverage} /></>}
           </div>
         </div>
       </div>

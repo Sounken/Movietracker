@@ -58,7 +58,7 @@ export default async function ComparePage({ params }: { params: Promise<{ id: st
           <div className={styles.sideName}>{myName}</div>
           <div className={styles.sideAvg}>
             {result.myTotal} films
-            {result.myAverage !== null && <> · ★ <Rating value={result.myAverage} /></>}
+            {result.myAverage !== null && <> • ★ <Rating value={result.myAverage} /></>}
           </div>
         </div>
 
@@ -69,7 +69,7 @@ export default async function ComparePage({ params }: { params: Promise<{ id: st
           <div className={styles.sideName}>{theirName}</div>
           <div className={styles.sideAvg}>
             {result.theirTotal} films
-            {result.theirAverage !== null && <> · ★ <Rating value={result.theirAverage} /></>}
+            {result.theirAverage !== null && <> • ★ <Rating value={result.theirAverage} /></>}
           </div>
         </div>
       </div>

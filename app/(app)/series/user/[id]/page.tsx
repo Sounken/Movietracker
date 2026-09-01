@@ -160,7 +160,7 @@ export default async function PublicSeriesProfilePage({
       <div className={styles.xpSection}>
         <div className={styles.xpRow}>
           <span className={styles.xpLabel}>
-            {levelInfo.title} · niveau {levelInfo.level}
+            {levelInfo.title} • niveau {levelInfo.level}
           </span>
           <span className={styles.xpVal}>
             {levelInfo.currentXP} / {levelInfo.nextLevelXP} XP

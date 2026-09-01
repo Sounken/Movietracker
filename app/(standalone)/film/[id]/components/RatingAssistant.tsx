@@ -122,7 +122,7 @@ export default function RatingAssistant({ scale, title, onApply, onClose }: Prop
                 >
                   <span className={styles.groupName}>{GROUPS[group].label}</span>
                   <small className={styles.groupMeta}>
-                    {members.length} critères · poids {Math.round(GROUPS[group].weight * 100)}%
+                    {members.length} critères • poids {Math.round(GROUPS[group].weight * 100)}%
                   </small>
                   <b className={styles.groupScore}>{fmt1(average)}</b>
                   <ChevronDown size={14} className={styles.chevron} />
@@ -267,11 +267,11 @@ export default function RatingAssistant({ scale, title, onApply, onClose }: Prop
         <footer className={styles.footer}>
           <div className={styles.breakdown}>
             <div>
-              Fabrication · 58%
+              Fabrication • 58%
               <b>{fmt1(result.head)}</b>
             </div>
             <div>
-              Expérience · 42%
+              Expérience • 42%
               <b>{fmt1(result.heart)}</b>
             </div>
             <div>

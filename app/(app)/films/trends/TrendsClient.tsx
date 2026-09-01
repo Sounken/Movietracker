@@ -192,7 +192,7 @@ export default function TrendsClient({
                       <div className={styles.rankMeta}>
                         {film.year}
                         {film.genres.length > 0 && (
-                          <> · {film.genres.slice(0, 2).join(", ")}</>
+                          <> • {film.genres.slice(0, 2).join(", ")}</>
                         )}
                       </div>
                       <div className={styles.rankBar}>
@@ -241,7 +241,7 @@ export default function TrendsClient({
                           <Link href={`${profileBase}/${r.user.id}`} className={styles.reviewUser}>
                             {r.user.name}
                           </Link>
-                          {" · "}
+                          {" • "}
                           <Link href={`${mediaBase}/${r.tmdbId}`} className={styles.reviewFilm}>
                             {r.title}
                           </Link>

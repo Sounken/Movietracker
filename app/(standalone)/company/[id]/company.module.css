@@ -77,7 +77,7 @@
 
 /* Séparateur en puce entre les informations */
 .meta > * + *::before {
-  content: "·";
+  content: "•";
   margin-right: 16px;
   color: var(--line);
 }

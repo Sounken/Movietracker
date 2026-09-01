@@ -92,9 +92,12 @@
   background: var(--accent);
 }
 
+/* 42px et non 52 : c'est le seul titre du site contraint en largeur (54% du
+   bandeau) et en hauteur (`min-height` calée sur celle du logo). Même avec le
+   `size-adjust` global, Cooper Black y passait sur deux lignes. */
 .title {
   font-family: var(--font-serif), serif;
-  font-size: 52px;
+  font-size: 42px;
   line-height: 0.96;
   margin: 0 0 16px;
   letter-spacing: -0.02em;

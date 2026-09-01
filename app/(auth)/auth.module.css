@@ -113,7 +113,7 @@
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 11px 14px;
-  font-family: var(--font-geist), system-ui, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
   font-size: 14px;
   color: var(--ink);
   outline: none;
@@ -136,7 +136,7 @@
   background: var(--accent);
   border: none;
   border-radius: 10px;
-  font-family: var(--font-geist), system-ui, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
   font-size: 14px;
   font-weight: 500;
   color: #fff;

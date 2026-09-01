@@ -39,10 +39,10 @@ export default function NotFound() {
               <path d="M3 9h18M3 15h18M8 4v16M16 4v16" />
             </svg>
           </div>
-          <div className={styles.frameLabel}>SCENE NOT FOUND · TAKE ∞</div>
+          <div className={styles.frameLabel}>SCENE NOT FOUND • TAKE ∞</div>
         </div>
 
-        <div className={styles.errorCode}>ERR · 404 · FRAME MISSING</div>
+        <div className={styles.errorCode}>ERR • 404 • FRAME MISSING</div>
 
         <h1 className={styles.headline}>Cette scène <em>n&apos;existe pas.</em></h1>
         <p className={styles.subline}>
@@ -72,7 +72,7 @@ export default function NotFound() {
         </div>
       </div>
 
-      <div className={styles.bottomInfo}>MOVIETRACKER · 2026 · PAGE INTROUVABLE</div>
+      <div className={styles.bottomInfo}>MOVIETRACKER • 2026 • PAGE INTROUVABLE</div>
     </div>
   );
 }

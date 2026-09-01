@@ -326,7 +326,7 @@ export default function Sidebar({
               <div className={styles.footInfo}>
                 <div className={styles.footName}>{userName ?? "Cinéphile"}</div>
                 <div className={styles.footSub}>
-                  {activeLevel.title} · niv. {activeLevel.level}
+                  {activeLevel.title} • niv. {activeLevel.level}
                 </div>
                 <div className={styles.xpBarWrap} title={`${activeLevel.currentXP} / ${activeLevel.nextLevelXP} XP`}>
                   <div className={styles.xpBar} style={{ width: `${activeLevel.percent}%` }} />

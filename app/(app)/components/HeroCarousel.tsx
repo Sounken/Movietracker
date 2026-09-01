@@ -154,7 +154,7 @@ export default function HeroCarousel({
         <div className={styles.meta}>
           {cur.year && <span>{cur.year}</span>}
           {cur.year && genres.length > 0 && <span className={styles.sep} />}
-          {genres.length > 0 && <span>{genres.join(" · ")}</span>}
+          {genres.length > 0 && <span>{genres.join(" • ")}</span>}
           {cur.voteAverage > 0 && (
             <span className={styles.score}>
               <StarIcon /> <Rating value={cur.voteAverage} outOf />
