@@ -1,97 +1,80 @@
 # Polices auto-hébergées
 
-| Fichier | Police | Origine |
-|---|---|---|
-| `blauer-nue-regular.woff2` | Blauer Nue Regular | Webhance Studio (Alwin Johnson), converti depuis l'OTF fourni |
-| `cooper-black.woff2` | Cooper Black **Lining** | dérivé de `COOPBL.TTF` — voir ci-dessous |
+| Fichier | Police | Rôle | Fonderie |
+|---|---|---|---|
+| `new-kansas-black.woff2` | New Kansas Black | titres (`--font-serif`) | Newlyn Works (Miles Newlyn, Riccardo Olocco, Leo Philp) |
+| `blauer-nue-regular.woff2` | Blauer Nue Regular | texte courant (`--font-sans`) | Webhance Studio (Alwin Johnson) |
+
+Geist Mono reste chargée depuis Google Fonts pour les chiffres du texte courant.
 
 Les deux fichiers déclarent `fsType: 8` (*Editable embedding*), le niveau le plus
-permissif de la spécification OpenType : l'intégration et la modification sont
-autorisées par le fichier lui-même.
+permissif de la spécification OpenType : le fichier autorise lui-même
+l'intégration et la modification.
 
-## Cooper Black : chiffres réalignés
+## Pourquoi auto-hébergées
 
-Cooper Black, dessinée en 1922, porte des **chiffres elzéviriens** — ils montent
-et descendent comme des minuscules au lieu d'être alignés sur la capitale.
-Mesuré sur l'original, en millièmes de cadratin :
+Servies depuis notre domaine via `next/font/local`, elles n'ajoutent aucune
+requête tierce et Next se charge du `@font-face` et du préchargement. Cooper
+Black, envisagée un temps, aurait imposé un chargement depuis `use.typekit.net`
+— Adobe Fonts interdit l'auto-hébergement.
 
-| | bas | haut | | | bas | haut |
-|---|---|---|---|---|---|---|
-| 0 | −13 | 563 | | 5 | −104 | 553 |
-| 1 | −14 | 560 | | 6 | −13 | 635 |
-| 2 | −46 | 560 | | 7 | −126 | 580 |
-| 3 | −101 | 560 | | 8 | −13 | 619 |
-| 4 | −92 | 597 | | 9 | −125 | 560 |
+## Réglages notables
 
-Dans « 1685 », le 6 monte à 635 et le 8 à 619 quand le 1 plafonne à 560 et que le
-5 descend à −104 : le 1 et le 5 paraissent tomber plus bas. Charmant sur un
-titre, illisible sur une colonne de statistiques.
+### `size-adjust: 85%` sur New Kansas Black
 
-Impossible à corriger en CSS : `font-variant-numeric: lining-nums` suppose une
-fonctionnalité OpenType `lnum`, or **la table de fonctionnalités de Cooper Black
-est vide**. La police ne contient pas non plus de jeu de chiffres alternatif — ses
-11 glyphes non mappés sont des composants d'accents.
+Mesurée à 100px sur « Il était une fois dans l'Ouest », elle occupe 1459px
+contre 926px pour Instrument Serif, la police de titres d'origine : elle est
+**1,58× plus large**. Les tailles en dur du site avaient été calées sur une
+serif fine et élancée ; reprises telles quelles, les titres débordaient.
 
-Les dix chiffres ont donc été **redessinés par transformation des contours** :
-chacun est mis à l'échelle verticalement pour aller de la ligne de base (0) à
-648, la hauteur du « 6 », le plus haut des chiffres déjà posés sur la ligne.
+Égaliser les largeurs demanderait 63%, ce qui écraserait la police. 85% ramène
+l'encombrement à ~1,34× en préservant sa présence. **C'est le seul curseur à
+bouger si les titres paraissent trop gros** : il agit d'un coup sur la
+cinquantaine de déclarations `--font-serif` du site.
 
-```
-zero  ×1.124   five  ×0.987
-one   ×1.130   six   ×1.000
-two   ×1.070   seven ×0.918
-three ×0.981   eight ×1.026
-four  ×0.941   nine  ×0.946
-```
+Le titre du carrousel descend en plus à 42px : c'est le seul du site contraint à
+la fois en largeur (54% du bandeau) et en hauteur (`min-height` calée sur celle
+du logo).
 
-Deux points de méthode :
+### `font-variant-numeric: tabular-nums` sur les nombres
 
-- **Échelle verticale seule, pas uniforme.** Une mise à l'échelle uniforme
-  préserverait les proportions de chaque chiffre, mais changerait leur largeur :
-  à l'essai, les chiffres ressortaient rapetissés et espacés. En n'agissant que
-  sur la hauteur, les largeurs dessinées et le crénage sont conservés, et la
-  déformation reste comprise entre −8% et +13%.
-- **L'avance reste à 600** (1229 unités sur 2048). Cooper Black est tabulaire par
-  construction, ce qui fait que les colonnes de chiffres s'alignent : cette
-  propriété est préservée.
+Les chiffres de New Kansas sont **déjà alignés** sur la capitale, mais
+proportionnels par défaut (huit largeurs différentes). La police embarque `tnum`,
+activé sur les classes qui empilent des nombres — statistiques du tableau de
+bord, de la collection, du profil et de la comparaison, note TMDB, résultats de
+recherche, numéros de favoris, récapitulatif de l'assistant — pour que les
+colonnes s'alignent.
 
-Le nom complet de la police porte le suffixe « Lining » pour ne pas confondre le
-fichier dérivé avec l'original.
+C'est ce qui distingue New Kansas de Cooper Black, un temps envisagée : cette
+dernière n'embarquait **aucune** fonctionnalité OpenType, et ses chiffres
+elzéviriens (le 7 descendait à −126, le 6 montait à 635) avaient dû être
+redessinés à la main dans le fichier. Ce bricolage a disparu avec elle.
 
-### Refaire la manipulation
+### `letter-spacing: -0.015em` global
 
-Si le fichier source est un jour remplacé, la transformation se rejoue avec
-`fonttools` :
+Blauer Nue est dessinée très aérée : mesurée sur les minuscules, elle laisse 79
+millièmes de cadratin d'air par lettre, contre 18 pour New Kansas — **4,4× plus**.
+Parti pris de fonderie assumé, mais sur des libellés d'interface courts le texte
+paraissait distendu. L'approche resserrée en retire environ un quart sans nuire
+à la lisibilité aux petites tailles.
 
-```python
-from fontTools.ttLib import TTFont
-from fontTools.pens.boundsPen import BoundsPen
+Posé sur `html`, le réglage s'applique aussi aux titres et au monospace, ce qui
+leur va bien — les deux sont eux aussi plutôt aérés.
 
-DIGITS = ["zero","one","two","three","four","five","six","seven","eight","nine"]
-f = TTFont("COOPBL.TTF")
-glyf, gs, hmtx = f["glyf"], f.getGlyphSet(), f["hmtx"]
+## Caractères absents
 
-bp = BoundsPen(gs); gs["six"].draw(bp)
-target = bp.bounds[3] - bp.bounds[1]          # hauteur du « 6 »
+Ni l'une ni l'autre ne contient **★**, que l'interface affiche comme du texte
+(badges de note, filtres). La chaîne de repli est donc explicite dans
+`layout.tsx` pour qu'il tombe proprement sur la police système ; le décalage
+passe inaperçu pour un pictogramme.
 
-for name in DIGITS:
-    g = glyf[name]
-    bp = BoundsPen(gs); gs[name].draw(bp)
-    _, ymin, _, ymax = bp.bounds
-    scale = target / (ymax - ymin)
-    advance = hmtx[name][0]
-    g.coordinates = [(x, round((y - ymin) * scale)) for x, y in g.coordinates]
-    g.recalcBounds(glyf)
-    hmtx[name] = (advance, g.xMin)            # avance inchangée
-
-f.flavor = "woff2"
-f.save("cooper-black.woff2")
-```
+Le point médian `·` a par ailleurs été remplacé par la puce `•` dans toute
+l'interface : dans Blauer Nue, `·` est centré à 685 pour une hauteur de capitale
+de 700 — dessiné en exposant, il faisait lire « 1982 ° 2h45 ».
 
 ## Licence
 
-Cooper Black est distribuée par Monotype ; `COOPBL.TTF` est la digitalisation
-livrée avec Windows et Office, et ses métadonnées ne portent ni fabricant ni URL
-de licence. L'autorisation d'intégration inscrite dans le fichier n'équivaut pas
-à une licence webfont : pour lever tout doute, une licence webfont Cooper Black
-chez Monotype remplacerait ce fichier sans rien changer au code.
+Blauer Nue est vendue par Webhance sur MyFonts, Creative Market, Envato Elements
+et Creative Fabrica. **Les licences webfont de ces plateformes excluent
+fréquemment l'usage dans une application web** : à vérifier sur la licence
+détenue.

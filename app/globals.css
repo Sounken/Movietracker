@@ -78,11 +78,18 @@
   padding: 0;
 }
 
+/* Approche resserrée. Blauer Nue est dessinée très aérée : mesurée sur les
+   minuscules, elle laisse 79 millièmes de cadratin d'air par lettre, contre 18
+   pour New Kansas — 4,4× plus. C'est un parti pris de la fonderie, pas un
+   défaut, mais posé sur des libellés d'interface courts il donnait un texte
+   distendu. −0,015em en retire environ un quart sans nuire à la lisibilité aux
+   petites tailles ; c'est le curseur à bouger si le rendu reste trop lâche. */
 html,
 body {
   height: 100%;
   background: var(--bg);
   color: var(--ink);
+  letter-spacing: -0.015em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

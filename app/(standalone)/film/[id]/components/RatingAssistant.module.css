@@ -495,6 +495,7 @@
 }
 
 .breakdown b {
+  font-variant-numeric: tabular-nums;
   display: block;
   font-family: var(--font-serif), serif;
   font-size: 21px;

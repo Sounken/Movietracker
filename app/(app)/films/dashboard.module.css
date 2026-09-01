@@ -92,6 +92,9 @@
   color: var(--ink);
   margin-top: 6px;
   margin-bottom: 0;
+  /* New Kansas embarque `tnum` : les chiffres passent à chasse fixe et les
+     colonnes s'alignent. Par défaut ils sont proportionnels (8 largeurs). */
+  font-variant-numeric: tabular-nums;
 }
 
 .statLab {

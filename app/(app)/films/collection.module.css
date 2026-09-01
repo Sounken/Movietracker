@@ -46,6 +46,9 @@
   line-height: 1;
   color: var(--ink);
   margin-bottom: 4px;
+  /* New Kansas embarque `tnum` : les chiffres passent à chasse fixe et les
+     colonnes s'alignent. Par défaut ils sont proportionnels (8 largeurs). */
+  font-variant-numeric: tabular-nums;
 }
 
 .statLab {

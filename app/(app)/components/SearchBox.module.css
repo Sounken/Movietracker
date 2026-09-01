@@ -159,6 +159,9 @@
   display: flex;
   align-items: center;
   gap: 4px;
+  /* New Kansas embarque `tnum` : les chiffres passent à chasse fixe et les
+     colonnes s'alignent. Par défaut ils sont proportionnels (8 largeurs). */
+  font-variant-numeric: tabular-nums;
 }
 
 .resultStar {

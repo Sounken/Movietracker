@@ -457,6 +457,9 @@
   margin-bottom: 4px;
   letter-spacing: -0.02em;
   color: var(--ink);
+  /* New Kansas embarque `tnum` : les chiffres passent à chasse fixe et les
+     colonnes s'alignent. Par défaut ils sont proportionnels (8 largeurs). */
+  font-variant-numeric: tabular-nums;
 }
 
 .statSub {
@@ -561,6 +564,9 @@
   font-style: italic;
   z-index: 2;
   pointer-events: none;
+  /* New Kansas embarque `tnum` : les chiffres passent à chasse fixe et les
+     colonnes s'alignent. Par défaut ils sont proportionnels (8 largeurs). */
+  font-variant-numeric: tabular-nums;
 }
 
 .favInfo {
@@ -675,6 +681,9 @@
   font-style: italic;
   color: var(--ink-mute);
   line-height: 1;
+  /* New Kansas embarque `tnum` : les chiffres passent à chasse fixe et les
+     colonnes s'alignent. Par défaut ils sont proportionnels (8 largeurs). */
+  font-variant-numeric: tabular-nums;
 }
 
 .favEmptyLabel {

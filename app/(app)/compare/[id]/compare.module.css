@@ -113,6 +113,9 @@
   font-size: 28px;
   color: var(--ink);
   line-height: 1;
+  /* New Kansas embarque `tnum` : les chiffres passent à chasse fixe et les
+     colonnes s'alignent. Par défaut ils sont proportionnels (8 largeurs). */
+  font-variant-numeric: tabular-nums;
 }
 
 .statSub {

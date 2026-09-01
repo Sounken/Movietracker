@@ -163,6 +163,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  /* New Kansas embarque `tnum` : les chiffres passent à chasse fixe et les
+     colonnes s'alignent. Par défaut ils sont proportionnels (8 largeurs). */
+  font-variant-numeric: tabular-nums;
 }
 
 /* Valeur en toutes lettres (statut, type…) : plus petite, mais centrée dans la

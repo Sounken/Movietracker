@@ -4,17 +4,17 @@ import localFont from "next/font/local";
 import "./globals.css";
 
 /**
- * Blauer Nue (Webhance Studio) remplace Geist pour le texte courant, Cooper
- * Black remplace Instrument Serif pour les titres.
+ * Blauer Nue (Webhance Studio) remplace Geist pour le texte courant, New Kansas
+ * Black (Newlyn Works) remplace Instrument Serif pour les titres.
  *
  * Auto-hébergées via `next/font/local` : les fichiers partent de notre domaine,
  * Next écrit le `@font-face` et les précharge — aucune requête tierce, à la
  * différence d'un chargement depuis Adobe Fonts, qui interdit l'auto-hébergement.
  *
- * Les deux polices ignorent ★ et →, que l'interface affiche comme du texte
- * (badges de note, boutons d'import). La chaîne de repli est donc explicite :
- * ces deux symboles retombent sur la police système, ce qui passe inaperçu pour
- * des pictogrammes — bien moins que si c'étaient des lettres.
+ * Aucune des deux ne contient ★, que l'interface affiche comme du texte (badges
+ * de note, filtres). La chaîne de repli est donc explicite pour qu'il tombe sur
+ * la police système, ce qui passe inaperçu pour un pictogramme — bien moins que
+ * si c'était une lettre.
  */
 const blauerNue = localFont({
   src: "./fonts/blauer-nue-regular.woff2",
@@ -25,21 +25,25 @@ const blauerNue = localFont({
 });
 
 /**
- * `size-adjust` : mesuré à 100px sur « Il était une fois dans l'Ouest »,
- * Cooper Black occupe 1402px contre 926px pour Instrument Serif — elle est
- * **1,52× plus large**. Les tailles en dur du site ont été réglées sur une
- * serif fine et élancée ; reprises telles quelles, les titres débordent (celui
- * du carrousel passait à deux lignes).
+ * New Kansas Black (Newlyn Works) porte les titres.
  *
- * Ramener la largeur à l'identique demanderait 66%, ce qui écraserait la
- * police et gâcherait ce qu'on est venu y chercher. 85% est le compromis :
- * l'encombrement retombe à ~1,3× au lieu de 1,52×, la présence reste. C'est le
- * seul curseur à bouger si les titres paraissent encore trop gros — il agit
- * d'un coup sur la cinquantaine de déclarations `--font-serif` du site, là où
- * les reprendre une par une serait ingérable.
+ * Elle remplace Cooper Black, dont les chiffres elzéviriens désalignaient les
+ * colonnes de statistiques et avaient dû être redessinés à la main dans le
+ * fichier. Ce bricolage disparaît : New Kansas a des chiffres déjà alignés et
+ * embarque `lnum`/`tnum`, donc la chasse tabulaire s'obtient proprement en CSS
+ * (`font-variant-numeric: tabular-nums`) là où des nombres s'empilent.
+ *
+ * `size-adjust` : mesuré à 100px sur « Il était une fois dans l'Ouest », elle
+ * occupe 1459px contre 926px pour Instrument Serif, soit **1,58× plus large**.
+ * Les tailles en dur du site ont été réglées sur une serif fine et élancée ;
+ * reprises telles quelles, les titres débordent. Égaliser demanderait 63%, ce
+ * qui écraserait la police ; 85% ramène l'encombrement à ~1,34× en gardant sa
+ * présence. C'est le seul curseur à bouger si les titres paraissent encore trop
+ * gros — il agit d'un coup sur la cinquantaine de déclarations `--font-serif`,
+ * là où les reprendre une par une serait ingérable.
  */
-const cooperBlack = localFont({
-  src: "./fonts/cooper-black.woff2",
+const newKansas = localFont({
+  src: "./fonts/new-kansas-black.woff2",
   variable: "--font-serif",
   display: "swap",
   weight: "400",
@@ -82,7 +86,7 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
-      className={`${blauerNue.variable} ${geistMono.variable} ${cooperBlack.variable}`}
+      className={`${blauerNue.variable} ${geistMono.variable} ${newKansas.variable}`}
       style={{ fontFamily: "var(--font-sans), system-ui, sans-serif" }}
     >
       <head>
