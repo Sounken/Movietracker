@@ -105,10 +105,22 @@ export default withSentryConfig(nextConfig, {
   telemetry: false,
   silent: !process.env.CI,
 
-  // Route le trafic du SDK par notre domaine, ce qui le rend insensible aux
-  // bloqueurs de publicité — ils filtrent les requêtes vers les domaines de
-  // supervision connus, et on perdrait une partie des erreurs sans le savoir.
-  tunnelRoute: "/monitoring",
+  /**
+   * Pas de `tunnelRoute`.
+   *
+   * L'option est implémentée par le greffon webpack de Sentry, or Next 16
+   * compile avec Turbopack : elle est **ignorée sans avertissement**. La route
+   * `/monitoring` n'était jamais générée, le SDK client y postait ses
+   * événements, recevait un 404, et toutes les erreurs du navigateur
+   * disparaissaient — pendant que les transactions serveur, qui n'empruntent
+   * pas le tunnel, arrivaient normalement. Symptôme trompeur : la supervision
+   * semblait fonctionner.
+   *
+   * Le tunnel servait à contourner les bloqueurs de publicité, qui filtrent
+   * les domaines de supervision connus. L'argument ne tient pas ici :
+   * l'instance est sur notre propre sous-domaine, qui ne figure dans aucune
+   * liste de blocage.
+   */
 
   // `disableLogger` est déprécié, et son remplaçant
   // (`webpack.treeshake.removeDebugLogging`) ne s'applique pas sous Turbopack,
