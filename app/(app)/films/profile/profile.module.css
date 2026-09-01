@@ -450,8 +450,12 @@
   font-family: var(--font-geist-mono), monospace;
 }
 
+  /* Chiffres en mono : Cooper Black a des chiffres elzéviriens très marqués
+     (le 7 descend à -126, le 6 monte à 635) et n'embarque aucune fonctionnalité
+     OpenType, donc pas de `lnum` pour forcer l'alignement. Une colonne de stats
+     y devenait illisible. */
 .statVal {
-  font-family: var(--font-serif), serif;
+  font-family: var(--font-geist-mono), monospace;
   font-size: 38px;
   line-height: 1;
   margin-bottom: 4px;
@@ -550,11 +554,15 @@
   background: linear-gradient(180deg, transparent 35%, rgba(0,0,0,0.88) 100%);
 }
 
+  /* Chiffres en mono : Cooper Black a des chiffres elzéviriens très marqués
+     (le 7 descend à -126, le 6 monte à 635) et n'embarque aucune fonctionnalité
+     OpenType, donc pas de `lnum` pour forcer l'alignement. Une colonne de stats
+     y devenait illisible. */
 .favNum {
   position: absolute;
   top: 14px;
   left: 14px;
-  font-family: var(--font-serif), serif;
+  font-family: var(--font-geist-mono), monospace;
   font-size: 48px;
   line-height: 1;
   color: rgba(255,255,255,0.12);
@@ -669,8 +677,12 @@
   border-color: var(--accent);
 }
 
+  /* Chiffres en mono : Cooper Black a des chiffres elzéviriens très marqués
+     (le 7 descend à -126, le 6 monte à 635) et n'embarque aucune fonctionnalité
+     OpenType, donc pas de `lnum` pour forcer l'alignement. Une colonne de stats
+     y devenait illisible. */
 .favEmptyNum {
-  font-family: var(--font-serif), serif;
+  font-family: var(--font-geist-mono), monospace;
   font-size: 64px;
   font-style: italic;
   color: var(--ink-mute);
