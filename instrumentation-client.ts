@@ -24,7 +24,19 @@ import { commonOptions, enabled } from "@/lib/sentry-options";
  * Pour retirer une intégration précise sans perdre les autres, il faut passer
  * une fonction : `integrations: (defauts) => defauts.filter(…)`.
  */
-Sentry.init(commonOptions);
+Sentry.init({
+  ...commonOptions,
+  /**
+   * Les événements transitent par notre propre route plutôt que d'aller
+   * directement à GlitchTip : les bloqueurs de publicité filtrent le motif
+   * `/api/<id>/envelope/?sentry_key=…` quel que soit le domaine, et toutes les
+   * erreurs des utilisateurs équipés d'un bloqueur étaient perdues.
+   *
+   * `tunnel` est une option d'exécution du SDK, contrairement à `tunnelRoute`
+   * qui passe par le greffon webpack et que Turbopack ignore.
+   */
+  tunnel: "/api/mn",
+});
 
 /** Nécessaire pour que les transitions de route apparaissent dans les traces. */
 export const onRouterTransitionStart = enabled
