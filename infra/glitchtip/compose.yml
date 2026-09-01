@@ -77,8 +77,18 @@ services:
     environment:
       <<: *default-environment
       SERVER_ROLE: all_in_one
-    ports:
-      - "8000:8000"
+    # `expose` et non `ports` : on ne publie rien sur l'IP publique du VPS.
+    #
+    # Le compose officiel utilise `ports: 8000:8000`, ce qui suppose une
+    # machine dédiée. Ici le port 8000 était déjà pris par un autre conteneur,
+    # et le déploiement échouait sur « port is already allocated ».
+    #
+    # Publier le port serait de toute façon une mauvaise idée : le proxy de
+    # Coolify atteint le conteneur par le réseau Docker interne, et c'est lui
+    # qui porte le certificat. Un port ouvert en direct exposerait GlitchTip en
+    # HTTP clair, en contournant TLS.
+    expose:
+      - "8000"
     volumes:
       - uploads:/code/uploads
     # Plafond mémoire explicite. Le VPS tourne déjà à saturation et a connu

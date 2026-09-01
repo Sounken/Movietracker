@@ -32,9 +32,20 @@ notifications : c'est l'erreur classique.
 Faire pointer `errors.movietracker.fr` sur le VPS, puis assigner ce domaine au
 service `web` (port 8000) dans Coolify, qui s'occupe du certificat.
 
-Le compose publie `8000:8000` comme le fait l'exemple officiel. Si le proxy de
-Coolify atteint le conteneur par le réseau interne, remplacer `ports` par
-`expose: ["8000"]` évite de laisser le port ouvert sur l'IP publique.
+Le compose utilise `expose` et non `ports`, contrairement à l'exemple officiel
+qui suppose une machine dédiée : le port 8000 est déjà occupé sur ce VPS, et le
+déploiement échouait sur `Bind for 0.0.0.0:8000 failed: port is already
+allocated`.
+
+C'est de toute façon la bonne configuration ici. Le proxy de Coolify joint le
+conteneur par le réseau Docker interne et porte le certificat ; publier le port
+exposerait GlitchTip en HTTP clair sur l'IP publique, en contournant TLS.
+
+Pour savoir ce qui occupe un port sur le VPS :
+
+```
+docker ps --format '{{.Names}}\t{{.Ports}}' | grep 8000
+```
 
 ## 3. Premier démarrage
 
