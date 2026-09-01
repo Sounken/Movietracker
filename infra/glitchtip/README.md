@@ -40,9 +40,10 @@ Coolify atteint le conteneur par le réseau interne, remplacer `ports` par
 
 Le conteneur applique ses migrations tout seul. Une fois en ligne :
 
-1. créer le compte — **c'est la seule fenêtre pour le faire**, `ENABLE_USER_REGISTRATION`
-   est à `False` dans le compose. Le mettre temporairement à `True`, créer le
-   compte, puis le repasser à `False` et redéployer ;
+1. dans Coolify, passer `ENABLE_USER_REGISTRATION` et `ENABLE_ORGANIZATION_CREATION`
+   à `True`, redéployer, créer le compte, puis les repasser à `False` et
+   redéployer. Les laisser ouverts exposerait l'instance à l'inscription de
+   n'importe qui ;
 2. créer l'organisation et le projet `movietracker` ;
 3. relever le **DSN** du projet, à reporter dans la variable `SENTRY_DSN` de
    MovieTracker.
