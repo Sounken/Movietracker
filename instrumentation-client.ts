@@ -6,15 +6,25 @@
 import * as Sentry from "@sentry/nextjs";
 import { commonOptions, enabled } from "@/lib/sentry-options";
 
-Sentry.init({
-  ...commonOptions,
-  /**
-   * Pas de `replayIntegration` : GlitchTip ne gère pas le session replay, c'est
-   * un choix assumé du projet. L'activer enverrait des enregistrements que
-   * l'instance rejetterait, en pure perte de bande passante.
-   */
-  integrations: [],
-});
+/**
+ * Surtout ne pas passer `integrations` ici.
+ *
+ * Fourni sous forme de tableau, le champ **remplace** les intégrations par
+ * défaut au lieu de s'y ajouter. Un `integrations: []` — écrit pour écarter le
+ * session replay — supprimait du même coup `globalHandlers`, qui accroche
+ * `window.onerror` et capture les erreurs non gérées, ainsi que
+ * `inboundFilters`, qui applique `ignoreErrors` et `denyUrls`. Le SDK
+ * s'initialisait correctement, DSN compris, et n'envoyait jamais rien : aucune
+ * requête réseau, aucun message d'erreur.
+ *
+ * La précaution était doublement inutile : le session replay ne fait pas partie
+ * des défauts, il faut l'ajouter explicitement via `replayIntegration()`. Ne
+ * rien déclarer est donc exactement ce qu'on veut.
+ *
+ * Pour retirer une intégration précise sans perdre les autres, il faut passer
+ * une fonction : `integrations: (defauts) => defauts.filter(…)`.
+ */
+Sentry.init(commonOptions);
 
 /** Nécessaire pour que les transitions de route apparaissent dans les traces. */
 export const onRouterTransitionStart = enabled
