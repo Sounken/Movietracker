@@ -151,12 +151,8 @@
   border-color: rgba(var(--accent-rgb), 0.2);
 }
 
-  /* Chiffres en mono : Cooper Black a des chiffres elzéviriens très marqués
-     (le 7 descend à -126, le 6 monte à 635) et n'embarque aucune fonctionnalité
-     OpenType, donc pas de `lnum` pour forcer l'alignement. Une colonne de stats
-     y devenait illisible. */
 .scoreVal {
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-serif), serif;
   font-size: 34px;
   line-height: 1;
   color: var(--ink);
