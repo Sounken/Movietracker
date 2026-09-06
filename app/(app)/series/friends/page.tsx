@@ -5,6 +5,7 @@ import { getSeriesCards } from "@/lib/series";
 import { computeXP, getLevelInfo } from "@/lib/xp";
 import Topbar from "../../components/Topbar";
 import FriendsClient from "../../friends/FriendsClient";
+import { getGreeting } from "@/lib/greeting";
 
 // Champs nécessaires au calcul du niveau (cf. computeXP).
 const XP_SELECT = { rating: true, review: true, liked: true, watched: true } as const;
@@ -13,8 +14,7 @@ export default async function SeriesFriendsPage() {
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
+  const greeting = getGreeting();
 
   const followingRaw = await prisma.userFollow.findMany({
     where: { followerId: session.userId },

@@ -8,6 +8,7 @@ import HeroCarousel from "../../components/HeroCarousel";
 import DiscoverFilters from "./DiscoverFilters";
 import DiscoverGrid from "./DiscoverGrid";
 import styles from "./discover.module.css";
+import { getGreeting } from "@/lib/greeting";
 
 export default async function DiscoverPage({
   searchParams,
@@ -60,8 +61,7 @@ export default async function DiscoverPage({
     ).filter((entry): entry is readonly [number, string] => entry[1] !== null),
   ) as Record<number, string>;
 
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
+  const greeting = getGreeting();
 
   return (
     <div className={styles.page}>

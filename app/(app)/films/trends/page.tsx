@@ -4,6 +4,7 @@ import { getFilmTrends, parsePeriod, type Period } from "@/lib/trends";
 import Topbar from "../../components/Topbar";
 import TrendsClient from "./TrendsClient";
 import styles from "./trends.module.css";
+import { getGreeting } from "@/lib/greeting";
 
 // Toutes les données de la page viennent d'une seule agrégation (cachée) :
 // un seul boundary Suspense pour tout le contenu, la Topbar reste immédiate.
@@ -33,8 +34,7 @@ export default async function TrendsPage({
   const [session, { period: periodParam }] = await Promise.all([getSession(), searchParams]);
   const period = parsePeriod(periodParam);
 
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
+  const greeting = getGreeting();
 
   return (
     <div>

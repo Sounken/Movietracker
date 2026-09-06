@@ -7,6 +7,7 @@ import { Rating } from "@/lib/rating-scale";
 import Topbar from "../../../components/Topbar";
 import CompareClient from "../../../compare/[id]/CompareClient";
 import styles from "../../../compare/[id]/compare.module.css";
+import { getGreeting } from "@/lib/greeting";
 
 function Avatar({ url, name }: { url: string | null; name: string }) {
   if (url) {
@@ -42,8 +43,7 @@ export default async function SeriesComparePage({
   const myName = me.name ?? me.email.split("@")[0];
   const theirName = them.name ?? them.email.split("@")[0];
 
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
+  const greeting = getGreeting();
 
   return (
     <div className={styles.page}>

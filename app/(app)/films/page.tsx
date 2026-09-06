@@ -11,6 +11,7 @@ import CollectionClient from "../components/CollectionClient";
 import AddFilmButton from "../components/AddFilmButton";
 import styles from "./dashboard.module.css";
 import { Rating } from "@/lib/rating-scale";
+import { getGreeting } from "@/lib/greeting";
 
 function formatHours(totalMinutes: number): string {
   const h = Math.floor(totalMinutes / 60);
@@ -238,8 +239,7 @@ export default async function DashboardPage() {
   const session = await getSession();
   if (!session) redirect("/films/discover");
 
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
+  const greeting = getGreeting();
 
   return (
     <div className={styles.page}>

@@ -4,6 +4,7 @@ import { getSeriesTrends, parsePeriod, type Period } from "@/lib/trends";
 import Topbar from "../../components/Topbar";
 import TrendsClient from "../../films/trends/TrendsClient";
 import styles from "../../films/trends/trends.module.css";
+import { getGreeting } from "@/lib/greeting";
 
 // Même architecture que les tendances films : une seule agrégation cachée,
 // un seul boundary Suspense.
@@ -36,8 +37,7 @@ export default async function SeriesTrendsPage({
   const [session, { period: periodParam }] = await Promise.all([getSession(), searchParams]);
   const period = parsePeriod(periodParam);
 
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
+  const greeting = getGreeting();
 
   return (
     <div>

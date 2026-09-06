@@ -5,6 +5,7 @@ import { getSeriesCards } from "@/lib/series";
 import Topbar from "../../components/Topbar";
 import SeriesCollectionClient from "../../components/SeriesCollectionClient";
 import discover from "../../films/discover/discover.module.css";
+import { getGreeting } from "@/lib/greeting";
 
 export default async function SeriesWatchlistPage() {
   const session = await getSession();
@@ -30,8 +31,7 @@ export default async function SeriesWatchlistPage() {
     })
     .filter((x): x is NonNullable<typeof x> => x !== null);
 
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
+  const greeting = getGreeting();
 
   return (
     <div className={discover.page}>

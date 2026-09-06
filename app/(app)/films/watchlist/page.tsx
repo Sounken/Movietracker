@@ -6,6 +6,7 @@ import { getFilmCards } from "@/lib/films";
 import Topbar from "../../components/Topbar";
 import CollectionClient from "../../components/CollectionClient";
 import styles from "../collection.module.css";
+import { getGreeting } from "@/lib/greeting";
 
 const PAGE_SIZE = 24;
 
@@ -13,8 +14,7 @@ export default async function WatchlistPage() {
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
+  const greeting = getGreeting();
 
   const [total, entries, ratedCount] = session
     ? await Promise.all([

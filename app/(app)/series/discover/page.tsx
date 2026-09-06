@@ -7,6 +7,7 @@ import Topbar from "../../components/Topbar";
 import SeriesDiscoverFilters from "./SeriesDiscoverFilters";
 import SeriesDiscoverGrid from "./SeriesDiscoverGrid";
 import styles from "../../films/discover/discover.module.css";
+import { getGreeting } from "@/lib/greeting";
 
 export default async function SeriesDiscoverPage({
   searchParams,
@@ -46,8 +47,7 @@ export default async function SeriesDiscoverPage({
           providers: parseProviders(providers),
         });
 
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
+  const greeting = getGreeting();
 
   return (
     <div className={styles.page}>

@@ -11,6 +11,7 @@ import SeriesCollectionClient from "../components/SeriesCollectionClient";
 import AddSeriesButton from "../components/AddSeriesButton";
 import styles from "../films/dashboard.module.css";
 import { Rating } from "@/lib/rating-scale";
+import { getGreeting } from "@/lib/greeting";
 
 // ——— Helpers de statistiques (mêmes conventions que l'accueil films) ———
 
@@ -283,8 +284,7 @@ async function CollectionSection({ userId }: { userId: string }) {
 export default async function SeriesHomePage() {
   const session = await getSession();
 
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
+  const greeting = getGreeting();
 
   return (
     <div className={styles.page}>

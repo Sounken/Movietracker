@@ -82,10 +82,11 @@ export default function Topbar({ greeting, userName }: Props) {
   return (
     <div className={styles.topbar}>
       <div className={styles.greet}>
-        <div className={styles.hello}>
-          <span className={styles.dot} />
-          En ligne • {greeting.toLowerCase()}
-        </div>
+        {/* La ligne « En ligne • bonsoir » a été retirée : elle répétait en
+            petit ce que le titre dit juste en dessous, et l'indicateur de
+            statut n'apprenait rien — on ne consulte pas l'application en étant
+            hors ligne. Le titre porte seul la salutation, désormais déclinée
+            par tranche horaire (cf. lib/greeting.ts). */}
         <h1 className={styles.title}>
           {userName ? (
             <>

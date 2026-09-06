@@ -5,6 +5,7 @@ import { getFilmCards } from "@/lib/films";
 import { computeXP, getLevelInfo } from "@/lib/xp";
 import Topbar from "../components/Topbar";
 import FriendsClient from "./FriendsClient";
+import { getGreeting } from "@/lib/greeting";
 
 // Les champs dont computeXP a besoin : la note seule ne suffit pas, un avis
 // vaut plus qu'une note et un « j'aime » compte aussi.
@@ -14,8 +15,7 @@ export default async function FriendsPage() {
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
+  const greeting = getGreeting();
 
   // Who the current user follows
   const followingRaw = await prisma.userFollow.findMany({
