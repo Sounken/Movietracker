@@ -22,12 +22,79 @@ import { NextRequest, NextResponse } from "next/server";
 
 const DSN = process.env.NEXT_PUBLIC_SENTRY_DSN;
 
+/**
+ * Garde-fous contre l'abus.
+ *
+ * La route est publique par construction : le navigateur doit pouvoir y poster
+ * sans authentification. Le contrôle de destination plus bas empêche de
+ * détourner le relais vers un tiers, mais pas de le **saturer** — n'importe qui
+ * peut poster des enveloppes parfaitement valides en boucle, qui seront
+ * fidèlement transmises et stockées. Sur un VPS qui a déjà passé trois jours à
+ * saturation disque, c'est le scénario à border.
+ */
+const MAX_BODY_BYTES = 1_000_000;
+const WINDOW_MS = 60_000;
+const MAX_PER_WINDOW = 60;
+
+/**
+ * Compteur en mémoire du processus. Suffisant tant qu'un seul conteneur sert
+ * l'application : un second exemplaire doublerait le plafond effectif sans rien
+ * casser. Le jour où l'app passe à deux répliques, il faudra un compteur partagé
+ * — Valkey tourne déjà à côté pour GlitchTip.
+ */
+const hits = new Map<string, { count: number; resetAt: number }>();
+
+function isRateLimited(ip: string, now: number): boolean {
+  /**
+   * Purge des fenêtres expirées. Sans elle, la Map grossit avec le nombre d'IP
+   * distinctes vues depuis le démarrage : une fuite mémoire lente, dans le
+   * service même dont le rôle est de signaler ce genre de problème. Déclenchée
+   * sur seuil plutôt qu'à chaque appel, pour ne pas parcourir la table à chaque
+   * événement reçu.
+   */
+  if (hits.size > 5_000) {
+    for (const [key, entry] of hits) {
+      if (entry.resetAt <= now) hits.delete(key);
+    }
+  }
+
+  const entry = hits.get(ip);
+  if (!entry || entry.resetAt <= now) {
+    hits.set(ip, { count: 1, resetAt: now + WINDOW_MS });
+    return false;
+  }
+
+  entry.count++;
+  return entry.count > MAX_PER_WINDOW;
+}
+
 export async function POST(request: NextRequest) {
   // Sans DSN configuré, rien à relayer. On répond succès pour ne pas faire
   // boucler le SDK sur une erreur de transport.
   if (!DSN) return new NextResponse(null, { status: 204 });
 
+  // `x-forwarded-for` est posé par le proxy de Coolify ; on prend la première
+  // entrée, la seule que le client ne contrôle pas.
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "inconnue";
+  if (isRateLimited(ip, Date.now())) {
+    return new NextResponse(null, { status: 429 });
+  }
+
+  // Refus avant lecture quand la taille annoncée est déjà hors bornes : inutile
+  // de charger le corps en mémoire pour le rejeter ensuite.
+  const declared = Number(request.headers.get("content-length"));
+  if (Number.isFinite(declared) && declared > MAX_BODY_BYTES) {
+    return new NextResponse(null, { status: 413 });
+  }
+
   const envelope = await request.text();
+
+  // Second contrôle : l'en-tête est déclaratif, la vraie taille ne se connaît
+  // qu'après lecture. Mesure en caractères et non en octets — l'écart est sans
+  // importance pour un plafond dont le seul but est d'écarter l'aberrant.
+  if (envelope.length > MAX_BODY_BYTES) {
+    return new NextResponse(null, { status: 413 });
+  }
 
   // Une enveloppe Sentry commence par une ligne d'en-tête JSON qui porte le DSN
   // d'origine ; le reste est opaque et transmis tel quel.
