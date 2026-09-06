@@ -275,36 +275,101 @@ export async function fetchOnTheAirSeries(): Promise<TmdbMovie[]> {
 }
 
 /**
- * Récupère une fiche TMDB en distinguant deux cas que le code confondait :
- *  - un vrai 404 → la fiche n'existe pas → `null` → l'appelant fait notFound()
- *  - une panne passagère (429, 5xx, timeout) → on réessaie une fois, puis on
- *    lève l'erreur.
+ * Échec d'un appel TMDB après épuisement des tentatives.
  *
- * Avant, `if (!res.ok) return null` renvoyait `null` dans les deux cas : une
- * hoquet de TMDB affichait donc une page 404 définitive pour un film qui
- * existe. Une erreur levée donne au contraire un écran réessayable et se voit
- * dans les logs.
+ * **Le message ne porte que le statut, jamais le chemin appelé.** GlitchTip
+ * regroupe les événements par message : la formulation précédente
+ * — `TMDB a répondu 502 sur /movie/992905` — donnait un incident distinct par
+ * film. Seize incidents pour deux causes réelles (des 502 et des 429), sur une
+ * instance dont le VPS est déjà juste en disque. Le chemin reste sur l'instance
+ * pour le diagnostic, il n'a simplement rien à faire dans la clé de regroupement.
  */
+class TmdbError extends Error {
+  constructor(
+    readonly status: number,
+    readonly path: string,
+  ) {
+    super(`TMDB a répondu ${status}`);
+    this.name = "TmdbError";
+  }
+}
+
+/** Limitation de débit et pannes serveur : les seuls cas où réessayer a un sens. */
+const isRetryable = (status: number) => status === 429 || (status >= 500 && status < 600);
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Délai demandé par TMDB, en millisecondes, quand il en indique un.
+ *
+ * Plafonné à 5 s : au-delà, attendre reviendrait à laisser un rendu serveur en
+ * suspens pendant que l'utilisateur regarde une page vide. Mieux vaut échouer
+ * et laisser la frontière d'erreur proposer un réessai.
+ */
+function retryAfterMs(res: Response): number | null {
+  const raw = res.headers.get("retry-after");
+  if (!raw) return null;
+
+  // L'en-tête est soit un nombre de secondes, soit une date HTTP.
+  const seconds = Number(raw);
+  const ms = Number.isFinite(seconds) ? seconds * 1000 : Date.parse(raw) - Date.now();
+  return ms > 0 && ms <= 5_000 ? ms : null;
+}
+
+/**
+ * Appelle TMDB en réessayant les pannes passagères.
+ *
+ * Renvoie `null` sur un vrai 404 — la fiche n'existe pas, l'appelant fait
+ * `notFound()`. Distinction essentielle : `if (!res.ok) return null` confondait
+ * autrefois les deux cas, et un hoquet de TMDB affichait une page « film
+ * introuvable » définitive pour un film qui existe.
+ *
+ * Trois écarts avec la boucle précédente, chacun lisible dans les incidents
+ * remontés :
+ *
+ *  - **On attend entre deux tentatives.** Les deux essais partaient coup sur
+ *    coup, à quelques millisecondes d'intervalle. Sur un 429 — « tu appelles
+ *    trop souvent » — réessayer aussitôt garantit un second 429 ; sur un 502,
+ *    ça ne laisse pas à TMDB le temps de se remettre. Les deux se retrouvent
+ *    tels quels dans la liste des incidents.
+ *  - **`Retry-After` prime sur notre propre délai** : c'est le serveur d'en
+ *    face qui sait quand il redeviendra disponible.
+ *  - **Seuls 429 et 5xx sont réessayés.** Un 401 (clé invalide) ou un 400
+ *    donneront la même réponse au second essai — autant échouer tout de suite.
+ */
+async function fetchTmdb(url: string, path: string): Promise<Response | null> {
+  const delays = [400, 1_200];
+  let lastError: unknown;
+
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const res = await fetch(url, { next: { revalidate: 3600 } });
+      if (res.status === 404) return null;
+      if (res.ok) return res;
+
+      lastError = new TmdbError(res.status, path);
+      if (!isRetryable(res.status) || attempt >= delays.length) break;
+
+      await wait(retryAfterMs(res) ?? delays[attempt]);
+    } catch (err) {
+      // Coupure réseau plutôt que réponse d'erreur : `fetch` rejette au lieu de
+      // répondre. C'est le cas de l'ECONNRESET côté TLS déjà remonté une fois.
+      lastError = err;
+      if (attempt >= delays.length) break;
+      await wait(delays[attempt]);
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error(`TMDB injoignable sur ${path}`);
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- payload TMDB brut, typé par l'appelant
 async function fetchTmdbDetail(path: string): Promise<any | null> {
   const key = process.env.TMDB_API_KEY;
   if (!key) throw new Error("TMDB_API_KEY manquante");
 
-  const url = `${BASE}${path}?api_key=${key}&language=fr-FR`;
-  let lastError: unknown;
-
-  for (let attempt = 0; attempt < 2; attempt++) {
-    try {
-      const res = await fetch(url, { next: { revalidate: 3600 } });
-      if (res.status === 404) return null;
-      if (res.ok) return await res.json();
-      lastError = new Error(`TMDB a répondu ${res.status} sur ${path}`);
-    } catch (err) {
-      lastError = err;
-    }
-  }
-
-  throw lastError instanceof Error ? lastError : new Error(`TMDB injoignable sur ${path}`);
+  const res = await fetchTmdb(`${BASE}${path}?api_key=${key}&language=fr-FR`, path);
+  return res ? await res.json() : null;
 }
 
 export async function fetchFilmDetail(id: number): Promise<TmdbFilmDetail | null> {
@@ -666,24 +731,9 @@ export async function fetchSeriesBundle(id: number): Promise<SeriesBundle | null
     `${BASE}/tv/${id}?api_key=${key}&language=fr-FR` +
     `&append_to_response=${SERIES_APPEND}&include_image_language=fr,en,null`;
 
-  let raw: Record<string, unknown> | null = null;
-  let lastError: unknown;
-  for (let attempt = 0; attempt < 2; attempt++) {
-    try {
-      const res = await fetch(url, { next: { revalidate: 3600 } });
-      if (res.status === 404) return null;
-      if (res.ok) {
-        raw = await res.json();
-        break;
-      }
-      lastError = new Error(`TMDB a répondu ${res.status} sur /tv/${id}`);
-    } catch (err) {
-      lastError = err;
-    }
-  }
-  if (!raw) {
-    throw lastError instanceof Error ? lastError : new Error(`TMDB injoignable sur /tv/${id}`);
-  }
+  const res = await fetchTmdb(url, `/tv/${id}`);
+  if (!res) return null;
+  const raw = (await res.json()) as Record<string, unknown>;
 
   const providersRaw = (raw["watch/providers"] as { results?: Record<string, unknown> })?.results;
   const local = providersRaw?.[WATCH_REGION] as Record<string, unknown> | undefined;
