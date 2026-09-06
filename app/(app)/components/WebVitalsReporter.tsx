@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { onLCP, onINP, onCLS, onTTFB, onFCP, type Metric } from "web-vitals";
 import { normalizeRoute } from "@/lib/web-vitals-route";
@@ -15,14 +15,45 @@ import { normalizeRoute } from "@/lib/web-vitals-route";
 export default function WebVitalsReporter() {
   const pathname = usePathname();
 
+  /**
+   * Route courante, lue au moment de l'envoi.
+   *
+   * Une référence plutôt qu'une dépendance d'effet, et c'est tout l'objet du
+   * correctif : voir plus bas.
+   */
+  const routeRef = useRef(normalizeRoute(pathname));
   useEffect(() => {
-    // Le chemin est capturé au moment de la mesure : une métrique arrivant
-    // après une navigation doit rester attribuée à la page qui l'a produite.
-    const route = normalizeRoute(pathname);
+    routeRef.current = normalizeRoute(pathname);
+  }, [pathname]);
 
+  /**
+   * Abonnement unique, pour toute la durée de vie de la page.
+   *
+   * **Cet effet dépendait de `pathname`.** Il se réexécutait donc à chaque
+   * navigation, et rappelait `onLCP`, `onINP`, `onCLS`, `onTTFB`, `onFCP` —
+   * or `web-vitals` ne déduplique pas, elle empile les abonnés, et n'offre
+   * aucun moyen de se désabonner. Un visiteur qui enchaînait vingt pages
+   * repartait avec vingt jeux d'abonnés ; au passage de l'onglet en arrière-
+   * plan, CLS et INP se finalisaient et envoyaient vingt relevés par métrique
+   * au lieu d'un. Plus la session était longue, plus le volume enflait.
+   *
+   * C'est ce qui a rempli la table : 166 Mo en moins de quatorze jours, contre
+   * quelques centaines de kilo-octets pour tout le reste de la base.
+   *
+   * Le tableau de dépendances vide est ici correct, et pas un raccourci : ces
+   * mesures portent sur le chargement de page, pas sur la navigation douce.
+   * LCP, FCP et TTFB se produisent une fois ; CLS et INP s'accumulent sur
+   * toute la durée de vie de la page. Elles ne se réinitialisent pas d'une
+   * navigation SPA à l'autre — s'y abonner une fois est ce que la
+   * bibliothèque attend.
+   */
+  useEffect(() => {
     const send = (metric: Metric) => {
       const body = JSON.stringify({
-        route,
+        // Lue à l'envoi, et non capturée à l'abonnement : une métrique
+        // finalisée après une navigation est attribuée à la page affichée au
+        // moment où elle se conclut.
+        route: routeRef.current,
         metric: metric.name,
         value: metric.value,
         rating: metric.rating,
@@ -58,7 +89,11 @@ export default function WebVitalsReporter() {
     onCLS(send);
     onTTFB(send);
     onFCP(send);
-  }, [pathname]);
+    // Tableau vide : abonnement unique au chargement de la page. Le lint ne
+    // réclame rien — `send` ne lit plus que `routeRef`, dont l'identité est
+    // stable. Ajouter `pathname` ici est précisément le défaut qui a rempli la
+    // table, et rien dans l'outillage ne l'aurait signalé.
+  }, []);
 
   return null;
 }
