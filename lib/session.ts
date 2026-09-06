@@ -1,6 +1,7 @@
 import "server-only";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import * as Sentry from "@sentry/nextjs";
 
 export type SessionPayload = {
   userId: string;
@@ -50,8 +51,32 @@ export async function deleteSession() {
   cookieStore.delete("session");
 }
 
+/**
+ * Session courante, et point de passage où l'on rattache l'utilisateur aux
+ * erreurs remontées.
+ *
+ * Sans ça, un incident dit qu'une page a cassé, jamais pour qui : impossible de
+ * distinguer un défaut qui touche tout le monde d'un cas lié à un compte — un
+ * import Letterboxd particulier, une liste au contenu inattendu — ni de
+ * répondre à quelqu'un qui signale un problème.
+ *
+ * **Seul l'identifiant est transmis.** Le nom est disponible ici, mais il n'a
+ * pas à sortir vers un service tiers, fût-il le nôtre : l'identifiant suffit à
+ * regrouper les erreurs d'un même compte et à le retrouver en base. C'est la
+ * même logique que `scrubIPAddresses`, déjà actif sur le projet GlitchTip.
+ *
+ * `Sentry.setUser` écrit sur le scope d'isolation, que le SDK cloisonne par
+ * requête : aucun risque qu'une session déborde sur la requête d'un autre.
+ *
+ * Le proxy, lui, passe par `decrypt` et non par cette fonction : il s'exécute
+ * avant le rendu, sur chaque requête, et n'a pas à embarquer le SDK.
+ */
 export async function getSession(): Promise<SessionPayload | null> {
   const cookieStore = await cookies();
   const session = cookieStore.get("session")?.value;
-  return decrypt(session);
+  const payload = await decrypt(session);
+
+  if (payload) Sentry.setUser({ id: payload.userId });
+
+  return payload;
 }
