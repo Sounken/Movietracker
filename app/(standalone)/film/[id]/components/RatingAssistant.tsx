@@ -297,8 +297,21 @@ export default function RatingAssistant({ scale, title, onApply, onClose }: Prop
     </div>
   );
 
-  // Portail vers `body` : rendue en place, la modale se positionnerait par
-  // rapport au premier ancêtre créant un bloc conteneur (un `transform`, un
-  // `filter`, une animation en cours) et non par rapport au viewport.
-  return createPortal(modal, document.body);
+  /**
+   * Portail hors du flux : rendue en place, la modale se positionnerait par
+   * rapport au premier ancêtre créant un bloc conteneur (un `transform`, un
+   * `filter`, une animation en cours) et non par rapport au viewport.
+   *
+   * La cible est `#modal-root`, déclaré dans le layout racine, et non
+   * `document.body` comme auparavant. React y dépose ses gabarits de Suspense
+   * pendant le rendu en flux et les redéplace via sa fonction interne `$RS` ;
+   * un portail qui monte ou démonte dans `body` au même moment peut faire
+   * disparaître le nœud que `$RS` s'apprête à déplacer. C'est l'explication la
+   * plus probable des « Cannot read properties of null (reading 'parentNode') »
+   * remontés depuis cette page — six occurrences, toutes sur `/film/:id`.
+   *
+   * Repli sur `body` si le nœud manque : mieux vaut une modale au mauvais
+   * endroit qu'un plantage au rendu.
+   */
+  return createPortal(modal, document.getElementById("modal-root") ?? document.body);
 }

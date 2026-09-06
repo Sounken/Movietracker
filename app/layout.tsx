@@ -97,6 +97,21 @@ export default function RootLayout({
       </head>
       <body suppressHydrationWarning>
         {children}
+
+        {/* Point d'ancrage des modales portées hors du flux.
+
+            Elles visaient `document.body` directement, or c'est là que React
+            dépose ses gabarits de Suspense pendant le rendu en flux, et qu'il
+            les redéplace ensuite via sa fonction interne `$RS`. Un portail qui
+            monte ou démonte dans `body` pendant que le flux se résout peut
+            faire disparaître le nœud que `$RS` s'apprête à déplacer — d'où les
+            « Cannot read properties of null (reading 'parentNode') » remontés
+            depuis la fiche film.
+
+            Un conteneur dédié met les modales hors du chemin de React sans rien
+            changer à leur positionnement : il est enfant direct de `body` et ne
+            crée aucun bloc conteneur. */}
+        <div id="modal-root" />
         {/* Monté à la racine et non dans le groupe (app) : la fiche film vit
             dans (standalone), et c'est justement la page dont le LCP compte le
             plus — grande affiche, backdrop en fond. */}
