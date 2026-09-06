@@ -49,6 +49,18 @@ ARG SENTRY_PROJECT
 
 RUN npm run build
 
+# Le cache de build ne doit pas entrer dans l'image.
+#
+# `next build` prérend les pages, ce qui remplit `.next/cache/fetch-cache` avec
+# les réponses TMDB — une entrée par film, par série, par crédit. L'étape
+# runtime copie `.next` en entier : chaque image emportait donc plusieurs
+# centaines de mégaoctets d'un cache déjà périmé au démarrage, et il en restait
+# une couche par déploiement. Sur ce VPS, près de trois mille snapshots
+# containerd et 28 Go, contre 3,3 Go pour l'ensemble des volumes de données.
+#
+# Next recrée ce répertoire au démarrage : il n'y a rien à préserver.
+RUN rm -rf .next/cache
+
 # --- Étape runtime : image légère qui sert l'app ---
 FROM node:24-bookworm-slim AS runner
 WORKDIR /app
