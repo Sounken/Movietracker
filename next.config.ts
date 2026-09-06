@@ -86,12 +86,34 @@ const nextConfig: NextConfig = {
  */
 const uploadSourceMaps = Boolean(process.env.SENTRY_AUTH_TOKEN);
 
+/**
+ * Nom de la release, à fournir explicitement.
+ *
+ * **Le laisser deviner produit une release littéralement nommée `undefined`.**
+ * Le greffon tente de lire le SHA depuis le dépôt Git, or `.dockerignore`
+ * exclut `.git` : à l'intérieur du conteneur de build, il n'y a rien à
+ * détecter. Constaté en production le 2026-09-06 — cinquante fichiers de source
+ * maps téléversés sur une release `undefined` rattachée à *aucun* projet,
+ * pendant que les erreurs arrivaient étiquetées avec le vrai SHA. Les deux ne
+ * se rencontraient jamais, et les piles restaient minifiées alors que tout
+ * semblait fonctionner.
+ *
+ * `create: false` quand le nom est inconnu : mieux vaut pas de release du tout
+ * qu'une release fantôme qui accumule des fichiers inexploitables.
+ */
+const releaseName = process.env.NEXT_PUBLIC_COMMIT_SHA || process.env.SOURCE_COMMIT || undefined;
+
 export default withSentryConfig(nextConfig, {
   // On vise notre instance GlitchTip, pas sentry.io.
   sentryUrl: process.env.SENTRY_URL,
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
   authToken: process.env.SENTRY_AUTH_TOKEN,
+
+  release: {
+    name: releaseName,
+    create: Boolean(releaseName),
+  },
 
   sourcemaps: {
     disable: !uploadSourceMaps,
