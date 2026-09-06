@@ -24,6 +24,15 @@ x-environment: &default-environment
   # lui les transactions fonctionnent, mais on perd le détail par span.
   GLITCHTIP_ENABLE_DUCKDB: "True"
 
+  # Purge automatique des événements. Le défaut est de 90 jours, ce qui est
+  # absurde ici : personne ne remonte à trois mois pour diagnostiquer une
+  # erreur, et chaque transaction conservée stocke ses spans. Sur un VPS qui a
+  # déclenché une alerte disque à 84%, la valeur par défaut est un piège.
+  #
+  # 30 jours couvre largement l'usage réel — comparer un incident à la version
+  # précédente, suivre une tendance sur un mois — pour un tiers du stockage.
+  GLITCHTIP_MAX_EVENT_LIFE_DAYS: "30"
+
   # Piloté depuis Coolify plutôt que figé ici : il faut ouvrir l'inscription le
   # temps de créer le premier compte, puis la refermer. En variable, ça se fait
   # en deux clics ; en dur, il faudrait éditer le fichier et redéployer deux
