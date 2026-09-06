@@ -15,6 +15,38 @@ RUN npm ci
 
 # Copie le code et build (le script "build" lance `prisma generate && next build`)
 COPY . .
+
+# --- Variables nécessaires *au build*, pas au runtime ---
+#
+# Next remplace les `process.env.NEXT_PUBLIC_*` par leur valeur au moment de la
+# compilation : absentes ici, elles valent `undefined` dans le bundle client,
+# quoi qu'on renseigne ensuite côté Coolify.
+#
+# En pratique Coolify les transmet déjà — le DSN est bien présent dans le bundle
+# en production, c'est vérifié. Ces déclarations ne corrigent donc pas un défaut,
+# elles rendent la dépendance explicite : un `docker build` lancé à la main, en
+# CI ou sur une autre plateforme produit aujourd'hui une image sans supervision,
+# silencieusement. Et c'est ce qui manque à `SENTRY_AUTH_TOKEN` pour que l'envoi
+# des source maps fonctionne, lui aussi consommé au build.
+ARG NEXT_PUBLIC_SENTRY_DSN
+ARG NEXT_PUBLIC_SENTRY_TRACES_RATE
+ARG NEXT_PUBLIC_COMMIT_SHA
+ENV NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN \
+    NEXT_PUBLIC_SENTRY_TRACES_RATE=$NEXT_PUBLIC_SENTRY_TRACES_RATE \
+    NEXT_PUBLIC_COMMIT_SHA=$NEXT_PUBLIC_COMMIT_SHA
+
+# Le jeton et les coordonnées de l'instance servent à `sentry-cli` pendant
+# `next build`. Un `ARG` suffit : Docker expose les arguments de construction
+# comme variables d'environnement aux instructions `RUN`, et l'étape `runner`
+# étant distincte, rien de tout cela n'atteint l'image finale.
+#
+# L'absence de jeton n'échoue pas le build — `next.config.ts` désactive alors
+# proprement l'envoi des source maps.
+ARG SENTRY_AUTH_TOKEN
+ARG SENTRY_URL
+ARG SENTRY_ORG
+ARG SENTRY_PROJECT
+
 RUN npm run build
 
 # --- Étape runtime : image légère qui sert l'app ---

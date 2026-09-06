@@ -116,10 +116,14 @@ export default withSentryConfig(nextConfig, {
    * pas le tunnel, arrivaient normalement. Symptôme trompeur : la supervision
    * semblait fonctionner.
    *
-   * Le tunnel servait à contourner les bloqueurs de publicité, qui filtrent
-   * les domaines de supervision connus. L'argument ne tient pas ici :
-   * l'instance est sur notre propre sous-domaine, qui ne figure dans aucune
-   * liste de blocage.
+   * Le tunnel est bien en place, mais déclaré ailleurs : par l'option
+   * d'exécution `tunnel` dans `instrumentation-client.ts`, qui ne dépend
+   * d'aucun bundler, vers la route `app/api/mn/route.ts` écrite à la main.
+   *
+   * Il reste nécessaire malgré l'auto-hébergement : les bloqueurs filtrent sur
+   * le **motif d'URL** — `/api/<id>/envelope/?sentry_key=…` — et pas seulement
+   * sur le domaine. Testé, la requête revenait en `ERR_BLOCKED_BY_CLIENT`
+   * depuis notre propre sous-domaine.
    */
 
   // `disableLogger` est déprécié, et son remplaçant

@@ -56,8 +56,10 @@ Le conteneur applique ses migrations tout seul. Une fois en ligne :
    redéployer. Les laisser ouverts exposerait l'instance à l'inscription de
    n'importe qui ;
 2. créer l'organisation et le projet `movietracker` ;
-3. relever le **DSN** du projet, à reporter dans la variable `SENTRY_DSN` de
-   MovieTracker.
+3. relever le **DSN** du projet, à reporter dans la variable
+   `NEXT_PUBLIC_SENTRY_DSN` de MovieTracker (cf. §5 — le préfixe n'est pas
+   optionnel, c'est lui qui autorise Next à inclure la valeur dans le bundle
+   navigateur).
 
 ## 4. Brancher le MCP
 
@@ -90,6 +92,20 @@ adresse d'envoi et non un secret. Le jeton d'API, lui, ne doit pas fuiter.
 
 Sans `SENTRY_AUTH_TOKEN`, les erreurs remontent quand même, mais les piles
 d'appel pointeront vers du code minifié.
+
+### Toutes ces variables sont consommées au *build*, pas au runtime
+
+C'est le piège de cette configuration. Next remplace les `NEXT_PUBLIC_*` par
+leur valeur au moment de la compilation, et `sentry-cli` lit le jeton pendant
+`next build` pour envoyer les source maps. Une variable renseignée seulement
+côté exécution ne sert donc à rien : le bundle est déjà figé.
+
+Dans Coolify, chacune doit être cochée **« Build Variable »**. Le `Dockerfile`
+les déclare en `ARG` en face, sinon Docker les ignore silencieusement.
+
+Le symptôme, si on oublie : aucune erreur ne remonte du navigateur alors que
+celles du serveur arrivent normalement — ces dernières lisent `process.env` à
+l'exécution. La supervision paraît fonctionner, à moitié.
 
 ## Vérifications après déploiement
 
