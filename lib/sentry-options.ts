@@ -86,8 +86,20 @@ export const commonOptions = {
      * Action postée n'existe plus dans le nouveau bundle. Même famille que
      * `ChunkLoadError` ci-dessus, et pas davantage un défaut du code — la
      * réponse est de recharger, ce que fait la frontière d'erreur.
+     *
+     * **Next émet deux messages distincts pour cette même situation**, et le
+     * premier filtre n'en couvrait qu'un. Le second est apparu dès le
+     * déploiement suivant, sous le type `UnrecognizedActionError` :
+     *
+     *   Server Action "708a878d53…" was not found on the server.
+     *
+     * Il porte l'identifiant de l'action **dans le message**, donc chaque
+     * action périmée crée son propre incident — exactement le travers qui avait
+     * produit seize incidents TMDB pour deux causes. On filtre sur la partie
+     * stable de la phrase, sans l'identifiant.
      */
     "Failed to find Server Action",
+    "was not found on the server",
   ],
   denyUrls: [
     /extensions\//i,
