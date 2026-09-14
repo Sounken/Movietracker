@@ -6,9 +6,28 @@ import { normalizeRoute, TRACKED_METRICS } from "@/lib/web-vitals-route";
 /**
  * Collecte des Core Web Vitals envoyés par le navigateur.
  *
- * Route publique par nécessité : les visiteurs non connectés produisent des
- * mesures aussi utiles que les autres. Elle est donc écrite en supposant que
- * n'importe qui peut lui envoyer n'importe quoi.
+ * **Seuls les utilisateurs connectés sont enregistrés.** La route était ouverte
+ * à tous, au motif que les visiteurs anonymes produisent des mesures aussi
+ * utiles que les autres. En pratique, les anonymes étaient un robot : sur les
+ * 24 heures mesurées le 2026-09-15, 75 091 lignes, dont une dizaine seulement
+ * venues d'une session. Il parcourait les fiches acteur, film et société en
+ * exécutant le JavaScript, et chaque page chargée écrivait trois à cinq lignes.
+ *
+ * Deux coûts en découlaient, sans rapport avec l'intérêt des mesures :
+ *  - Neon recevait environ une écriture par seconde et ne se mettait jamais en
+ *    veille. Son calcul se facture au temps éveillé : le quota mensuel gratuit
+ *    fondait au rythme d'une journée pleine par jour ;
+ *  - la table regagnait 190 Mo en neuf jours, sur un plafond de 0,5 Go.
+ *
+ * Les mesures d'un robot n'apprennent de toute façon rien sur l'expérience des
+ * utilisateurs : autre machine, autre réseau, jamais de cache chaud.
+ *
+ * La session est vérifiée **avant** de lire le corps. `getSession` se contente
+ * de déchiffrer un cookie, sans toucher la base : un envoi anonyme coûte
+ * quelques microsecondes et ne réveille rien. Le navigateur continue d'envoyer
+ * ses mesures quelle que soit la session — le composant est monté dans le
+ * layout racine, qui ne peut pas lire les cookies sans rendre dynamiques les
+ * pages statiques comme `/login`. Le tri se fait donc ici.
  */
 
 /** Bornes de bon sens. Au-delà, la valeur est une aberration ou une injection. */
@@ -19,29 +38,27 @@ const VALID_NAVIGATION = new Set(["navigate", "reload", "back-forward", "back_fo
 /**
  * Rétention des relevés bruts.
  *
- * **C'est ce qui manquait, et ça a rempli la base.** Cette route écrit une
- * ligne par métrique et par page vue — cinq par visite — sans que rien ne
- * supprime jamais. La table grossissait donc indéfiniment, au rythme du trafic,
- * pour alimenter une page qui n'agrège que les sept derniers jours.
- *
- * Quatorze jours laissent de la marge pour élargir la fenêtre d'affichage sans
- * rien reperdre, tout en divisant par plusieurs fois ce qui est conservé.
- * Au-delà, un relevé individuel n'a aucune valeur : ce qui compte sur la durée,
- * c'est la tendance, et elle demanderait une table d'agrégats quotidiens, pas
- * des millions de lignes brutes.
+ * La page /vitals n'agrège que les sept derniers jours ; quatorze laissent de
+ * la marge pour élargir la fenêtre d'affichage. Au-delà, un relevé individuel
+ * n'a aucune valeur : ce qui compte sur la durée, c'est la tendance, et elle
+ * demanderait une table d'agrégats quotidiens, pas des lignes brutes.
  */
 const RETENTION_DAYS = 14;
 
 /**
- * Probabilité qu'une écriture déclenche la purge.
+ * Intervalle minimal entre deux purges.
  *
- * Faite ici plutôt que dans une tâche planifiée : le serveur est déjà à
- * saturation et n'a pas besoin d'un service de plus. À quelques milliers de
- * relevés par jour, une chance sur cinq cents fait tourner la purge plusieurs
- * fois par jour sans qu'aucune requête ne la porte visiblement, et l'index sur
- * `createdAt` rend la suppression peu coûteuse.
+ * La purge était tirée au sort, une écriture sur cinq cents : un réglage fait
+ * pour des milliers de relevés par jour. Réservée aux sessions, la collecte
+ * tombe à quelques dizaines de lignes quotidiennes, et le tirage ne sortirait
+ * plus qu'une fois par mois. On purge donc au plus toutes les six heures, à la
+ * première écriture qui suit.
+ *
+ * L'horodatage vit en mémoire du processus : un redémarrage provoque une purge
+ * de plus, sans conséquence.
  */
-const PURGE_PROBABILITY = 1 / 500;
+const PURGE_INTERVAL_MS = 6 * 60 * 60 * 1000;
+let lastPurgeAt = 0;
 
 async function purgeOldVitals() {
   const cutoff = new Date(Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000);
@@ -60,6 +77,11 @@ async function purgeOldVitals() {
 }
 
 export async function POST(request: NextRequest) {
+  // 204 plutôt que 401 : le navigateur n'attend rien d'un beacon, et une
+  // réponse d'erreur apparaîtrait dans la console de chaque visiteur anonyme.
+  const session = await getSession();
+  if (!session) return new NextResponse(null, { status: 204 });
+
   let payload: unknown;
   try {
     payload = await request.json();
@@ -101,8 +123,6 @@ export async function POST(request: NextRequest) {
       ? navigationType
       : null;
 
-  const session = await getSession();
-
   await prisma.webVital.create({
     data: {
       route: normalizedRoute,
@@ -110,15 +130,17 @@ export async function POST(request: NextRequest) {
       value,
       rating,
       navigationType: navigation,
-      userId: session?.userId ?? null,
+      userId: session.userId,
     },
   });
 
-  // Attendue plutôt que lancée en arrière-plan : une promesse flottante peut
-  // être interrompue par la fin de la requête. À une chance sur cinq cents, le
-  // coût moyen par relevé est négligeable, et le navigateur n'attend de toute
-  // façon pas la réponse d'un beacon.
-  if (Math.random() < PURGE_PROBABILITY) await purgeOldVitals();
+  // Horodatage posé avant l'attente, pour que deux relevés simultanés ne
+  // lancent pas chacun leur purge. Attendue plutôt que lancée en arrière-plan :
+  // une promesse flottante peut être interrompue par la fin de la requête.
+  if (Date.now() - lastPurgeAt > PURGE_INTERVAL_MS) {
+    lastPurgeAt = Date.now();
+    await purgeOldVitals();
+  }
 
   // 204 : le navigateur n'attend rien, et `sendBeacon` ignore la réponse.
   return new NextResponse(null, { status: 204 });

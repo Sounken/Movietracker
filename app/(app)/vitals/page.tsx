@@ -157,10 +157,11 @@ export default async function VitalsPage() {
     <div className={styles.page}>
       <h1 className={styles.title}>Performances perçues</h1>
       <p className={styles.intro}>
-        Ce que vivent réellement les visiteurs, mesuré dans leur navigateur sur les
-        sept derniers jours. Chaque valeur est un 75<sup>e</sup> centile : trois
-        visiteurs sur quatre ont eu au moins cette expérience. Les routes comptant
-        moins de trois relevés sont masquées.
+        Ce que vivent réellement les utilisateurs connectés, mesuré dans leur
+        navigateur sur les sept derniers jours. Chaque valeur est un 75<sup>e</sup>{" "}
+        centile : trois utilisateurs sur quatre ont eu au moins cette expérience. Les
+        visiteurs anonymes ne sont pas comptés, et les routes comptant moins de trois
+        relevés sont masquées.
       </p>
 
       {rows.length === 0 ? (
