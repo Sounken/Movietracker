@@ -142,8 +142,29 @@ export const commonOptions = {
    * erreur qui s'y produit — un échec d'écriture en base, par exemple — est un
    * vrai défaut, et doit continuer de remonter.
    */
-  beforeSendTransaction<T extends { transaction?: string }>(event: T): T | null {
+  beforeSendTransaction<T extends { transaction?: string; contexts?: { trace?: { op?: string } } }>(
+    event: T,
+  ): T | null {
     const collecte = event.transaction === "POST /api/mn" || event.transaction === "POST /api/vitals";
-    return collecte ? null : event;
+
+    /**
+     * Appels sortants orphelins.
+     *
+     * Un `fetch` exécuté hors de toute transaction active — pendant le rendu
+     * en flux d'un Server Component, typiquement — est envoyé comme une
+     * transaction à part entière, nommée d'après son URL complète. GlitchTip
+     * en fait un groupe par URL : relevé le 2026-09-15, plus de 20 000 groupes
+     * de transactions, dont 19 983 étaient des appels TMDB isolés
+     * (`GET https://api.themoviedb.org/3/person/1796024`…). Le même travers que
+     * les incidents TMDB d'avant le correctif de regroupement, côté traces.
+     *
+     * Ces événements n'apprennent rien — un appel TMDB sans la page qui l'a
+     * déclenché ne dit pas ce qui est lent — et remplissent le Postgres de
+     * GlitchTip. Les appels rattachés à une page restent visibles, comme spans
+     * de sa transaction.
+     */
+    const appelOrphelin = event.contexts?.trace?.op === "http.client";
+
+    return collecte || appelOrphelin ? null : event;
   },
 };
