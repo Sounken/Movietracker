@@ -2,6 +2,32 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs/config";
 
 const nextConfig: NextConfig = {
+  /**
+   * Cache des `fetch` en mémoire seulement, jamais sur disque.
+   *
+   * Par défaut, Next écrit chaque réponse mise en cache — les appels TMDB avec
+   * `next: { revalidate }`, une trentaine dans `lib/` — dans
+   * `.next/cache/fetch-cache`, **un fichier par URL distincte, sans aucune
+   * éviction**. Un fichier revalidé remplace le précédent, mais une URL jamais
+   * revue reste pour toujours. Tant que les visiteurs consultent les mêmes
+   * films, le volume se stabilise ; un robot qui parcourt les identifiants TMDB
+   * un par un le fait croître sans fin, et le disque du VPS avec lui.
+   *
+   * `isrFlushToDisk: false` coupe l'écriture sur disque (le gestionnaire par
+   * défaut sort de `set` avant toute écriture) et laisse le cache vivre dans
+   * son LRU mémoire, borné par `cacheMaxMemorySize`. La valeur est posée
+   * explicitement — 50 Mo, le défaut de Next — pour la même raison que le
+   * plafond des images plus bas : un budget implicite est un budget qu'on
+   * découvre en production.
+   *
+   * Contrepartie : le cache repart vide à chaque redémarrage. Sans conséquence,
+   * les entrées TMDB expirent de toute façon au bout d'une heure.
+   */
+  cacheMaxMemorySize: 50 * 1024 * 1024,
+  experimental: {
+    isrFlushToDisk: false,
+  },
+
   images: {
     // Notre optimiseur ne voit plus que nos propres fichiers (avatars,
     // bannières) : les visuels TMDB partent directement vers leur CDN, cf.
