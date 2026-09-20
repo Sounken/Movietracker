@@ -46,15 +46,25 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
 
   if (!film) notFound();
 
-  // Distinctions réelles (Wikidata). Dépend de external_ids, donc en second
-  // temps ; un échec renvoie une liste vide et la fiche s'affiche quand même.
-  const awards = externalIds.wikidataId ? await fetchAwards(externalIds.wikidataId) : [];
+  /**
+   * Second temps : distinctions Wikidata et films de la saga.
+   *
+   * Les deux dépendent du premier lot — les distinctions de `external_ids`, la
+   * saga de `film.collectionId` — mais **pas l'un de l'autre**. Ils étaient
+   * pourtant enchaînés, ce qui ajoutait un aller-retour complet au rendu : le
+   * Wikidata en fait déjà deux à lui seul. En parallèle, seul le plus lent
+   * compte.
+   *
+   * Un échec de l'un renvoie une liste vide et la fiche s'affiche quand même.
+   */
+  const [awards, collection] = await Promise.all([
+    externalIds.wikidataId ? fetchAwards(externalIds.wikidataId) : Promise.resolve([]),
+    film.collectionId ? fetchFilmCollection(film.collectionId) : Promise.resolve([]),
+  ]);
 
-  // Films de la saga (hors film courant). `recommendations` en oublie une
+  // Films de la saga, hors film courant. `recommendations` en oublie une
   // partie — sur Star Wars, plusieurs épisodes n'apparaissaient pas.
-  const sagaFilms = film.collectionId
-    ? (await fetchFilmCollection(film.collectionId)).filter((f) => f.id !== film.id)
-    : [];
+  const sagaFilms = collection.filter((f) => f.id !== film.id);
 
   // Pas de doublon entre les deux blocs : ce qui est déjà dans la saga sort
   // des « films similaires ».
