@@ -952,6 +952,61 @@ const getRankedPool = unstable_cache(
   { revalidate: 86400 },
 );
 
+/**
+ * Une page de « Mieux notés », au-delà du vivier si nécessaire.
+ *
+ * Le vivier tient dans `POOL_PAGES` pages par source, soit environ deux cents
+ * titres après dédoublonnage : le scroll infini s'arrêtait donc net une fois
+ * ces pages consommées, sans rien indiquer. Signalé sur les séries, mais les
+ * films partageaient le défaut.
+ *
+ * On garde le vivier pour les premières pages — c'est lui qui porte le
+ * classement bayésien, donc la qualité du haut de liste — puis on enchaîne sur
+ * TMDB à la page suivante de la source la plus large. Les identifiants déjà
+ * présents dans le vivier sont écartés, sans quoi les premiers titres
+ * reviendraient une seconde fois.
+ */
+async function rankedPoolPage(
+  media: "movie" | "tv",
+  genreId: number | null,
+  extraFilter: string,
+  page: number,
+): Promise<Record<string, unknown>[]> {
+  const pool = await getRankedPool(media, genreId, extraFilter);
+  const start = (page - 1) * DISCOVER_PAGE_SIZE;
+
+  if (start < pool.length) return pool.slice(start, start + DISCOVER_PAGE_SIZE);
+
+  const key = process.env.TMDB_API_KEY;
+  if (!key) return [];
+
+  // Le vivier a déjà consommé les pages 1 à POOL_PAGES de cette source.
+  const poolPages = Math.ceil(pool.length / DISCOVER_PAGE_SIZE);
+  const tmdbPage = POOL_PAGES + (page - poolPages);
+  // TMDB refuse au-delà de la page 500.
+  if (tmdbPage > 500) return [];
+
+  // Mêmes seuils que la source la plus permissive de `fetchRankedPool`.
+  const weakVotes = media === "movie" ? 300 : 100;
+  const genreFilter = genreId ? `&with_genres=${genreId}` : "";
+
+  try {
+    const res = await fetch(
+      `${BASE}/discover/${media}?api_key=${key}&language=fr-FR&page=${tmdbPage}` +
+        `&sort_by=vote_average.desc&vote_count.gte=${weakVotes}${genreFilter}${extraFilter}`,
+      { next: { revalidate: 86400 } },
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    const seen = new Set(pool.map((p) => p.id as number));
+    return ((data.results ?? []) as Record<string, unknown>[]).filter(
+      (r) => r.poster_path && !seen.has(r.id as number),
+    );
+  } catch {
+    return [];
+  }
+}
+
 /** Filtres communs aux pages « Découvrir » films et séries. */
 export type DiscoverOptions = {
   genreId?: number | null;
@@ -1054,12 +1109,10 @@ export async function fetchDiscover(
   const filters = commonFilters(opts, "primary_release_date");
 
   try {
-    // « Mieux notés » ne passe pas par un tri TMDB : on pagine le vivier reclassé.
+    // « Mieux notés » ne passe pas par un tri TMDB : on pagine le vivier
+    // reclassé, prolongé par TMDB une fois celui-ci épuisé.
     if (category === "top_rated") {
-      const pool = await getRankedPool("movie", genreId, filters);
-      return pool
-        .slice((page - 1) * DISCOVER_PAGE_SIZE, page * DISCOVER_PAGE_SIZE)
-        .map(mapDiscoverFilm);
+      return (await rankedPoolPage("movie", genreId, filters, page)).map(mapDiscoverFilm);
     }
 
     const today = new Date().toISOString().split("T")[0];
@@ -1126,10 +1179,9 @@ export async function fetchDiscoverSeries(
 
   try {
     if (category === "top_rated") {
-      const pool = await getRankedPool("tv", genreId, filters + animeFilter);
-      return pool
-        .slice((page - 1) * DISCOVER_PAGE_SIZE, page * DISCOVER_PAGE_SIZE)
-        .map(mapDiscoverSeries);
+      return (await rankedPoolPage("tv", genreId, filters + animeFilter, page)).map(
+        mapDiscoverSeries,
+      );
     }
 
     const today = new Date().toISOString().split("T")[0];

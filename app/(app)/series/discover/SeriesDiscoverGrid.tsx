@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Plus, Loader2 } from "lucide-react";
 import type { TmdbDiscoverSeries } from "@/lib/tmdb";
+import { useRestorableList } from "@/app/(app)/components/use-restorable-list";
 import styles from "../../films/discover/discover.module.css";
 import { Rating } from "@/lib/rating-scale";
 
@@ -29,9 +30,20 @@ export default function SeriesDiscoverGrid({
   providers?: string;
   emptyMessage?: string;
 }) {
-  const [series, setSeries] = useState(initialSeries);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(initialSeries.length === 20);
+  // Même clé composite que pour les films, avec le filtre anime en plus.
+  const {
+    items: series,
+    setItems: setSeries,
+    page,
+    setPage,
+    hasMore,
+    setHasMore,
+    save,
+  } = useRestorableList<TmdbDiscoverSeries>(
+    `series:${category}:${anime ? "anime" : "all"}:${genre}:${minYear}:${maxYear}:${minRating}:${providers}`,
+    initialSeries,
+    20,
+  );
   const [loading, setLoading] = useState(false);
   const loadingRef = useRef(false);
 
@@ -60,7 +72,8 @@ export default function SeriesDiscoverGrid({
         loadingRef.current = false;
         setLoading(false);
       });
-  }, [category, anime, genre, minYear, maxYear, minRating, providers, page]);
+    // Setters stables issus de `useRestorableList`.
+  }, [category, anime, genre, minYear, maxYear, minRating, providers, page, setSeries, setPage, setHasMore]);
 
   const sentinelRef = useRef<HTMLButtonElement | null>(null);
   useEffect(() => {
@@ -87,7 +100,7 @@ export default function SeriesDiscoverGrid({
   return (
     <div className={`${styles.grid} stagger`}>
       {series.map((s) => (
-        <Link key={s.id} href={`/series/${s.id}`} className={styles.filmCard}>
+        <Link key={s.id} href={`/series/${s.id}`} className={styles.filmCard} onClick={save}>
           <div className={styles.poster}>
             {s.posterUrl && (
               <Image

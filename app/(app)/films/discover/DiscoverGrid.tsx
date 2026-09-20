@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import type { TmdbDiscoverFilm } from "@/lib/tmdb";
+import { useRestorableList } from "@/app/(app)/components/use-restorable-list";
 import styles from "./discover.module.css";
 import { Rating } from "@/lib/rating-scale";
 
@@ -38,9 +39,21 @@ export default function DiscoverGrid({
   providers?: string;
   emptyMessage?: string;
 }) {
-  const [films, setFilms] = useState(initialFilms);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(initialFilms.length === 20);
+  // La clé inclut les filtres : changer de genre ou de plateforme doit repartir
+  // d'une liste vierge, pas reprendre celle d'un autre réglage.
+  const {
+    items: films,
+    setItems: setFilms,
+    page,
+    setPage,
+    hasMore,
+    setHasMore,
+    save,
+  } = useRestorableList<TmdbDiscoverFilm>(
+    `films:${category}:${genre}:${minYear}:${maxYear}:${minRating}:${providers}`,
+    initialFilms,
+    20,
+  );
   const [loading, setLoading] = useState(false);
   const loadingRef = useRef(false);
 
@@ -68,7 +81,9 @@ export default function DiscoverGrid({
         loadingRef.current = false;
         setLoading(false);
       });
-  }, [category, genre, minYear, maxYear, minRating, providers, page]);
+    // Les setters viennent de `useRestorableList` et sont stables (useCallback
+    // sans dépendance) : les déclarer ne provoque aucun recalcul.
+  }, [category, genre, minYear, maxYear, minRating, providers, page, setFilms, setPage, setHasMore]);
 
   // Scroll infini : la carte « Afficher plus » se déclenche seule à l'approche
   const sentinelRef = useRef<HTMLButtonElement | null>(null);
@@ -97,7 +112,7 @@ export default function DiscoverGrid({
   return (
     <div className={`${styles.grid} stagger`}>
       {films.map((film) => (
-        <Link key={film.id} href={`/film/${film.id}`} className={styles.filmCard}>
+        <Link key={film.id} href={`/film/${film.id}`} className={styles.filmCard} onClick={save}>
           <div className={styles.poster}>
             {film.posterUrl && (
               <Image

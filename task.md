@@ -32,6 +32,32 @@ Légende : 🟢 simple · 🟡 moyen · 🔴 gros / à cadrer
 
 ---
 
+## I. 🔧 Retours d'usage — septembre 2026
+
+Lot issu des retours d'utilisation du 20/09. **Rien n'est poussé** : tout est commité
+en local, en attente de validation.
+
+| Réf | Tâche | État |
+|---|---|---|
+| **I1** | Notation : la note partait déjà au clic, mais le bouton « Sauvegarder » laissait croire qu'il fallait valider | ✅ confirmation « Note enregistrée », avis marqué facultatif, bouton actif seulement si le texte a changé |
+| **I2** | Inscription : prénom suggéré « Damien » | ✅ « Votre prénom » |
+| **I3** | Recherche : un résultat cliqué ne naviguait qu'au clic suivant (signalé depuis une fiche série) | ✅ résultats transformés en `<Link>` — navigation par le navigateur, préchargée, accessible au clavier |
+| **I4** | Connexion : bouton retour collé à la marque | ✅ 20 → 32 px |
+| **I5** | Amis : résultats de recherche collés à la liste | ✅ `.page > .section` prend une marge basse |
+| **I6** | Découvrir : scroll et pages chargées perdus au retour arrière | ✅ hook `useRestorableList` (sessionStorage par URL + filtres), films et séries |
+| **I7** | Séries « Mieux notées » : scroll infini qui s'arrête | ✅ le vivier classé (5 pages × 3 sources) est prolongé par TMDB au-delà, doublons écartés — vaut aussi pour les films |
+| **I8** | Barre latérale absente des fiches film/série sur grand écran | 🟡 à faire |
+| **I9** | Motion / micro-interactions | 🟡 à faire — base existante (`.pageEnter`, `.stagger`, `prefers-reduced-motion`) à étendre |
+| **I10** | Amis : « ami » doit désigner une relation réciproque, + notification quand quelqu'un s'abonne | 🔴 à faire — table `Notification` à créer, la cloche du Topbar est aujourd'hui décorative |
+| **I11** | Mot de passe oublié | ⏸️ reporté — aucune dépendance d'envoi d'e-mail, choix du service à faire |
+| **I12** | Notes IMDb plutôt que TMDB | ⏸️ reporté — options étudiées : import quotidien du dataset (~50-80 Mo sur les 500 Mo Neon, + une lecture DB sur les fiches anonymes) ou OMDb à la demande (1 000 req/jour en gratuit) |
+
+**Décidé pour I10** : suivre quelqu'un reste un abonnement à sens unique — il apparaît
+dans « Abonnements » et son activité dans le fil. Le libellé **« Ami » n'apparaît qu'en
+réciprocité**. Le fil d'activité et les avis sur les fiches ne changent pas.
+
+---
+
 ## H. 🎨 Interface & ergonomie (nouveaux retours)
 
 ### H9. ✅ Barre de navigation mobile — refaite
