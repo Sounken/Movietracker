@@ -30,7 +30,13 @@ type ListState<T> = { items: T[]; page: number; hasMore: boolean };
 
 type Snapshot<T> = ListState<T> & { scrollY: number; savedAt: number };
 
-export function useRestorableList<T>(key: string, initialItems: T[], pageSize: number) {
+/**
+ * `initialHasMore` est fourni par l'appelant plutôt que déduit d'une taille de
+ * page : toutes les grilles ne comptent pas pareil. Celle des sociétés filtre
+ * les films sans affiche, donc une page pleine peut en renvoyer moins de vingt
+ * et se juge sur un seuil.
+ */
+export function useRestorableList<T>(key: string, initialItems: T[], initialHasMore: boolean) {
   /**
    * Un seul objet d'état plutôt que trois.
    *
@@ -41,7 +47,7 @@ export function useRestorableList<T>(key: string, initialItems: T[], pageSize: n
   const [state, setState] = useState<ListState<T>>({
     items: initialItems,
     page: 1,
-    hasMore: initialItems.length === pageSize,
+    hasMore: initialHasMore,
   });
 
   /** Position à rétablir une fois les éléments remis dans le DOM. */
@@ -131,14 +137,32 @@ export function useRestorableList<T>(key: string, initialItems: T[], pageSize: n
   }, [state, storageKey]);
 
   /**
-   * On enregistre au clic sur une carte plutôt qu'à chaque défilement : c'est
-   * le seul moment où l'état va être perdu, et ça évite d'écrire en continu.
-   * `pagehide` couvre la fermeture d'onglet et le retour navigateur.
+   * On enregistre au démontage plutôt qu'à chaque défilement : c'est le moment
+   * où l'état est perdu, quelle que soit la façon de quitter la page, et ça
+   * évite d'écrire en continu pendant le scroll.
+   *
+   * Le `pagehide` ne suffisait pas : il ne se déclenche qu'au déchargement du
+   * document. Une navigation interne — un résultat de recherche, le carrousel,
+   * un lien de la barre latérale — n'en provoque aucun, et l'état partait alors
+   * sans avoir été sauvegardé. Seul le clic sur une carte de la grille était
+   * couvert, par son `onClick`.
+   *
+   * La référence suit la dernière version de `save`, qui change à chaque page
+   * chargée : sans elle, l'effet de démontage figerait l'état du premier rendu.
    */
+  const saveRef = useRef(save);
   useEffect(() => {
-    window.addEventListener("pagehide", save);
-    return () => window.removeEventListener("pagehide", save);
+    saveRef.current = save;
   }, [save]);
+
+  useEffect(() => {
+    const onPageHide = () => saveRef.current();
+    window.addEventListener("pagehide", onPageHide);
+    return () => {
+      window.removeEventListener("pagehide", onPageHide);
+      saveRef.current();
+    };
+  }, []);
 
   return {
     items: state.items,

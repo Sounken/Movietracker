@@ -52,7 +52,7 @@ export default function DiscoverGrid({
   } = useRestorableList<TmdbDiscoverFilm>(
     `films:${category}:${genre}:${minYear}:${maxYear}:${minRating}:${providers}`,
     initialFilms,
-    20,
+    initialFilms.length === 20,
   );
   const [loading, setLoading] = useState(false);
   const loadingRef = useRef(false);

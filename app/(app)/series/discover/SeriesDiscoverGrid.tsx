@@ -42,7 +42,7 @@ export default function SeriesDiscoverGrid({
   } = useRestorableList<TmdbDiscoverSeries>(
     `series:${category}:${anime ? "anime" : "all"}:${genre}:${minYear}:${maxYear}:${minRating}:${providers}`,
     initialSeries,
-    20,
+    initialSeries.length === 20,
   );
   const [loading, setLoading] = useState(false);
   const loadingRef = useRef(false);

@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Plus, Loader2 } from "lucide-react";
 import type { TmdbFilmCard } from "@/lib/tmdb";
 import { Rating } from "@/lib/rating-scale";
+import { useRestorableList } from "@/app/(app)/components/use-restorable-list";
 import styles from "../../../(app)/films/discover/discover.module.css";
 
 export default function CompanyFilmsGrid({
@@ -20,12 +21,24 @@ export default function CompanyFilmsGrid({
   query: string;
   media: "movie" | "tv";
 }) {
-  const [films, setFilms] = useState(initialFilms);
-  const [page, setPage] = useState(1);
-  // TMDB renvoie 20 résultats par page ; on filtre ceux sans affiche, donc
-  // une page pleine peut en compter moins. On se base sur le brut de l'API
-  // via un seuil bas plutôt que sur l'égalité stricte.
-  const [hasMore, setHasMore] = useState(initialFilms.length >= 15);
+  // La clé inclut le tri et les filtres courants : les changer doit repartir
+  // d'une liste vierge.
+  const {
+    items: films,
+    setItems: setFilms,
+    page,
+    setPage,
+    hasMore,
+    setHasMore,
+    save,
+  } = useRestorableList<TmdbFilmCard>(
+    `company:${companyId}:${media}:${query}`,
+    initialFilms,
+    // TMDB renvoie 20 résultats par page ; on filtre ceux sans affiche, donc
+    // une page pleine peut en compter moins. On se base sur le brut de l'API
+    // via un seuil bas plutôt que sur l'égalité stricte.
+    initialFilms.length >= 15,
+  );
   const [loading, setLoading] = useState(false);
   const loadingRef = useRef(false);
 
@@ -48,7 +61,8 @@ export default function CompanyFilmsGrid({
         loadingRef.current = false;
         setLoading(false);
       });
-  }, [companyId, page, query]);
+    // Setters stables issus de `useRestorableList`.
+  }, [companyId, page, query, setFilms, setPage, setHasMore]);
 
   const sentinelRef = useRef<HTMLButtonElement | null>(null);
   useEffect(() => {
@@ -79,6 +93,7 @@ export default function CompanyFilmsGrid({
           key={film.id}
           href={`${media === "tv" ? "/series" : "/film"}/${film.id}`}
           className={styles.filmCard}
+          onClick={save}
         >
           <div className={styles.poster}>
             {film.posterUrl && (

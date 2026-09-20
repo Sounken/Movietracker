@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import FilmGrid from "./FilmGrid";
+import { useRestorableList } from "./use-restorable-list";
 import type { TmdbFilmCard } from "@/lib/tmdb";
 import styles from "./FilmGridInfinite.module.css";
 
@@ -22,7 +23,17 @@ export default function FilmGridInfinite({
   emptyTitle?: string;
   emptyHint?: string;
 }) {
-  const [films, setFilms] = useState<RatedFilm[]>(initialFilms);
+  /**
+   * `hasMore` est déduit de `total`, pas tenu par le hook : on ne lui demande
+   * donc que de conserver la liste. Les cartes sont rendues par `FilmGrid`, où
+   * l'on ne peut pas accrocher de `onClick` — c'est l'enregistrement au
+   * démontage qui couvre le départ vers une fiche.
+   */
+  const { items: films, setItems: setFilms } = useRestorableList<RatedFilm>(
+    `collection:${type}`,
+    initialFilms,
+    false,
+  );
   const [loading, setLoading] = useState(false);
   const loadingRef = useRef(false);
 
@@ -43,7 +54,8 @@ export default function FilmGridInfinite({
         loadingRef.current = false;
         setLoading(false);
       });
-  }, [type, films.length]);
+    // Setter stable issu de `useRestorableList`.
+  }, [type, films.length, setFilms]);
 
   // Scroll infini : charge la suite dès que la sentinelle approche du viewport
   const sentinelRef = useRef<HTMLDivElement | null>(null);
