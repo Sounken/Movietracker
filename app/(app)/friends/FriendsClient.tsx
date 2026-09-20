@@ -133,6 +133,17 @@ export default function FriendsClient({
 
   const followingIds = new Set(initialFollowing.map((f) => f.id));
 
+  /**
+   * « Ami » ne se dit qu'en réciprocité.
+   *
+   * S'abonner reste à sens unique — la personne apparaît dans « Tu suis » et
+   * son activité dans le fil — mais le mot « ami » suppose que les deux se
+   * suivent. Le libellé existait déjà côté abonnés sous la forme « Abonné
+   * mutuel » ; il manquait côté abonnements, où rien ne distinguait une
+   * relation réciproque d'un abonnement resté sans retour.
+   */
+  const followerIds = new Set(followers.map((f) => f.id));
+
   return (
     <div className={styles.page}>
       {/* ——— Header */}
@@ -211,6 +222,7 @@ export default function FriendsClient({
                       <Avatar url={u.avatarUrl} name={u.name} level={u.level} levelTitle={u.levelTitle} />
                       <div className={styles.userInfo}>
                         <div className={styles.userName}>{u.name}</div>
+                        {followerIds.has(u.id) && <div className={styles.mutualBadge}>Ami</div>}
                         <div className={styles.userMeta}>
                           {u.filmCount} {countNoun}{u.filmCount !== 1 ? "s" : ""}
                           {u.avgRating != null && <> • ★ <Rating value={u.avgRating} /></>}
@@ -255,7 +267,7 @@ export default function FriendsClient({
                       <Avatar url={u.avatarUrl} name={u.name} level={u.level} levelTitle={u.levelTitle} />
                       <div className={styles.userInfo}>
                         <div className={styles.userName}>{u.name}</div>
-                        {u.followsBack && <div className={styles.mutualBadge}>Abonné mutuel</div>}
+                        {u.followsBack && <div className={styles.mutualBadge}>Ami</div>}
                       </div>
                     </Link>
                     {!u.followsBack && (

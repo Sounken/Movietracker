@@ -274,6 +274,12 @@
   border-color: var(--accent);
 }
 
+/* La carte retombe légèrement au clic : sans ce retour, rien n'indique que
+   l'appui a été pris pendant que la fiche se charge. */
+.filmCard:active {
+  transform: translateY(-1px);
+}
+
 .poster {
   width: 100%;
   aspect-ratio: 2/3;

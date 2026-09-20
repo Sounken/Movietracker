@@ -48,8 +48,8 @@ en local, en attente de validation.
 | **I7** | Séries « Mieux notées » : scroll infini qui s'arrête | ✅ le vivier classé (5 pages × 3 sources) est prolongé par TMDB au-delà, doublons écartés — vaut aussi pour les films |
 | **I8** | Barre latérale absente des fiches film/série sur grand écran | ✅ shell extrait en `AppShell`, partagé par `(app)` et `(standalone)` — **à valider visuellement** |
 | **I13** | Séries : la note de la collection s'affichait « Ma note : 8,5 » en texte, illisible face au `★` des films | ✅ même rendu que les films (`★` + composant `Rating`) |
-| **I9** | Motion / micro-interactions | 🟡 à faire — base existante (`.pageEnter`, `.stagger`, `prefers-reduced-motion`) à étendre |
-| **I10** | Amis : « ami » doit désigner une relation réciproque, + notification quand quelqu'un s'abonne | 🔴 à faire — table `Notification` à créer, la cloche du Topbar est aujourd'hui décorative |
+| **I9** | Motion / micro-interactions | ✅ volontairement restreint — anneau de `:focus-visible` (les résultats de recherche sont devenus des liens clavier), enfoncement des boutons au clic, retombée des cartes, apparition du menu de recherche. Le socle existant (`.pageEnter`, `.stagger`, squelettes, View Transitions) était déjà en place |
+| **I10** | Amis : « ami » doit désigner une relation réciproque, + notification quand quelqu'un s'abonne | ✅ table `Notification` (+ migration), cloche fonctionnelle avec pastille et panneau, libellé « Ami » des deux côtés — **migration à appliquer au déploiement** |
 | **I11** | Mot de passe oublié | ⏸️ reporté — aucune dépendance d'envoi d'e-mail, choix du service à faire |
 | **I12** | Notes IMDb plutôt que TMDB | ⏸️ reporté — options étudiées : import quotidien du dataset (~50-80 Mo sur les 500 Mo Neon, + une lecture DB sur les fiches anonymes) ou OMDb à la demande (1 000 req/jour en gratuit) |
 

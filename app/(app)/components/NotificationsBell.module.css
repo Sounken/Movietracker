@@ -1,0 +1,113 @@
+.wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+/* Pastille du nombre de non-lues, posée sur le coin du pictogramme. */
+.badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10px;
+  line-height: 16px;
+  text-align: center;
+}
+
+@keyframes panelIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: min(320px, calc(100vw - 32px));
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  /* Au-dessus de la barre supérieure des fiches, comme le menu de recherche. */
+  z-index: 120;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+  animation: panelIn var(--dur-fast) var(--ease-out);
+}
+
+.panelTitle {
+  padding: 12px 14px;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  border-bottom: 1px solid var(--line);
+}
+
+.empty {
+  padding: 20px 14px;
+  font-size: 13px;
+  color: var(--ink-mute);
+  text-align: center;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  text-decoration: none;
+  color: var(--ink);
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.item:hover {
+  background: rgba(var(--accent-rgb), 0.07);
+}
+
+/* Non lue : un liseré discret plutôt qu'un fond plein, qui rendrait le panneau
+   illisible quand tout est neuf. */
+.itemUnread {
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.avatarEmpty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--ink-dim);
+  font-size: 13px;
+}
+
+.text {
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.time {
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--ink-mute);
+}

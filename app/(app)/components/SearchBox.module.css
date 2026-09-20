@@ -59,6 +59,19 @@
 }
 
 /* ——— Dropdown ——— */
+/* Keyframes locales : une référence à l'animation globale `riseIn` serait
+   réécrite par les CSS Modules et ne correspondrait plus à rien. */
+@keyframes dropIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 .dropdown {
   position: absolute;
   top: calc(100% + 8px);
@@ -68,6 +81,8 @@
   border: 1px solid var(--line);
   border-radius: 12px;
   overflow: hidden;
+  /* Le menu surgissait d'un bloc, sans lien visuel avec le champ. */
+  animation: dropIn var(--dur-fast) var(--ease-out);
   /* Au-dessus de la topbar sticky des fiches (z-index 50). */
   z-index: 120;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);

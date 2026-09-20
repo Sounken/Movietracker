@@ -28,6 +28,33 @@ model User {
   episodes       UserEpisode[]
   seasons        UserSeason[]
   favoriteSeries UserFavoriteSeries[]
+  notifications  Notification[]       @relation("notificationRecipient")
+  actedOn        Notification[]       @relation("notificationActor")
+}
+
+/// Notification reçue par un utilisateur.
+///
+/// Créée aujourd'hui pour un seul cas — quelqu'un s'abonne à vous — mais le
+/// champ `type` laisse la place aux suivants (avis d'un ami, réciprocité)
+/// sans nouvelle migration.
+model Notification {
+  id        String    @id @default(cuid())
+  /// Destinataire.
+  userId    String
+  user      User      @relation("notificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  /// Auteur de l'action à l'origine de la notification.
+  actorId   String
+  actor     User      @relation("notificationActor", fields: [actorId], references: [id], onDelete: Cascade)
+  /// « follow » pour l'instant.
+  type      String
+  /// Nul tant que la notification n'a pas été vue.
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  /// Se désabonner puis se réabonner ne doit pas empiler les notifications :
+  /// la ligne existante est réutilisée et redevient non lue.
+  @@unique([userId, actorId, type])
+  @@index([userId, createdAt])
 }
 
 model UserFollow {

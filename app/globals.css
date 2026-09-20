@@ -194,6 +194,32 @@ a {
 .stagger > *:nth-child(11) { animation-delay: 0.22s; }
 .stagger > *:nth-child(n + 12) { animation-delay: 0.24s; }
 
+/* ——————————————————————————————————————————————————————————————
+   Retours d'interaction
+   ——————————————————————————————————————————————————————————————
+   Anneau de focus unique pour tout le site. Il manquait, et ça compte depuis
+   que les résultats de recherche sont de vrais liens : ils sont atteignables
+   au clavier, or le contour par défaut du navigateur est invisible sur nos
+   fonds sombres. `:focus-visible` et non `:focus` — pas d'anneau au clic à la
+   souris, seulement au clavier. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Enfoncement au clic, réservé aux boutons : le geste y est explicite.
+   Les liens en sont exclus — un `transform` n'a aucun effet sur un lien de
+   texte, et sur une carte il entrerait en conflit avec l'élévation au survol,
+   qui a sa propre règle. */
+button {
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+button:not(:disabled):active {
+  transform: scale(0.97);
+}
+
 /* Squelette de chargement générique : le balayage indique que ça travaille,
    là où un bloc gris fixe passe pour une erreur d'affichage. */
 @keyframes shimmer {

@@ -4,6 +4,7 @@ import { useSyncExternalStore } from "react";
 import { flushSync } from "react-dom";
 import { usePathname } from "next/navigation";
 import SearchBox from "./SearchBox";
+import NotificationsBell from "./NotificationsBell";
 import styles from "./Topbar.module.css";
 
 const SunIcon = () => (
@@ -15,11 +16,6 @@ const SunIcon = () => (
 const MoonIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-  </svg>
-);
-const BellIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-    <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0" />
   </svg>
 );
 
@@ -103,9 +99,10 @@ export default function Topbar({ greeting, userName }: Props) {
       <button className={styles.iconBtn} title={isDark ? "Passer en clair" : "Passer en sombre"} onClick={toggleTheme}>
         {isDark ? <SunIcon /> : <MoonIcon />}
       </button>
-      <button className={styles.iconBtn} title="Notifications">
-        <BellIcon />
-      </button>
+      {/* `userName` sert d'indice d'authentification : le prénom est exigé à
+          l'inscription, et la barre ne le reçoit que pour une session ouverte.
+          Un visiteur anonyme ne déclenche donc aucune requête. */}
+      <NotificationsBell enabled={!!userName} buttonClassName={styles.iconBtn} />
     </div>
   );
 }
