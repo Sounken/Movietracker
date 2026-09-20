@@ -30,6 +30,17 @@
   overflow-x: hidden;
 }
 
+/* Les fiches posent leur affiche en fond (`position: fixed; inset: 0`, floutée
+   et assombrie) avec un `z-index: 0` explicite. La barre latérale est en
+   `position: sticky` sans z-index, donc en `auto` : déclarée avant dans le DOM,
+   elle passait dessous et paraissait grisée depuis qu'elle s'affiche sur les
+   fiches. Son fond est opaque, il suffit de la remettre au-dessus.
+   3 et non davantage : la fiche monte jusqu'à 2, et les modales (60+) doivent
+   rester devant. */
+.appFlush > aside {
+  z-index: 3;
+}
+
 @media (max-width: 768px) {
   .app {
     grid-template-columns: 1fr;
