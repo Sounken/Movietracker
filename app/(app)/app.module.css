@@ -19,6 +19,17 @@
   overflow-x: hidden;
 }
 
+/* Zone de contenu des fiches film, série, acteur et société.
+   Aucun gabarit : elles gèrent leur propre mise en page, affiche de fond en
+   `position: fixed` comprise. Seule la colonne de la grille les borne, à côté
+   de la barre latérale. `min-width: 0` évite qu'un contenu large (bandeau de
+   casting, grille de recommandations) ne pousse la colonne au-delà. */
+.mainFlush {
+  width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
 @media (max-width: 768px) {
   .app {
     grid-template-columns: 1fr;
@@ -27,6 +38,18 @@
 
   .main {
     padding: 20px 16px 24px;
+  }
+
+  /* Fiches : la navigation reste réservée aux écrans larges, comme demandé.
+     Sous 768px la Sidebar se transforme en barre du bas, or les fiches ont
+     déjà leur propre bouton de retour — l'ajouter changerait leur affichage
+     mobile sans qu'on l'ait voulu. */
+  .appFlush {
+    padding-bottom: 0;
+  }
+
+  .appFlush > aside {
+    display: none;
   }
 }
 

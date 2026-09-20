@@ -46,7 +46,8 @@ en local, en attente de validation.
 | **I5** | Amis : résultats de recherche collés à la liste | ✅ `.page > .section` prend une marge basse |
 | **I6** | Découvrir : scroll et pages chargées perdus au retour arrière | ✅ hook `useRestorableList` (sessionStorage par URL + filtres), films et séries |
 | **I7** | Séries « Mieux notées » : scroll infini qui s'arrête | ✅ le vivier classé (5 pages × 3 sources) est prolongé par TMDB au-delà, doublons écartés — vaut aussi pour les films |
-| **I8** | Barre latérale absente des fiches film/série sur grand écran | 🟡 à faire |
+| **I8** | Barre latérale absente des fiches film/série sur grand écran | ✅ shell extrait en `AppShell`, partagé par `(app)` et `(standalone)` — **à valider visuellement** |
+| **I13** | Séries : la note de la collection s'affichait « Ma note : 8,5 » en texte, illisible face au `★` des films | ✅ même rendu que les films (`★` + composant `Rating`) |
 | **I9** | Motion / micro-interactions | 🟡 à faire — base existante (`.pageEnter`, `.stagger`, `prefers-reduced-motion`) à étendre |
 | **I10** | Amis : « ami » doit désigner une relation réciproque, + notification quand quelqu'un s'abonne | 🔴 à faire — table `Notification` à créer, la cloche du Topbar est aujourd'hui décorative |
 | **I11** | Mot de passe oublié | ⏸️ reporté — aucune dépendance d'envoi d'e-mail, choix du service à faire |

@@ -321,6 +321,21 @@
   font-family: var(--font-geist-mono), monospace;
 }
 
+/* Ligne méta des cartes de séries : année, puis la note de l'utilisateur.
+   Reprend la mise en forme des cartes de films (FilmGrid.module.css) pour que
+   la même information se lise de la même façon des deux côtés. */
+.metaRow {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.myRating {
+  color: var(--accent-soft);
+  letter-spacing: 1px;
+}
+
 /* ——— Load more card ——— */
 .loadMoreCard {
   border-style: dashed;

@@ -6,7 +6,7 @@ import SeriesGrid, { type SeriesGridItem } from "./SeriesGrid";
 import styles from "./CollectionClient.module.css";
 import loadMoreStyles from "./FilmGridInfinite.module.css";
 import { useRatingScale } from "@/lib/rating-scale";
-import { formatRatingOutOf, toDisplayRating } from "@/lib/rating";
+import { toDisplayRating } from "@/lib/rating";
 
 type ApiItem = {
   id: number;
@@ -192,7 +192,9 @@ export default function SeriesCollectionClient({
     posterUrl: s.posterUrl,
     year: s.year,
     voteAverage: s.voteAverage,
-    caption: !isWatchlist && s.rating != null ? `Ma note : ${formatRatingOutOf(s.rating, scale)}` : s.year,
+    caption: s.year,
+    // La note est rendue par la grille, comme pour les films.
+    rating: isWatchlist ? null : s.rating,
   }));
 
   const remaining = totalCount - items.length;

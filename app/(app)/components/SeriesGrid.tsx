@@ -9,7 +9,16 @@ export type SeriesGridItem = {
   posterUrl: string;
   year: string;
   voteAverage: number;
-  caption?: string; // texte sous le titre (ex. progression ou note) — sinon l'année
+  caption?: string; // texte sous le titre (ex. progression) — sinon l'année
+  /**
+   * Note de l'utilisateur, rendue comme sur les cartes de films.
+   *
+   * Elle transitait auparavant par `caption`, sous la forme du texte
+   * « Ma note : 8,5 » : deux mots de préfixe, aucune mise en avant, et une
+   * apparence qui n'avait rien à voir avec le `★` des films. La même
+   * information doit se lire de la même façon des deux côtés.
+   */
+  rating?: number | null;
 };
 
 export default function SeriesGrid({
@@ -41,7 +50,15 @@ export default function SeriesGrid({
           </div>
           <div className={styles.info}>
             <div className={styles.title}>{s.name}</div>
-            <div className={styles.year}>{s.caption ?? s.year}</div>
+            <div className={`${styles.year} ${styles.metaRow}`}>
+              <span>{s.caption ?? s.year}</span>
+              {s.rating != null && (
+                <>
+                  <span>•</span>
+                  <span className={styles.myRating}>★ <Rating value={s.rating} outOf /></span>
+                </>
+              )}
+            </div>
           </div>
         </Link>
       ))}
