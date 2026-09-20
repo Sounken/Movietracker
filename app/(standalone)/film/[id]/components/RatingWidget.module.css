@@ -26,6 +26,26 @@
   margin-bottom: 2px;
 }
 
+/* Accusé de réception de la note, à la place de la consigne pendant quelques
+   secondes. La note part dès le clic sur une étoile ; sans ce retour, le champ
+   d'avis qui apparaît juste après laissait croire qu'il fallait valider. */
+.savedInline {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--accent);
+}
+
+.autoHint {
+  color: var(--ink-mute);
+}
+
+.optional {
+  color: var(--ink-mute);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
 .divider {
   width: 1px;
   height: 40px;

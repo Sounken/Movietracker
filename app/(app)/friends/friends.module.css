@@ -87,6 +87,13 @@
   border-radius: 16px;
   overflow: hidden;
 }
+
+/* Le bloc de résultats de recherche est le seul `.section` enfant direct de
+   `.page` — les autres vivent dans `.cols`, qui a son propre `gap`. Sans marge,
+   il collait à la grille des abonnements affichée juste en dessous. */
+.page > .section {
+  margin-bottom: 24px;
+}
 .sectionTitle {
   display: flex;
   align-items: center;

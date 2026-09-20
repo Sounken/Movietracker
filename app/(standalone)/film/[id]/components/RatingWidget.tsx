@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Sparkles } from "lucide-react";
 import StarRating from "@/app/(app)/components/StarRating";
@@ -34,7 +34,13 @@ export default function RatingWidget({
   const scale = useRatingScale();
   const [rating, setRating] = useState(initialRating);
   const [review, setReview] = useState(initialReview);
-  const [saved, setSaved] = useState(false);
+  /**
+   * Dernier avis réellement enregistré, pour savoir si le texte a changé.
+   *
+   * Sans cette référence, le bouton d'enregistrement restait actif en
+   * permanence et laissait croire qu'une action était attendue.
+   */
+  const [savedReview, setSavedReview] = useState(initialReview);
   const [isPending, startTransition] = useTransition();
   // Saisie libre sur 100 : texte tant qu'on tape, converti au blur/Entrée.
   const [draft, setDraft] = useState<string | null>(null);
@@ -43,14 +49,33 @@ export default function RatingWidget({
   const [hover, setHover] = useState<number | null>(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
 
+  /**
+   * Accusé de réception de la note.
+   *
+   * **La note était déjà enregistrée dès le clic sur une étoile**, mais rien ne
+   * le disait : l'apparition simultanée du champ d'avis et de son bouton
+   * « Sauvegarder » faisait croire qu'il fallait encore valider. Signalé à
+   * l'usage. On confirme donc explicitement, et le bouton ne concerne plus que
+   * le texte.
+   */
+  const [ratingSavedAt, setRatingSavedAt] = useState<number | null>(null);
+  useEffect(() => {
+    if (ratingSavedAt === null) return;
+    const timer = setTimeout(() => setRatingSavedAt(null), 2600);
+    return () => clearTimeout(timer);
+  }, [ratingSavedAt]);
+
   const displayed = hover ?? rating;
+  const reviewDirty = review !== savedReview;
 
   const handleRate = (value: number) => {
     if (!isAuthenticated) { router.push("/login"); return; }
     setRating(value);
-    setSaved(false);
     startTransition(async () => {
       await saveAction(tmdbId, value, review);
+      // L'appel enregistre aussi le texte courant : la référence suit.
+      setSavedReview(review);
+      setRatingSavedAt(Date.now());
       router.refresh();
     });
   };
@@ -72,7 +97,7 @@ export default function RatingWidget({
   const handleSave = () => {
     startTransition(async () => {
       await saveAction(tmdbId, rating, review);
-      setSaved(true);
+      setSavedReview(review);
       router.refresh();
     });
   };
@@ -80,7 +105,8 @@ export default function RatingWidget({
   const handleClearRating = () => {
     setRating(0);
     setReview("");
-    setSaved(false);
+    setSavedReview("");
+    setRatingSavedAt(null);
     startTransition(async () => {
       await deleteAction(tmdbId);
       router.refresh();
@@ -92,7 +118,14 @@ export default function RatingWidget({
       <div className={styles.widget}>
         <div className={styles.label}>
           <strong>Votre note</strong>
-          {scale === 100 ? "Cliquez ou saisissez une valeur" : "Cliquez pour noter"}
+          {ratingSavedAt !== null ? (
+            <span className={styles.savedInline}><Check size={13} /> Note enregistrée</span>
+          ) : (
+            <>
+              {scale === 100 ? "Cliquez ou saisissez une valeur" : "Cliquez pour noter"}
+              <span className={styles.autoHint}> — enregistrement immédiat</span>
+            </>
+          )}
         </div>
         <div className={styles.divider} />
         <StarRating
@@ -158,22 +191,27 @@ export default function RatingWidget({
 
       {rating > 0 && (
         <div className={styles.reviewBlock}>
-          <div className={styles.reviewLabel}>Votre avis</div>
+          <div className={styles.reviewLabel}>Votre avis <span className={styles.optional}>— facultatif</span></div>
           <textarea
             value={review}
-            onChange={(e) => { setReview(e.target.value); setSaved(false); }}
+            onChange={(e) => setReview(e.target.value)}
             placeholder={`Qu'avez-vous pensé de "${title}" ? Partagez votre ressenti…`}
             className={styles.textarea}
           />
           <div className={styles.reviewActions}>
-            {saved && <span className={styles.savedMsg}><Check size={13} /> Avis sauvegardé</span>}
             {/* Seul point de suppression depuis que le bouton « Supprimer ma
                 note » de la colonne poster a disparu → libellé explicite. */}
             <button onClick={handleClearRating} disabled={isPending} className={styles.btnSecondary}>
               Supprimer ma note
             </button>
-            <button onClick={handleSave} disabled={isPending} className={styles.btnSave}>
-              {isPending ? "Sauvegarde…" : "Sauvegarder l'avis"}
+            {/* Désactivé tant que le texte n'a pas changé : un bouton toujours
+                actif se lit comme une validation en attente. */}
+            <button
+              onClick={handleSave}
+              disabled={isPending || !reviewDirty}
+              className={styles.btnSave}
+            >
+              {isPending ? "Enregistrement…" : reviewDirty ? "Enregistrer l'avis" : "Avis enregistré"}
             </button>
           </div>
         </div>

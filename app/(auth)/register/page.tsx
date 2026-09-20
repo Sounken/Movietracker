@@ -34,7 +34,7 @@ export default function RegisterPage() {
               autoComplete="name"
               required
               className={styles.input}
-              placeholder="Damien"
+              placeholder="Votre prénom"
             />
           </div>
 

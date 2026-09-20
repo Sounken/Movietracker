@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
 import { Rating } from "@/lib/rating-scale";
 import styles from "./SearchBox.module.css";
@@ -46,7 +46,6 @@ export default function SearchBox({
   compact?: boolean;
   scope?: "films" | "series";
 }) {
-  const router = useRouter();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [open, setOpen] = useState(false);
@@ -78,15 +77,30 @@ export default function SearchBox({
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const navigate = (id: number, mediaType?: SearchResult["mediaType"]) => {
+  /**
+   * Destination d'un résultat.
+   *
+   * Les résultats sont des liens, plus des `div` qui appelaient `router.push`.
+   * Signalé en production : depuis une fiche série, cliquer un résultat ne
+   * faisait rien — la page ne changeait qu'au clic suivant, n'importe où. Une
+   * navigation entièrement pilotée par JavaScript n'offre aucun repli quand la
+   * transition ne se valide pas, et aucun retour visuel pendant qu'elle dure
+   * (la fiche série est la page la plus lourde du site).
+   *
+   * Un `<Link>` déclenche la navigation par le navigateur, se précharge, et
+   * devient accessible au clavier et au clic milieu — ce qu'un `div` n'était
+   * pas.
+   */
+  const hrefFor = ({ id, mediaType }: SearchResult) =>
+    mediaType === "tv" ? `/series/${id}`
+    : mediaType === "person" ? `/actor/${id}`
+    : mediaType === "company" ? `/company/${id}`
+    : `/film/${id}`;
+
+  /** Referme et vide la recherche : la navigation est portée par le lien. */
+  const handlePick = () => {
     setQuery("");
     setOpen(false);
-    const href =
-      mediaType === "tv" ? `/series/${id}`
-      : mediaType === "person" ? `/actor/${id}`
-      : mediaType === "company" ? `/company/${id}`
-      : `/film/${id}`;
-    router.push(href);
   };
 
   return (
@@ -111,10 +125,11 @@ export default function SearchBox({
       {open && results.length > 0 && (
         <div className={styles.dropdown}>
           {results.map((m) => (
-            <div
+            <Link
               key={`${m.mediaType ?? "movie"}-${m.id}`}
+              href={hrefFor(m)}
               className={styles.result}
-              onClick={() => navigate(m.id, m.mediaType)}
+              onClick={handlePick}
             >
               {m.posterUrl ? (
                 <Image
@@ -145,7 +160,7 @@ export default function SearchBox({
                   <Rating value={m.voteAverage} />
                 </div>
               )}
-            </div>
+            </Link>
           ))}
         </div>
       )}

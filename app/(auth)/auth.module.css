@@ -23,7 +23,9 @@
   background: none;
   border: none;
   padding: 0;
-  margin-bottom: 20px;
+  /* 20px laissait le bouton collé au nom de la marque, juste en dessous :
+     les deux se lisaient comme un seul bloc. */
+  margin-bottom: 32px;
   font-size: 14px;
   font-family: inherit;
   color: var(--ink-dim);
