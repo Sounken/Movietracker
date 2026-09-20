@@ -9,10 +9,9 @@ import FilmTitleLogo from "../../film/[id]/components/FilmTitleLogo";
 import CastGrid from "../../film/[id]/components/CastGrid";
 import SimilarFilms from "../../film/[id]/components/SimilarFilms";
 import WatchProvidersSection from "../../components/WatchProvidersSection";
-import AwardsSection from "../../components/AwardsSection";
+import AwardsAsync from "../../components/AwardsAsync";
 import TrailerSection from "../../components/TrailerSection";
 import ExternalLinks from "../../components/ExternalLinks";
-import { fetchAwards } from "@/lib/awards";
 import SeriesActions from "./SeriesActions";
 import SeasonTracker from "./SeasonTracker";
 import RatingWidget from "../../film/[id]/components/RatingWidget";
@@ -82,10 +81,6 @@ export default async function SeriesPage({ params }: { params: Promise<{ id: str
     certification,
     logoUrl,
   } = bundle;
-
-  // Distinctions réelles (Wikidata) : dépend de external_ids, donc en second
-  // temps. Un échec renvoie une liste vide, la fiche s'affiche quand même.
-  const awards = externalIds.wikidataId ? await fetchAwards(externalIds.wikidataId) : [];
 
   const [userSeries, watchedEpisodes, seasonRatings] = session
     ? await Promise.all([
@@ -397,8 +392,8 @@ export default async function SeriesPage({ params }: { params: Promise<{ id: str
             <ExternalLinks ids={externalIds} homepage={series.homepage} />
           </div>
 
-          <AwardsSection
-            awards={awards}
+          <AwardsAsync
+            wikidataId={externalIds.wikidataId}
             sectionClassName={filmStyles.section}
             titleClassName={filmStyles.sectionTitle}
           />

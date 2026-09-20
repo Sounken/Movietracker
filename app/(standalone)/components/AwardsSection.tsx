@@ -22,7 +22,7 @@ export default function AwardsSection({
   const majorCount = awards.filter((a) => a.major).length;
 
   return (
-    <div className={sectionClassName}>
+    <div className={`${sectionClassName} ${styles.appear}`}>
       <div className={titleClassName}>Distinctions</div>
 
       <div className={styles.list}>

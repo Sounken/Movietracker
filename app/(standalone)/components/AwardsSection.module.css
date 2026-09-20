@@ -1,3 +1,30 @@
+/* Arrivée du bloc une fois Wikidata résolu : il remplace un squelette, donc
+   l'apparition doit se voir sans être spectaculaire. Même vocabulaire que le
+   reste du site (cf. globals.css). `forwards` est inutile — l'état final est
+   déjà l'état au repos. */
+@keyframes awardsIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.appear {
+  animation: awardsIn var(--dur-base) var(--ease-out);
+}
+
+/* Pastille du squelette : hauteur calée sur `.award` (7px + 7px de padding,
+   ~16px de texte, 2px de bordure) pour que rien ne saute à l'arrivée. */
+.skelPill {
+  display: inline-block;
+  height: 32px;
+  border-radius: 8px;
+}
+
 .list {
   display: flex;
   flex-wrap: wrap;

@@ -6,10 +6,9 @@ import { prisma } from "@/lib/db";
 import { saveRating, deleteRating } from "@/app/actions/film";
 import { fetchFilmDetail, fetchFilmCredits, fetchSimilarFilms, fetchFilmKeywords, fetchFilmLogo, fetchFilmCollection, fetchWatchProviders, fetchExternalIds, fetchFilmExtras, formatMoney, formatRuntime } from "@/lib/tmdb";
 import WatchProvidersSection from "../../components/WatchProvidersSection";
-import AwardsSection from "../../components/AwardsSection";
+import AwardsAsync from "../../components/AwardsAsync";
 import TrailerSection from "../../components/TrailerSection";
 import ExternalLinks from "../../components/ExternalLinks";
-import { fetchAwards } from "@/lib/awards";
 import FilmTopbar from "./components/FilmTopbar";
 import FilmTitleLogo from "./components/FilmTitleLogo";
 import PosterActions from "./components/PosterActions";
@@ -47,20 +46,15 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
   if (!film) notFound();
 
   /**
-   * Second temps : distinctions Wikidata et films de la saga.
+   * Second temps : les films de la saga, qui dépendent de `film.collectionId`
+   * et ne peuvent donc pas rejoindre le lot précédent.
    *
-   * Les deux dépendent du premier lot — les distinctions de `external_ids`, la
-   * saga de `film.collectionId` — mais **pas l'un de l'autre**. Ils étaient
-   * pourtant enchaînés, ce qui ajoutait un aller-retour complet au rendu : le
-   * Wikidata en fait déjà deux à lui seul. En parallèle, seul le plus lent
-   * compte.
-   *
-   * Un échec de l'un renvoie une liste vide et la fiche s'affiche quand même.
+   * Les distinctions Wikidata étaient elles aussi attendues ici. Elles sont
+   * désormais différées dans un `<Suspense>` (cf. AwardsAsync) : c'était le
+   * poste le plus lourd de la page, ~1,2 s de médiane, et il bloquait tout le
+   * reste — y compris pour les films qui n'ont aucune distinction à montrer.
    */
-  const [awards, collection] = await Promise.all([
-    externalIds.wikidataId ? fetchAwards(externalIds.wikidataId) : Promise.resolve([]),
-    film.collectionId ? fetchFilmCollection(film.collectionId) : Promise.resolve([]),
-  ]);
+  const collection = film.collectionId ? await fetchFilmCollection(film.collectionId) : [];
 
   // Films de la saga, hors film courant. `recommendations` en oublie une
   // partie — sur Star Wars, plusieurs épisodes n'apparaissaient pas.
@@ -364,8 +358,8 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
             </div>
           )}
 
-          <AwardsSection
-            awards={awards}
+          <AwardsAsync
+            wikidataId={externalIds.wikidataId}
             sectionClassName={styles.section}
             titleClassName={styles.sectionTitle}
           />
