@@ -42,6 +42,7 @@ en local, en attente de validation.
 | **I1** | Notation : la note partait déjà au clic, mais le bouton « Sauvegarder » laissait croire qu'il fallait valider | ✅ confirmation « Note enregistrée », avis marqué facultatif, bouton actif seulement si le texte a changé |
 | **I2** | Inscription : prénom suggéré « Damien » | ✅ « Votre prénom » |
 | **I3** | Recherche : un résultat cliqué ne naviguait qu'au clic suivant (signalé depuis une fiche série) | ✅ résultats transformés en `<Link>` — navigation par le navigateur, préchargée, accessible au clavier |
+| **I14** | **Cause réelle du I3** : `toggleEpisode` revalidait la fiche série elle-même, donc un rendu serveur complet par case cochée ; les Server Actions étant sérialisées, la navigation attendait son tour | ✅ la fiche n'est plus revalidée sur le suivi d'épisode (suivi déjà optimiste) ; les pages de liste le restent |
 | **I4** | Connexion : bouton retour collé à la marque | ✅ 20 → 32 px |
 | **I5** | Amis : résultats de recherche collés à la liste | ✅ `.page > .section` prend une marge basse |
 | **I6** | Découvrir : scroll et pages chargées perdus au retour arrière | ✅ hook `useRestorableList` (sessionStorage par URL + filtres), films et séries |

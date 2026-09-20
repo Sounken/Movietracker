@@ -151,7 +151,26 @@ export async function toggleEpisode(
     await ensureUserSeries(session.userId, seriesId);
   }
 
-  revalidateSeriesPages(seriesId);
+  /**
+   * **La fiche elle-même n'est pas revalidée ici**, contrairement aux autres
+   * actions — et c'est volontaire.
+   *
+   * Une Server Action appelée depuis le client renvoie la page courante
+   * re-rendue si elle a été invalidée. Cocher un épisode déclenchait donc un
+   * rendu serveur complet de la fiche série : appel TMDB groupé, Wikidata,
+   * requêtes Prisma — la page la plus lourde du site. Next exécutant les
+   * Server Actions une par une, cocher une saison entière empilait autant de
+   * rendus, et **toute navigation lancée pendant ce temps attendait son tour**.
+   *
+   * Symptôme rapporté en production : depuis une fiche série où l'on venait de
+   * cocher beaucoup d'épisodes, cliquer un résultat de recherche ne faisait
+   * rien — la page ne changeait qu'au clic suivant, quand React vidait la file.
+   *
+   * Le suivi est optimiste côté client : la case est déjà cochée à l'écran, le
+   * rendu serveur n'apportait rien. Les pages de liste restent invalidées, ce
+   * qui ne coûte qu'un marquage de cache sans aucun rendu.
+   */
+  revalidateSeriesPages();
 }
 
 // Marque (ou démarque) toute une saison d'un coup.
