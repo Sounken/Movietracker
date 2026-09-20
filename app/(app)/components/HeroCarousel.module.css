@@ -359,10 +359,23 @@
   z-index: 12;
 }
 
+/* `transform` et non `width`.
+   C'est la seule barre du site animée en continu — elle avance toutes les
+   60 ms pendant toute la durée d'une diapositive. Animer `width` force un
+   recalcul de mise en page à chaque image ; `scaleX` reste sur le compositeur.
+   Conversion sûre ici, et seulement ici : cette barre est d'une couleur unie
+   et sans arrondi. Les autres (XP, genres, jauges) sont en `border-radius:
+   999px` avec un dégradé — les mettre à l'échelle écraserait leurs extrémités
+   et compresserait le dégradé, pour un gain nul puisqu'elles n'animent qu'une
+   fois à l'affichage. */
 .progressFill {
   height: 100%;
+  width: 100%;
   background: var(--accent);
-  transition: width 0.06s linear;
+  transform-origin: left;
+  transition: transform 0.06s linear;
+  /* Justifié par l'animation continue ; à ne pas généraliser. */
+  will-change: transform;
 }
 
 /* ——— Responsive ——— */

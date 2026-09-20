@@ -63,6 +63,8 @@ export default function NotificationsBell({
   const [items, setItems] = useState<Notification[]>([]);
   const [unread, setUnread] = useState(0);
   const [open, setOpen] = useState(false);
+  /** Garde le panneau monté le temps de son animation de sortie. */
+  const [closing, setClosing] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
@@ -91,7 +93,7 @@ export default function NotificationsBell({
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
-      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
+      if (!wrapRef.current?.contains(e.target as Node)) setClosing(true);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -99,15 +101,19 @@ export default function NotificationsBell({
 
   /** Ouvrir vaut lecture : le compteur retombe et le serveur est prévenu. */
   const toggle = useCallback(() => {
-    setOpen((wasOpen) => {
-      if (!wasOpen && unread > 0) {
-        setUnread(0);
-        setItems((prev) => prev.map((n) => ({ ...n, readAt: n.readAt ?? new Date().toISOString() })));
-        void fetch("/api/notifications", { method: "POST" }).catch(() => {});
-      }
-      return !wasOpen;
-    });
-  }, [unread]);
+    // Fermeture : on laisse l'animation de sortie se jouer, le démontage suit.
+    if (open) {
+      setClosing(true);
+      return;
+    }
+
+    setOpen(true);
+    if (unread > 0) {
+      setUnread(0);
+      setItems((prev) => prev.map((n) => ({ ...n, readAt: n.readAt ?? new Date().toISOString() })));
+      void fetch("/api/notifications", { method: "POST" }).catch(() => {});
+    }
+  }, [open, unread]);
 
   if (!enabled) return null;
 
@@ -126,7 +132,15 @@ export default function NotificationsBell({
       </button>
 
       {open && (
-        <div className={styles.panel}>
+        <div
+          className={`${styles.panel} ${closing ? styles.closing : ""}`}
+          // Se déclenche aussi à l'entrée : d'où le garde-fou.
+          onAnimationEnd={() => {
+            if (!closing) return;
+            setClosing(false);
+            setOpen(false);
+          }}
+        >
           <div className={styles.panelTitle}>Notifications</div>
 
           {!loaded && <div className={styles.empty}>Chargement…</div>}

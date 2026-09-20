@@ -34,8 +34,8 @@ Légende : 🟢 simple · 🟡 moyen · 🔴 gros / à cadrer
 
 ## I. 🔧 Retours d'usage — septembre 2026
 
-Lot issu des retours d'utilisation du 20/09. **Rien n'est poussé** : tout est commité
-en local, en attente de validation.
+Lot issu des retours d'utilisation du 20/09, poussé sur `main` le 20/09 au soir.
+La migration `20260920120000_add_notifications` s'applique au démarrage du conteneur.
 
 | Réf | Tâche | État |
 |---|---|---|
@@ -43,13 +43,13 @@ en local, en attente de validation.
 | **I2** | Inscription : prénom suggéré « Damien » | ✅ « Votre prénom » |
 | **I3** | Recherche : un résultat cliqué ne naviguait qu'au clic suivant (signalé depuis une fiche série) | ✅ résultats transformés en `<Link>` — navigation par le navigateur, préchargée, accessible au clavier |
 | **I14** | **Cause réelle du I3** : `toggleEpisode` revalidait la fiche série elle-même, donc un rendu serveur complet par case cochée ; les Server Actions étant sérialisées, la navigation attendait son tour | ✅ la fiche n'est plus revalidée sur le suivi d'épisode (suivi déjà optimiste) ; les pages de liste le restent |
-| **I4** | Connexion : bouton retour collé à la marque | ✅ 20 → 32 px |
+| **I4** | Connexion : bouton retour collé à la marque | ✅ les deux sont des éléments en ligne, donc côte à côte sans rien entre eux — 18 px d'écart explicite. Deux tentatives ratées avant : marge basse (sans effet), puis passage en bloc (les séparait mais déséquilibrait la carte) |
 | **I5** | Amis : résultats de recherche collés à la liste | ✅ `.page > .section` prend une marge basse |
 | **I6** | Découvrir : scroll et pages chargées perdus au retour arrière | ✅ hook `useRestorableList` (sessionStorage par URL + filtres), films et séries |
 | **I7** | Séries « Mieux notées » : scroll infini qui s'arrête | ✅ le vivier classé (5 pages × 3 sources) est prolongé par TMDB au-delà, doublons écartés — vaut aussi pour les films |
 | **I8** | Barre latérale absente des fiches film/série sur grand écran | ✅ shell extrait en `AppShell`, partagé par `(app)` et `(standalone)` — **à valider visuellement** |
 | **I13** | Séries : la note de la collection s'affichait « Ma note : 8,5 » en texte, illisible face au `★` des films | ✅ même rendu que les films (`★` + composant `Rating`) |
-| **I9** | Motion / micro-interactions | ✅ volontairement restreint — anneau de `:focus-visible` (les résultats de recherche sont devenus des liens clavier), enfoncement des boutons au clic, retombée des cartes, apparition du menu de recherche. Le socle existant (`.pageEnter`, `.stagger`, squelettes, View Transitions) était déjà en place |
+| **I9** | Motion / micro-interactions | ✅ deux passes. D'abord les manques évidents (`:focus-visible`, enfoncement des boutons, retombée des cartes, apparition des menus). Puis la compétence `interaction-design` appliquée : échelle de courbes complétée (`--ease-in`, `--ease-in-out`, `--spring`, `--dur-exit`), **animations de sortie** sur le menu de recherche et le panneau de notifications, barre du carrousel passée en `scaleX`, ressort sur la confirmation de note |
 | **I10** | Amis : « ami » doit désigner une relation réciproque, + notification quand quelqu'un s'abonne | ✅ table `Notification` (+ migration), cloche fonctionnelle avec pastille et panneau, libellé « Ami » des deux côtés — **migration à appliquer au déploiement** |
 | **I11** | Mot de passe oublié | ⏸️ reporté — aucune dépendance d'envoi d'e-mail, choix du service à faire |
 | **I12** | Notes IMDb plutôt que TMDB | ⏸️ reporté — options étudiées : import quotidien du dataset (~50-80 Mo sur les 500 Mo Neon, + une lecture DB sur les fiches anonymes) ou OMDb à la demande (1 000 req/jour en gratuit) |

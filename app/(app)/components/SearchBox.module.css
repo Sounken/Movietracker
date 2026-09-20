@@ -61,6 +61,13 @@
 /* ——— Dropdown ——— */
 /* Keyframes locales : une référence à l'animation globale `riseIn` serait
    réécrite par les CSS Modules et ne correspondrait plus à rien. */
+@keyframes dropOut {
+  to {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
 @keyframes dropIn {
   from {
     opacity: 0;
@@ -81,13 +88,20 @@
   border: 1px solid var(--line);
   border-radius: 12px;
   overflow: hidden;
-  /* Le menu surgissait d'un bloc, sans lien visuel avec le champ. */
-  animation: dropIn var(--dur-fast) var(--ease-out);
   /* Au-dessus de la topbar sticky des fiches (z-index 50). */
   z-index: 120;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
   max-height: 60vh;
   overflow-y: auto;
+  /* Le menu surgissait d'un bloc, sans lien visuel avec le champ. */
+  animation: dropIn var(--dur-fast) var(--ease-out);
+}
+
+/* Sortie : plus courte que l'entrée et en accélération — on n'attend pas ce
+   qui s'en va. `forwards` maintient l'état final le temps du démontage, qui
+   suit immédiatement. */
+.closing {
+  animation: dropOut var(--dur-exit) var(--ease-in) forwards;
 }
 
 .result {

@@ -231,7 +231,7 @@ export default function HeroCarousel({
       </div>
 
       <div className={styles.progress}>
-        <div className={styles.progressFill} style={{ width: `${prog}%` }} />
+        <div className={styles.progressFill} style={{ transform: `scaleX(${prog / 100})` }} />
       </div>
     </div>
   );

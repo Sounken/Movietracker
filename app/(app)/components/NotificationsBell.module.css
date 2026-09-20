@@ -31,6 +31,13 @@
   }
 }
 
+@keyframes panelOut {
+  to {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
 .panel {
   position: absolute;
   top: calc(100% + 8px);
@@ -44,6 +51,11 @@
   z-index: 120;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
   animation: panelIn var(--dur-fast) var(--ease-out);
+}
+
+/* Sortie : plus courte, en accélération. */
+.closing {
+  animation: panelOut var(--dur-exit) var(--ease-in) forwards;
 }
 
 .panelTitle {

@@ -106,9 +106,22 @@ a {
    transitions se ressemblent d'un écran à l'autre au lieu d'être réglées au
    cas par cas dans chaque module CSS. */
 :root {
+  /* Entrée : décélération. Conservée telle quelle — toutes les animations
+     existantes sont réglées dessus, la changer déplacerait le rendu partout. */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  /* Sortie : accélération. Un élément qui disparaît doit partir vite, là où un
+     élément qui entre doit s'installer en douceur — c'est ce qui manquait, et
+     ce qui explique que nos menus disparaissaient d'un coup. */
+  --ease-in: cubic-bezier(0.55, 0, 1, 0.45);
+  /* Déplacement d'un point à un autre : accélère puis décélère. */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  /* Léger dépassement, réservé aux retours positifs (note enregistrée). */
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
   --dur-fast: 0.18s;
   --dur-base: 0.34s;
+  /* Sortie plus courte que l'entrée : on n'attend pas ce qui s'en va. */
+  --dur-exit: 0.14s;
 }
 
 @keyframes riseIn {

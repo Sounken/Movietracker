@@ -49,7 +49,16 @@ export default function SearchBox({
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [open, setOpen] = useState(false);
+  /**
+   * Sortie animée : le menu restait affiché puis disparaissait d'un coup.
+   * Sans bibliothèque d'animation, il faut le garder monté le temps de
+   * l'animation — d'où cet état, levé à la fin de celle-ci.
+   */
+  const [closing, setClosing] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  /** Referme en douceur ; `setOpen(false)` démonterait sans transition. */
+  const requestClose = () => setClosing(true);
 
   // Recherche débouncée
   useEffect(() => {
@@ -71,7 +80,7 @@ export default function SearchBox({
   // Fermeture au clic extérieur
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (!containerRef.current?.contains(e.target as Node)) setOpen(false);
+      if (!containerRef.current?.contains(e.target as Node)) requestClose();
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -112,10 +121,12 @@ export default function SearchBox({
           onChange={(e) => {
             const q = e.target.value;
             setQuery(q);
-            if (q.length < 2) { setResults([]); setOpen(false); }
+            // Fermeture immédiate : la liste est vidée, il n'y a plus rien à
+            // faire sortir en douceur.
+            if (q.length < 2) { setResults([]); setOpen(false); setClosing(false); }
           }}
           onFocus={() => results.length > 0 && setOpen(true)}
-          onKeyDown={(e) => { if (e.key === "Escape") setOpen(false); }}
+          onKeyDown={(e) => { if (e.key === "Escape") requestClose(); }}
           placeholder={placeholder ?? SCOPE_PLACEHOLDER[scope]}
           aria-label={placeholder ?? SCOPE_PLACEHOLDER[scope]}
           className={styles.searchInput}
@@ -123,7 +134,15 @@ export default function SearchBox({
       </div>
 
       {open && results.length > 0 && (
-        <div className={styles.dropdown}>
+        <div
+          className={`${styles.dropdown} ${closing ? styles.closing : ""}`}
+          // Se déclenche aussi pour l'animation d'entrée : d'où le garde-fou.
+          onAnimationEnd={() => {
+            if (!closing) return;
+            setClosing(false);
+            setOpen(false);
+          }}
+        >
           {results.map((m) => (
             <Link
               key={`${m.mediaType ?? "movie"}-${m.id}`}
