@@ -48,6 +48,23 @@ export default function WebVitalsReporter() {
    * bibliothèque attend.
    */
   useEffect(() => {
+    /**
+     * Rien n'est envoyé hors production.
+     *
+     * `.env.local` pointe le serveur de développement sur la base de
+     * production : une soirée de développement écrivait donc ses mesures dans
+     * la même table que les visiteurs. Or en mode dev, Next compile chaque
+     * route à la première visite — des TTFB de plusieurs secondes qui n'ont
+     * aucun rapport avec la production. Constaté le 2026-09-20 : la page
+     * /vitals affichait l'accueil « à surveiller » à 1 583 ms de TTFB, alors
+     * que les traces serveur donnent 24 ms en p50.
+     *
+     * Effet de bord utile : le serveur de dev ne réveille plus Neon pour
+     * écrire des mesures, et le calcul facturé ne court plus pendant qu'on
+     * travaille.
+     */
+    if (process.env.NODE_ENV !== "production") return;
+
     const send = (metric: Metric) => {
       const body = JSON.stringify({
         // Lue à l'envoi, et non capturée à l'abonnement : une métrique
