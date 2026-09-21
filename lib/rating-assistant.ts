@@ -9,12 +9,12 @@
 export const LEVELS = [
   { label: "Faible", value: 1, color: "#e7a39b" },
   { label: "Fragile", value: 3.5, color: "#e9b59d" },
-  { label: "Solide", value: 6, color: "#e7cf9c" },
+  { label: "Bien", value: 6, color: "#e7cf9c" },
   { label: "Fort", value: 8, color: "#bdd09d" },
   { label: "Exceptionnel", value: 10, color: "#98c59d" },
 ] as const;
 
-/** Niveau par défaut à l'ouverture : « Solide », le milieu de l'échelle. */
+/** Niveau par défaut à l'ouverture : « Bien », le milieu de l'échelle. */
 export const DEFAULT_LEVEL = 6;
 
 export type CriterionGroup = "head" | "heart";

@@ -153,20 +153,20 @@ export default function SeriesDiscoverFilters({
         <div className={styles.filterRow}>
           <Dropdown label={genreName ?? "Genre"} active={Boolean(genre)}>
             {(close) => (
-              <div className={styles.genreGrid}>
+              <div className={styles.dropdownList}>
                 <button
-                  className={`${styles.pill} ${!genre ? styles.pillOn : ""}`}
+                  className={`${styles.dropdownItem} ${!genre ? styles.dropdownItemOn : ""}`}
                   onClick={() => {
                     setParams({ genre: "" });
                     close();
                   }}
                 >
-                  Tous
+                  Tous les genres
                 </button>
                 {GENRE_LIST.map((g) => (
                   <button
                     key={g.id}
-                    className={`${styles.pill} ${genre === String(g.id) ? styles.pillOn : ""}`}
+                    className={`${styles.dropdownItem} ${genre === String(g.id) ? styles.dropdownItemOn : ""}`}
                     onClick={() => {
                       setParams({ genre: genre === String(g.id) ? "" : String(g.id) });
                       close();

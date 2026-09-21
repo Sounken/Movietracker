@@ -31,9 +31,24 @@
   align-items: center;
 }
 
+/* Le logo fait 170x155 : aucune paire d'entiers autour de 42px ne garde ce
+   ratio. On déclare donc à `next/image` un multiple exact (68x62) et on fixe
+   la taille d'affichage ici — `height: auto` pour que l'attribut `height`
+   émis par le composant n'écrase pas la proportion. */
+.brandMark img {
+  width: 42px;
+  height: auto;
+}
+
+/* 27px et non 22 : à l'ancienne taille la marque pesait le même poids visuel
+   que le sélecteur Films/Séries juste en dessous et que les titres de section
+   du contenu (30px) — elle ne se lisait plus comme le point d'ancrage de la
+   colonne. Taille fixe, volontairement : la colonne s'élargit à 280 puis
+   320px sur grand écran, mais c'est le vide autour qui doit augmenter, pas
+   la marque. */
 .brandName {
   font-family: var(--font-serif), serif;
-  font-size: 22px;
+  font-size: 27px;
   letter-spacing: -0.01em;
   color: var(--ink);
 }

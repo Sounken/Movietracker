@@ -6,13 +6,12 @@
   align-items: center;
   gap: 16px;
   padding: 18px 52px;
-  background: rgba(13, 11, 10, 0.7);
-  backdrop-filter: blur(16px);
+  /* Opaque, et non `rgba(--bg, 0.7)` + `backdrop-filter` : à 70% l'affiche
+     floutée du fond transparaissait et teintait la barre d'une nuance
+     variable selon le film. On lisait alors trois fonds distincts — barre
+     latérale, topbar, body — là où l'accueil n'en montre que deux. */
+  background: var(--bg);
   border-bottom: 1px solid var(--line);
-}
-
-:global([data-theme="light"]) .topbar {
-  background: rgba(245, 244, 242, 0.8);
 }
 
 .backBtn {

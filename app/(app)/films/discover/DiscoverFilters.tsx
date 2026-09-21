@@ -19,16 +19,19 @@ const CATEGORIES = [
 // décennie reviendrait à écraser la recommandation par une requête générique.
 const FILTERABLE = (category: string) => category !== "for_you";
 
+// Trié alphabétiquement (comme la liste TV) : dans un panneau d'une vingtaine
+// d'entrées sur une colonne, c'est le seul ordre où l'œil trouve sans lire tout.
 const GENRE_LIST = [
   { id: 28, name: "Action" },
-  { id: 12, name: "Aventure" },
   { id: 16, name: "Animation" },
+  { id: 12, name: "Aventure" },
   { id: 35, name: "Comédie" },
   { id: 80, name: "Crime" },
   { id: 99, name: "Documentaire" },
   { id: 18, name: "Drame" },
   { id: 10751, name: "Famille" },
   { id: 14, name: "Fantastique" },
+  { id: 10752, name: "Guerre" },
   { id: 36, name: "Histoire" },
   { id: 27, name: "Horreur" },
   { id: 10402, name: "Musique" },
@@ -36,7 +39,6 @@ const GENRE_LIST = [
   { id: 10749, name: "Romance" },
   { id: 878, name: "Science-Fiction" },
   { id: 53, name: "Thriller" },
-  { id: 10752, name: "Guerre" },
   { id: 37, name: "Western" },
 ];
 
@@ -176,20 +178,20 @@ export default function DiscoverFilters({
         {/* ——— Genres ——— */}
         <Dropdown label={genreName ?? "Genre"} active={Boolean(genre)}>
           {(close) => (
-            <div className={styles.genreGrid}>
+            <div className={styles.dropdownList}>
               <button
-                className={`${styles.pill} ${!genre ? styles.pillOn : ""}`}
+                className={`${styles.dropdownItem} ${!genre ? styles.dropdownItemOn : ""}`}
                 onClick={() => {
                   setParams({ genre: "" });
                   close();
                 }}
               >
-                Tous
+                Tous les genres
               </button>
               {GENRE_LIST.map((g) => (
                 <button
                   key={g.id}
-                  className={`${styles.pill} ${genre === String(g.id) ? styles.pillOn : ""}`}
+                  className={`${styles.dropdownItem} ${genre === String(g.id) ? styles.dropdownItemOn : ""}`}
                   onClick={() => {
                     setParams({ genre: genre === String(g.id) ? "" : String(g.id) });
                     close();

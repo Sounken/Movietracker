@@ -179,6 +179,28 @@
   gap: 2px;
   max-height: 300px;
   overflow-y: auto;
+  /* Même barre de défilement que le reste de l'application (assistant de
+     notation, biographie du profil) : la barre native du système jurait dans
+     un panneau de 10px de rayon, et sa largeur variable décalait les libellés. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+.dropdownList::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dropdownList::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dropdownList::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 999px;
+}
+
+.dropdownList::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-mute);
 }
 
 .dropdownItem {

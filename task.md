@@ -60,6 +60,28 @@ réciprocité**. Le fil d'activité et les avis sur les fiches ne changent pas.
 
 ---
 
+## J. 📱 Mobile & finitions — septembre 2026
+
+Lot issu d'une passe sur téléphone du 21/09. Sauf mention contraire, tout est à
+faire **sous les points de rupture mobiles uniquement** : le rendu bureau ne bouge pas.
+
+| Réf | Tâche | État |
+|---|---|---|
+| **J1** | Grille de films : 2 colonnes quelles que soient les dimensions du téléphone, alors que les grands écrans ont la place pour plus | 🟡 rendre le nombre de colonnes dépendant de la largeur — viser 4 par ligne sur un iPhone Pro Max, 3 sur un SE. [FilmGrid.module.css](app/(app)/components/FilmGrid.module.css#L135-L137) force aujourd'hui `repeat(2, 1fr)` sous 768 px ; le `minmax(180px, 1fr)` du bureau s'adapterait tout seul avec un minimum plus bas, à voir si ça suffit sans paliers explicites |
+| **J2** | Onglet actif de la barre de navigation : liseré **à gauche** même quand la barre est passée en bas de l'écran | 🟡 en mobile, le repère doit devenir un liseré **bas**. Le `.navItem.active::before` de [Sidebar.module.css](app/(app)/components/Sidebar.module.css#L192) n'est pas réorienté dans le bloc `@media (max-width: 768px)` |
+| **J3** | Pills « Cinémas / Streaming / Festivals » | 🟡 **jamais câblées** : trois `<button>` sans `onClick` ni état dans [films/page.tsx](app/(app)/films/page.tsx#L255-L257), « Cinémas » codé en dur comme actif. C'était une intention de filtre sur « Cette semaine en salles » jamais implémentée. **À trancher** : les supprimer, ou les brancher sur un vrai filtre de source |
+| **J4** | Carrousel héro en mobile : l'image de fond ne se voit presque pas | 🟡 baisser la `min-height` et réduire en conséquence les éléments posés dessus (titre, méta, actions), pour dégager l'affiche |
+| **J5** | « Ma collection » en mobile : un bouton par filtre, dont « note min » et « note max » séparés → plusieurs lignes | 🟡 regrouper en un seul bouton **« Note »** ouvrant un petit dépliant avec min et max, pour ramener toute la barre de filtres sur une ligne |
+| **J6** | « Ma collection » : au clic sur la loupe, l'icône reste blanche sur fond clair — invisible | 🟡 corriger la couleur de l'icône à l'état actif/ouvert |
+| **J7** | Thème clair | 🟡 **à supprimer** — le bloc `:root[data-theme="light"]` de [globals.css](app/globals.css#L47), le sélecteur de thème et la logique `data-theme-switching` associée |
+| **J8** | Découvrir en mobile : 5 boutons répartis sur plusieurs lignes | 🟡 les ramener sur une seule ligne (même principe que J5) |
+| **J9** | Amis : listes affichées en entier | 🟡 **aucune limite aujourd'hui** — le `take: 20` de [friends/page.tsx](app/(app)/friends/page.tsx#L64) ne porte que sur le fil d'activité ; abonnements et abonnés sont chargés et rendus intégralement, avec les films de chacun pour le calcul d'XP. Objectif : **5 personnes affichées**, le reste dans une liste déroulante, plus une recherche par nom. À faire côté requête aussi, pas seulement à l'affichage |
+| **J10** | Bouton « Se déconnecter » en mobile | 🟡 le passer en rouge pastel |
+| **J11** | Tendances : « ancienne police » | 🟡 pas un défaut de chargement — la page n'a jamais reçu la passe typographique. Son `.headerTitle` est bien en serif, mais [`.sectionTitle`](app/(app)/films/trends/trends.module.css#L155) n'a **aucun `font-family`** (12 px, capitales, barrette d'accent) et retombe sur la sans. Partout ailleurs — [dashboard](app/(app)/films/dashboard.module.css#L14), [discover](app/(app)/films/discover/discover.module.css#L21), [lists](app/(app)/films/lists/lists.module.css#L15), [profile](app/(app)/films/profile/profile.module.css#L502) — c'est `var(--font-serif)` en 30-34 px, précédé d'un `.sectionSub` numéroté. **À décider** : aligner sur la convention (le JSX doit gagner les `sectionSub`, et la page s'allongera — beaucoup de sections courtes, peut-être 24 px plutôt que 30) ou garder le micro-label. Ne pas se contenter d'ajouter la serif au format 12 px capitales : un serif display à cette taille rend mal |
+| **J12** | Amis : texte trop petit | 🟡 même origine que J11 — [`.sectionTitle`](app/(app)/friends/friends.module.css#L97) est le clone de celui de Tendances. Au-delà des titres, 17 déclarations sous 14 px dont plusieurs à **10 px** (noms, compteurs, méta du fil). Remonter l'échelle globale de la page, et traiter les titres avec J11 pour rester cohérent |
+
+---
+
 ## H. 🎨 Interface & ergonomie (nouveaux retours)
 
 ### H9. ✅ Barre de navigation mobile — refaite

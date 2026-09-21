@@ -165,7 +165,7 @@ export default function Sidebar({
     <aside className={styles.nav}>
       <Link href={sectionHome} className={styles.brand} aria-label="Accueil">
         <div className={styles.brandMark}>
-          <Image src="/logo.png" alt="Movietracker" width={34} height={31} priority />
+          <Image src="/logo.png" alt="Movietracker" width={68} height={62} priority />
         </div>
         <div className={styles.brandName}>
           Movie<em>tracker</em>

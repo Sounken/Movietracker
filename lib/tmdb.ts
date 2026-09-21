@@ -1040,18 +1040,24 @@ export const WATCH_REGION = "FR";
 // pour watch_region=FR. Ne pas les deviner : plusieurs noms évidents pointent
 // ailleurs (415 est Animation Digital Network et non OCS, 234 est Arte et non
 // Paramount+). Les libellés sont ceux de TMDB, raccourcis quand ils sont longs.
+/**
+ * Plateformes proposées au filtrage, **par ordre alphabétique** : la liste est
+ * lue dans un menu déroulant, où un ordre de popularité n'aide pas à trouver
+ * une plateforme précise. Seuls consommateurs : les deux panneaux de filtres
+ * Découvrir et l'ensemble d'identifiants connus de `watch-providers`.
+ */
 export const WATCH_PROVIDERS: Array<{ id: number; name: string }> = [
-  { id: 8, name: "Netflix" },
-  { id: 119, name: "Prime Video" },
-  { id: 337, name: "Disney+" },
-  { id: 1899, name: "HBO Max" },
   { id: 350, name: "Apple TV+" },
-  { id: 381, name: "Canal+" },
-  { id: 531, name: "Paramount+" },
-  { id: 283, name: "Crunchyroll" },
   { id: 234, name: "Arte" },
-  { id: 11, name: "MUBI" },
+  { id: 381, name: "Canal+" },
+  { id: 283, name: "Crunchyroll" },
+  { id: 337, name: "Disney+" },
   { id: 223, name: "Hayu" },
+  { id: 1899, name: "HBO Max" },
+  { id: 11, name: "MUBI" },
+  { id: 8, name: "Netflix" },
+  { id: 531, name: "Paramount+" },
+  { id: 119, name: "Prime Video" },
   { id: 35, name: "Rakuten TV" },
 ];
 
