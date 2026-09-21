@@ -10,21 +10,12 @@
   pointer-events: none;
 }
 
-:global([data-theme="light"]) .backdrop {
-  filter: blur(90px) saturate(0.6) brightness(1.6);
-  opacity: 0.3;
-}
-
 .backdropOverlay {
   position: fixed;
   inset: 0;
   z-index: 1;
   pointer-events: none;
   background: linear-gradient(180deg, rgba(13, 11, 10, 0.55) 0%, var(--bg) 70%);
-}
-
-:global([data-theme="light"]) .backdropOverlay {
-  background: linear-gradient(180deg, rgba(245, 244, 242, 0.5) 0%, var(--bg) 65%);
 }
 
 /* ——— Topbar ——— */
@@ -39,10 +30,6 @@
   background: rgba(13, 11, 10, 0.7);
   backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--line);
-}
-
-:global([data-theme="light"]) .topbar {
-  background: rgba(245, 244, 242, 0.8);
 }
 
 .backBtn {
@@ -112,10 +99,6 @@
   object-fit: cover;
   display: block;
   box-shadow: 0 32px 80px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.06);
-}
-
-:global([data-theme="light"]) .photo {
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.06);
 }
 
 .photoFallback {
@@ -241,10 +224,6 @@
   margin: 0;
 }
 
-:global([data-theme="light"]) .bio {
-  color: #444;
-}
-
 /* ——— Sort pills ——— */
 /* Compteur discret dans les pastilles de filtre */
 .pillCount {
@@ -367,10 +346,6 @@
   font-size: 11px;
   color: var(--gold);
   font-family: var(--font-geist-mono), monospace;
-}
-
-:global([data-theme="light"]) .top4Score {
-  color: var(--accent);
 }
 
 /* ——— Filmography grid ——— */

@@ -36,7 +36,12 @@
   gap: 8px;
 }
 
+/* Ces pastilles étaient des `<button>` inertes ; ce sont maintenant des liens
+   vers `?source=…`. D'où `display: inline-flex` et `text-decoration: none` :
+   un `<a>` se dispose en ligne et souligne par défaut. */
 .pill {
+  display: inline-flex;
+  align-items: center;
   padding: 7px 14px;
   border-radius: 999px;
   font-size: 12px;
@@ -44,6 +49,7 @@
   border: 1px solid var(--line);
   color: var(--ink-dim);
   cursor: pointer;
+  text-decoration: none;
   transition: all 0.18s;
   font-family: var(--font-geist-mono), monospace;
   letter-spacing: 0.02em;
@@ -56,6 +62,14 @@
 
 .pillOn {
   background: var(--ink);
+  color: var(--bg);
+  border-color: var(--ink);
+}
+
+/* `.pill:hover` (0,2,0) l'emporterait sinon sur `.pillOn` (0,1,0) : le libellé
+   de la source active repasserait à `--ink`, la couleur de son propre fond.
+   Même piège que la loupe de la collection (J6). */
+.pillOn:hover {
   color: var(--bg);
   border-color: var(--ink);
 }

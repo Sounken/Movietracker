@@ -42,7 +42,7 @@ export default function FilmGrid({
                 src={film.posterUrl}
                 alt=""
                 fill
-                sizes="(max-width: 768px) 50vw, 200px"
+                sizes="(max-width: 768px) 30vw, 200px"
                 style={{ objectFit: "cover" }}
               />
             )}

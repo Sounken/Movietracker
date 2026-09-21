@@ -1,9 +1,10 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { ArrowUp, ArrowDown } from "lucide-react";
 import { prisma } from "@/lib/db";
-import { fetchNowPlaying, fetchFilmLogo, type TmdbFilmCard } from "@/lib/tmdb";
+import { fetchNowPlaying, fetchNewOnStreaming, fetchFilmLogo, type TmdbFilmCard } from "@/lib/tmdb";
 import { getFilmCards } from "@/lib/films";
 import Topbar from "../components/Topbar";
 import HeroCarousel from "../components/HeroCarousel";
@@ -85,9 +86,22 @@ function runtimeByWeek(entries: { updatedAt: Date; runtime: number | null }[], n
   }).reverse();
 }
 
+/**
+ * Sources du carrousel. « Festivals » a été retiré : TMDB n'expose aucune
+ * notion de festival, et les distinctions Wikidata de `lib/awards.ts` se lisent
+ * film par film, après coup — de quoi dire « ce film a eu la Palme », pas de
+ * quoi bâtir une liste.
+ */
+const HERO_SOURCES = [
+  { id: "cinema", label: "Cinémas", sub: "01 — Sorties récentes", title: "Cette semaine en salles" },
+  { id: "streaming", label: "Streaming", sub: "01 — Sorties récentes", title: "Nouveautés en streaming" },
+] as const;
+
+type HeroSource = (typeof HERO_SOURCES)[number]["id"];
+
 // Section 01 — carrousel des sorties (requêtes TMDB + watchlist, streamé)
-async function HeroSection({ userId }: { userId: string }) {
-  const nowPlaying = await fetchNowPlaying();
+async function HeroSection({ userId, source }: { userId: string; source: HeroSource }) {
+  const nowPlaying = source === "streaming" ? await fetchNewOnStreaming() : await fetchNowPlaying();
 
   // Logos officiels + présence en watchlist, en parallèle
   const [logoEntries, watchlistEntries] = await Promise.all([
@@ -112,7 +126,9 @@ async function HeroSection({ userId }: { userId: string }) {
   if (nowPlaying.length === 0) {
     return (
       <div className={styles.noTmdb}>
-        Ajoutez <code>TMDB_API_KEY</code> dans <code>.env.local</code> pour voir les films en salle.
+        {source === "streaming"
+          ? "Aucune sortie récente disponible en abonnement pour le moment."
+          : "Ajoutez TMDB_API_KEY dans .env.local pour voir les films en salle."}
       </div>
     );
   }
@@ -235,11 +251,23 @@ async function CollectionSection({ userId }: { userId: string }) {
   );
 }
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ source?: string }>;
+}) {
   const session = await getSession();
   if (!session) redirect("/films/discover");
 
   const greeting = getGreeting();
+
+  // Source du carrousel, pilotée par l'URL comme les filtres de Découvrir :
+  // la section est rendue côté serveur, un état client obligerait à lui
+  // envoyer les deux jeux de résultats.
+  const { source: raw } = await searchParams;
+  const source: HeroSource =
+    HERO_SOURCES.some((s) => s.id === raw) ? (raw as HeroSource) : "cinema";
+  const active = HERO_SOURCES.find((s) => s.id === source)!;
 
   return (
     <div className={styles.page}>
@@ -248,19 +276,25 @@ export default async function DashboardPage() {
       <section>
         <div className={styles.sectionHead}>
           <div>
-            <div className={styles.sectionSub}>01 — Sorties récentes</div>
-            <h2 className={styles.sectionTitle}>Cette semaine en salles</h2>
+            <div className={styles.sectionSub}>{active.sub}</div>
+            <h2 className={styles.sectionTitle}>{active.title}</h2>
           </div>
           <div className={styles.pills}>
-            <button className={`${styles.pill} ${styles.pillOn}`}>Cinémas</button>
-            <button className={styles.pill}>Streaming</button>
-            <button className={styles.pill}>Festivals</button>
+            {HERO_SOURCES.map((s) => (
+              <Link
+                key={s.id}
+                href={s.id === "cinema" ? "/films" : `/films?source=${s.id}`}
+                className={`${styles.pill} ${s.id === source ? styles.pillOn : ""}`}
+              >
+                {s.label}
+              </Link>
+            ))}
           </div>
         </div>
       </section>
 
-      <Suspense fallback={<div className={`${styles.skeleton} ${styles.skeletonHero}`} />}>
-        <HeroSection userId={session.userId} />
+      <Suspense key={source} fallback={<div className={`${styles.skeleton} ${styles.skeletonHero}`} />}>
+        <HeroSection userId={session.userId} source={source} />
       </Suspense>
 
       <section>

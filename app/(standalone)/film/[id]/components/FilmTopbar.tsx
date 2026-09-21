@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import SearchBox from "@/app/(app)/components/SearchBox";
 import styles from "./FilmTopbar.module.css";
@@ -37,10 +36,6 @@ export default function FilmTopbar({ fallbackHref = "/films" }: { fallbackHref?:
       <button type="button" className={styles.backBtn} onClick={goBack}>
         <BackIcon /> <span>Retour</span>
       </button>
-      {/* Le logo ramène à l'accueil du monde courant (films ou séries). */}
-      <Link href={fallbackHref} className={styles.brand} aria-label="Retour à l'accueil">
-        Movie<em>tracker</em>
-      </Link>
       {/* Même recherche que l'accueil, calée à droite de la barre. */}
       <div className={styles.searchSlot}>
         <SearchBox compact scope={scope} />

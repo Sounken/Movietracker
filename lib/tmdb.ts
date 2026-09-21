@@ -177,6 +177,81 @@ export async function fetchFilmCard(id: number): Promise<TmdbFilmCard | null> {
   }
 }
 
+/**
+ * Dernières sorties disponibles en abonnement, pour la pill « Streaming » du
+ * carrousel d'accueil.
+ *
+ * **TMDB n'expose pas de date d'ajout sur une plateforme.** Les données de
+ * disponibilité viennent de JustWatch et décrivent ce qui est regardable
+ * *maintenant*, pas ce qui vient d'arriver au catalogue. La fenêtre porte donc
+ * sur la date de sortie du film — ce qui, pour ce qu'on cherche ici, revient
+ * au même : un film sorti en salle il y a moins d'un mois n'est pas encore en
+ * SVOD en France (chronologie des médias), donc ce que la requête remonte est
+ * très majoritairement de la production de plateforme, sortie directement en
+ * streaming. C'est exactement la définition voulue.
+ *
+ * `sort_by=popularity.desc` et non par date, **mesuré** sur un mois de
+ * catalogue : trié par date, le haut de liste était un documentaire à 0 vote,
+ * deux spectacles de stand-up et un film érotique. La popularité TMDB est
+ * recalculée chaque jour et décroît avec le temps — sur une fenêtre d'un mois,
+ * elle classe donc « les grosses sorties récentes », pas les succès d'antan.
+ *
+ * `vote_count.gte` est un filet contre la longue traîne : sans lui, un titre à
+ * six votes peut remonter en tête de l'accueil sur une semaine creuse. À 25 le
+ * vivier gardait 13 films pour 7 affiches ; à 50 il tombait à 9, trop juste.
+ */
+const STREAMING_WINDOW_DAYS = 30;
+const STREAMING_MIN_VOTES = 25;
+
+async function streamingReleases(days: number): Promise<Record<string, unknown>[]> {
+  const key = process.env.TMDB_API_KEY;
+  if (!key) return [];
+  const today = new Date().toISOString().split("T")[0];
+  const from = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+  const providers = WATCH_PROVIDERS.map((p) => p.id).join("|");
+  try {
+    const res = await fetch(
+      `${BASE}/discover/movie?api_key=${key}&language=fr-FR&region=FR` +
+        `&sort_by=popularity.desc` +
+        `&primary_release_date.gte=${from}&primary_release_date.lte=${today}` +
+        `&with_watch_providers=${providers}&watch_region=${WATCH_REGION}` +
+        `&with_watch_monetization_types=flatrate` +
+        `&vote_count.gte=${STREAMING_MIN_VOTES}`,
+      { next: { revalidate: 3600 } },
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return ((data.results ?? []) as Record<string, unknown>[])
+      // Le carrousel affiche une image pleine largeur : un film sans backdrop
+      // y laisserait un trou noir.
+      .filter((m) => Boolean(m.backdrop_path));
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchNewOnStreaming(): Promise<TmdbMovie[]> {
+  let results = await streamingReleases(STREAMING_WINDOW_DAYS);
+  // Semaine creuse : plutôt qu'un carrousel à trois affiches, on élargit la
+  // fenêtre. Le second appel n'a lieu que dans ce cas, et il est caché comme
+  // le premier.
+  if (results.length < 7) {
+    const wider = await streamingReleases(90);
+    const seen = new Set(results.map((m) => m.id));
+    results = results.concat(wider.filter((m) => !seen.has(m.id)));
+  }
+  return results.slice(0, 7).map((m) => ({
+    id: m.id as number,
+    title: (m.title as string) ?? "",
+    overview: (m.overview as string) ?? "",
+    posterUrl: m.poster_path ? `${IMG}/w500${m.poster_path}` : "",
+    backdropUrl: m.backdrop_path ? `${IMG}/${BACKDROP_SIZE}${m.backdrop_path}` : "",
+    year: typeof m.release_date === "string" ? m.release_date.slice(0, 4) : "",
+    voteAverage: Math.round(((m.vote_average as number) ?? 0) * 10) / 10,
+    genreIds: (m.genre_ids as number[]) ?? [],
+  }));
+}
+
 export async function fetchNowPlaying(): Promise<TmdbMovie[]> {
   const key = process.env.TMDB_API_KEY;
   if (!key) return [];

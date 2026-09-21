@@ -90,11 +90,6 @@ export default function RootLayout({
       className={`${blauerNue.variable} ${geistMono.variable} ${newKansas.variable}`}
       style={{ fontFamily: "var(--font-sans), system-ui, sans-serif" }}
     >
-      <head>
-        {/* Sync theme before first paint to avoid flash */}
-        {/* suppressHydrationWarning: browser extensions (e.g. Browsec) inject attributes on this tag */}
-        <script suppressHydrationWarning dangerouslySetInnerHTML={{ __html: `(function(){try{if(localStorage.getItem('mt-theme')==='light')document.documentElement.setAttribute('data-theme','light')}catch(e){}})()` }} />
-      </head>
       <body suppressHydrationWarning>
         {children}
 

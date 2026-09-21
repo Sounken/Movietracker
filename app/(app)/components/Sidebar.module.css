@@ -463,6 +463,17 @@ button.navItem {
     background: var(--hover-strong);
   }
 
+  /* Déconnexion : la seule action de la feuille qui sorte de l'application.
+     Rouge pastel et non `--red`, gardé pour les erreurs et les suppressions —
+     se déconnecter n'est ni l'un ni l'autre. */
+  .sheetItemLogout {
+    color: var(--red-soft);
+  }
+
+  .sheetItemLogout:active {
+    background: rgba(var(--red-rgb), 0.12);
+  }
+
   .sheetItem svg {
     width: 20px;
     height: 20px;
@@ -528,6 +539,52 @@ button.navItem {
   .navItem.active {
     box-shadow: none;
     background: rgba(var(--accent-rgb), 0.12);
+  }
+
+  /* La barre latérale est devenue la barre du bas : un liseré à gauche n'a
+     plus de sens — il désigne un bord que l'onglet ne longe plus. On bascule
+     l'indicateur sur toute la largeur, en bas, et l'animation d'activation
+     porte sur la largeur au lieu de la hauteur. */
+  .navItem::before {
+    left: 50%;
+    top: auto;
+    bottom: 0;
+    width: 0;
+    height: 3px;
+    border-radius: 3px 3px 0 0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--accent) 25%,
+      var(--accent) 75%,
+      transparent 100%
+    );
+    transform: translateX(-50%);
+    transition: width 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  /* Le dégradé est redéclaré ici : la règle de bureau `.navItem.active::before`
+     est plus spécifique que `.navItem::before` ci-dessus et lui imposerait
+     sinon son dégradé vertical, qui délave une barre de 3px de haut. */
+  .navItem.active::before,
+  .navItem.active:hover::before {
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--accent) 25%,
+      var(--accent) 75%,
+      transparent 100%
+    );
+  }
+
+  /* Pas de survol au doigt : l'amorce du bureau n'a pas d'équivalent ici, on
+     la neutralise pour qu'un état de survol résiduel n'allume pas un onglet
+     inactif après un tap. */
+  .navItem:hover::before {
+    width: 0;
+    height: 3px;
   }
 
   .navItem svg {

@@ -56,10 +56,6 @@
   flex: none;
 }
 
-:global([data-theme="light"]) .icon {
-  color: var(--accent);
-}
-
 .year {
   font-family: var(--font-geist-mono), monospace;
   font-size: 10px;

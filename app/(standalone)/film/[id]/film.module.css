@@ -10,21 +10,12 @@
   pointer-events: none;
 }
 
-:global([data-theme="light"]) .backdrop {
-  filter: blur(90px) saturate(0.6) brightness(1.6);
-  opacity: 0.3;
-}
-
 .backdropOverlay {
   position: fixed;
   inset: 0;
   z-index: 1;
   pointer-events: none;
   background: linear-gradient(180deg, rgba(13, 11, 10, 0.55) 0%, var(--bg) 70%);
-}
-
-:global([data-theme="light"]) .backdropOverlay {
-  background: linear-gradient(180deg, rgba(245, 244, 242, 0.5) 0%, var(--bg) 65%);
 }
 
 /* ——— Hero grid ——— */
@@ -59,10 +50,6 @@
   background-position: center;
   background-color: var(--panel);
   box-shadow: 0 32px 80px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.06);
-}
-
-:global([data-theme="light"]) .poster {
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.06);
 }
 
 /* ——— Meta column ——— */
@@ -181,10 +168,6 @@
   color: var(--gold);
 }
 
-:global([data-theme="light"]) .scoreGold {
-  color: var(--accent);
-}
-
 .scoreLab {
   font-size: 10px;
   font-family: var(--font-geist-mono), monospace;
@@ -223,10 +206,6 @@
   line-height: 1.75;
   color: var(--ink-dim);
   max-width: 680px;
-}
-
-:global([data-theme="light"]) .synopsis {
-  color: #444;
 }
 
 /* ——— Facts ——— */
@@ -517,10 +496,6 @@
   opacity: 0.85;
 }
 
-:global([data-theme="light"]) .companyLogo {
-  filter: grayscale(1);
-}
-
 /* ——— Avis des amis ——— */
 .friendReviews {
   display: flex;
@@ -596,10 +571,6 @@
   padding: 2px 9px;
   white-space: nowrap;
   flex: 0 0 auto;
-}
-
-:global([data-theme="light"]) .friendRating {
-  color: var(--accent);
 }
 
 .friendReviewText {

@@ -222,10 +222,6 @@
   color: var(--ink);
 }
 
-:global([data-theme="light"]) .dropdownItem:hover {
-  background: rgba(0, 0, 0, 0.05);
-}
-
 .dropdownItemOn {
   color: var(--accent);
 }
@@ -322,10 +318,6 @@
   padding: 3px 7px;
   border-radius: 5px;
   backdrop-filter: blur(4px);
-}
-
-:global([data-theme="light"]) .score {
-  background: rgba(0, 0, 0, 0.5);
 }
 
 .info {
@@ -426,5 +418,37 @@
 
   .sectionTitle {
     font-size: 22px;
+  }
+}
+
+/* Téléphones : les cinq catégories tiennent sur une seule ligne.
+
+   `flex-wrap: wrap` les renvoyait sur deux rangées, ce qui repoussait les
+   filtres et la grille d'autant. On resserre la typographie et les marges
+   intérieures plutôt que de tronquer les libellés — « Populaires » coupé en
+   « Popul… » n'apprend rien.
+
+   `overflow-x: auto` n'est qu'un filet : les libellés films tiennent dans
+   343px (un iPhone SE), mais « En diffusion » côté séries déborde légèrement
+   sur les écrans les plus étroits, où la rangée se fait alors glisser du
+   doigt au lieu de se couper. La barre de défilement est masquée : elle
+   doublerait la hauteur de la rangée pour rien. */
+@media (max-width: 520px) {
+  .categoryTabs {
+    flex-wrap: nowrap;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .categoryTabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab {
+    padding: 7px 8px;
+    font-size: 11px;
+    white-space: nowrap;
+    flex: 0 0 auto;
   }
 }

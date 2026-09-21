@@ -267,10 +267,6 @@
   background: rgba(255, 255, 255, 0.04);
 }
 
-:global([data-theme="light"]) .gapSmall {
-  background: rgba(0, 0, 0, 0.04);
-}
-
 /* Désaccord marqué (> 2 points) */
 .gapBig {
   color: var(--accent);

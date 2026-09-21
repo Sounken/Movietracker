@@ -302,7 +302,7 @@ export default function Sidebar({
             ))}
             {isAuthenticated && (
               <form action={logout}>
-                <button type="submit" className={styles.sheetItem}>
+                <button type="submit" className={`${styles.sheetItem} ${styles.sheetItemLogout}`}>
                   <LogoutIcon />
                   <span>Se déconnecter</span>
                 </button>

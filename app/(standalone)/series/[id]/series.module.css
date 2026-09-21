@@ -289,10 +289,6 @@
   flex: 0 0 auto;
 }
 
-:global([data-theme="light"]) .seasonScore {
-  color: var(--accent);
-}
-
 @media (max-width: 768px) {
   .seasonToolbar {
     flex-direction: column;
@@ -387,10 +383,6 @@
      selon que l'épisode a une note ou non. */
   min-width: 46px;
   text-align: right;
-}
-
-:global([data-theme="light"]) .epScore {
-  color: var(--accent);
 }
 
 /* Étiquette « Finale » / « Mi-saison » */

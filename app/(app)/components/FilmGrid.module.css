@@ -132,13 +132,30 @@
   color: var(--ink-mute) !important;
 }
 
+/* Deux colonnes fixes quelle que soit la largeur, c'était deux affiches
+   immenses sur un grand téléphone et autant de défilement. On revient au
+   `auto-fill` du bureau avec des minimums plus bas : le nombre de colonnes
+   suit alors la largeur réelle, sans paliers par modèle — qui seraient à
+   refaire à chaque sortie d'iPhone.
+
+   Tablette et paysage (521-768px) : minimum 140px -> 3 colonnes vers 560px,
+   4 vers 736px. */
 @media (max-width: 768px) {
   .grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: 14px 10px;
   }
 
   .title {
     font-size: 12px;
+  }
+}
+
+/* Téléphones. Minimum 92px, gouttière de 10px : le nombre de colonnes vaut
+   floor((largeur + 10) / 102), soit 3 sur un SE ou un 16 Pro (343 et 370px
+   utiles), 4 sur un Pro Max (398-408px utiles), et 2 en dessous de 330px. */
+@media (max-width: 520px) {
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
   }
 }

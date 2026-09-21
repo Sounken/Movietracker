@@ -10,10 +10,6 @@
   animation: fade 0.18s ease;
 }
 
-:global([data-theme="light"]) .overlay {
-  background: rgba(40, 32, 26, 0.5);
-}
-
 @keyframes fade {
   from {
     opacity: 0;
@@ -256,8 +252,8 @@
   color: var(--ink);
 }
 
-/* Texte sombre imposé : les cinq pastels sont clairs dans les deux thèmes, un
-   `--ink` qui bascule en clair deviendrait illisible sur l'aplat. */
+/* Texte sombre imposé : les cinq pastels sont clairs, `--ink` y serait
+   illisible. */
 .segmentOn {
   background: var(--level);
   color: #201814;

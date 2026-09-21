@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { followUser, unfollowUser } from "@/app/actions/friends";
-import { Check, Heart, GitCompare } from "lucide-react";
+import { Check, Heart, GitCompare, Search as SearchGlyph, X as XGlyph } from "lucide-react";
 import styles from "./friends.module.css";
 import { Rating } from "@/lib/rating-scale";
 
@@ -68,6 +68,67 @@ function Avatar({
       >
         {level}
       </span>
+    </div>
+  );
+}
+
+
+/**
+ * Normalisation pour la recherche par nom : sans elle, « Amelie » ne trouve
+ * pas « Amélie », ce qui est exactement le cas d'usage sur des prénoms.
+ */
+const normalize = (v: string) =>
+  v.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
+
+/**
+ * Loupe repliée dans l'en-tête d'une liste : l'en-tête est étroit, un champ
+ * permanent y prendrait toute la place pour un usage occasionnel.
+ */
+function ListSearch({
+  value,
+  onChange,
+  label,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  label: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLInputElement | null>(null);
+
+  function close() {
+    setOpen(false);
+    onChange("");
+  }
+
+  return (
+    <div className={styles.listSearch}>
+      {open ? (
+        <>
+          <input
+            ref={ref}
+            className={styles.listSearchInput}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onKeyDown={(e) => e.key === "Escape" && close()}
+            placeholder="Nom…"
+            aria-label={label}
+            autoFocus
+          />
+          <button type="button" className={styles.listSearchBtn} onClick={close} aria-label="Fermer la recherche">
+            <XGlyph size={13} />
+          </button>
+        </>
+      ) : (
+        <button
+          type="button"
+          className={styles.listSearchBtn}
+          onClick={() => setOpen(true)}
+          aria-label={label}
+        >
+          <SearchGlyph size={13} />
+        </button>
+      )}
     </div>
   );
 }
@@ -144,6 +205,19 @@ export default function FriendsClient({
    */
   const followerIds = new Set(followers.map((f) => f.id));
 
+  // Recherche par nom dans chaque liste. Le filtrage est côté client : les
+  // deux listes sont déjà chargées en entier (elles doivent l'être pour que
+  // le défilement ait un sens), aucune requête supplémentaire n'est utile.
+  const [followingQuery, setFollowingQuery] = useState("");
+  const [followersQuery, setFollowersQuery] = useState("");
+
+  const shownFollowing = followingQuery
+    ? initialFollowing.filter((u) => normalize(u.name).includes(normalize(followingQuery)))
+    : initialFollowing;
+  const shownFollowers = followersQuery
+    ? followers.filter((u) => normalize(u.name).includes(normalize(followersQuery)))
+    : followers;
+
   return (
     <div className={styles.page}>
       {/* ——— Header */}
@@ -211,12 +285,25 @@ export default function FriendsClient({
             <div className={styles.sectionTitle}>
               Tu suis
               <span className={styles.sectionCount}>{initialFollowing.length}</span>
+              {initialFollowing.length > 5 && (
+                <ListSearch
+                  value={followingQuery}
+                  onChange={setFollowingQuery}
+                  label="Rechercher parmi les personnes que tu suis"
+                />
+              )}
             </div>
             {initialFollowing.length === 0 ? (
               <div className={styles.empty}>Tu ne suis personne encore. Recherche des amis ci-dessus.</div>
+            ) : shownFollowing.length === 0 ? (
+              <div className={styles.empty}>Aucun nom ne correspond.</div>
             ) : (
-              <div className={styles.userList}>
-                {initialFollowing.map((u) => (
+              <div
+                className={`${styles.userList} ${styles.userListTall} ${
+                  shownFollowing.length > 5 ? styles.userListScroll : ""
+                }`}
+              >
+                {shownFollowing.map((u) => (
                   <div key={u.id} className={styles.userCard}>
                     <Link href={`${profileBase}/${u.id}`} className={styles.userLink}>
                       <Avatar url={u.avatarUrl} name={u.name} level={u.level} levelTitle={u.levelTitle} />
@@ -256,12 +343,25 @@ export default function FriendsClient({
             <div className={styles.sectionTitle}>
               Tes abonnés
               <span className={styles.sectionCount}>{followers.length}</span>
+              {followers.length > 5 && (
+                <ListSearch
+                  value={followersQuery}
+                  onChange={setFollowersQuery}
+                  label="Rechercher parmi tes abonnés"
+                />
+              )}
             </div>
             {followers.length === 0 ? (
               <div className={styles.empty}>Personne ne te suit encore.</div>
+            ) : shownFollowers.length === 0 ? (
+              <div className={styles.empty}>Aucun nom ne correspond.</div>
             ) : (
-              <div className={styles.userList}>
-                {followers.map((u) => (
+              <div
+                className={`${styles.userList} ${
+                  shownFollowers.length > 5 ? styles.userListScroll : ""
+                }`}
+              >
+                {shownFollowers.map((u) => (
                   <div key={u.id} className={styles.userCard}>
                     <Link href={`${profileBase}/${u.id}`} className={styles.userLink}>
                       <Avatar url={u.avatarUrl} name={u.name} level={u.level} levelTitle={u.levelTitle} />

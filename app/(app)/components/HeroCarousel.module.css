@@ -30,31 +30,12 @@
   );
 }
 
-/* Le voile suit désormais --bg au lieu de reprendre en dur l'ancien #f5f4f2 :
-   c'est ce décalage qui faisait ressortir une bande blanche sur un fond de
-   page devenu plus chaud. La marche est aussi adoucie en fin de course (0,05
-   → 0,18) : à 5% d'opacité la photo repartait à pleine intensité juste à côté
-   d'un voile à 98%, et c'est ce contraste brutal qui piquait les yeux. */
-:global([data-theme="light"]) .bg::after {
-  background: linear-gradient(
-    105deg,
-    rgba(var(--bg-rgb), 0.97) 0%,
-    rgba(var(--bg-rgb), 0.9) 36%,
-    rgba(var(--bg-rgb), 0.55) 65%,
-    rgba(var(--bg-rgb), 0.18) 100%
-  );
-}
-
 .bg::before {
   content: "";
   position: absolute;
   inset: 0;
   z-index: 1;
   background: linear-gradient(0deg, rgba(0, 0, 0, 0.65) 0%, transparent 32%);
-}
-
-:global([data-theme="light"]) .bg::before {
-  background: linear-gradient(0deg, rgba(var(--bg-2-rgb), 0.92) 0%, transparent 32%);
 }
 
 /* ——— Content ——— */
@@ -128,15 +109,6 @@
   margin: 0 0 16px;
   /* les logos sont souvent blancs : une ombre les décolle du fond */
   filter: drop-shadow(0 2px 12px rgba(0, 0, 0, 0.55));
-}
-
-/* En thème clair, un logo blanc sur un voile clair disparaissait purement et
-   simplement — l'ombre diffuse d'origine ne rattrapait rien. Trois ombres
-   serrées le détourent façon liseré. Une inversion aurait été plus simple mais
-   aurait massacré les logos déjà colorés, qui sont nombreux. */
-:global([data-theme="light"]) .titleLogo {
-  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.6)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45))
-    drop-shadow(0 3px 12px rgba(0, 0, 0, 0.28));
 }
 
 /* Les surcharges claires de `.title`, `.meta` et `.synopsis` ont disparu :
@@ -234,18 +206,8 @@
   backdrop-filter: blur(8px);
 }
 
-:global([data-theme="light"]) .btnGhost {
-  background: rgba(0, 0, 0, 0.05);
-  border-color: rgba(0, 0, 0, 0.15);
-  color: var(--ink);
-}
-
 .btnGhost:hover {
   background: rgba(255, 255, 255, 0.15);
-}
-
-:global([data-theme="light"]) .btnGhost:hover {
-  background: rgba(0, 0, 0, 0.09);
 }
 
 /* ——— Poster ——— */
@@ -267,10 +229,6 @@
 
 .poster:hover {
   transform: translateY(calc(-50% - 4px));
-}
-
-:global([data-theme="light"]) .poster {
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(0, 0, 0, 0.06);
 }
 
 /* ——— Thumb rail ——— */
@@ -336,12 +294,6 @@
   transition: all 0.2s;
 }
 
-:global([data-theme="light"]) .arrow {
-  background: rgba(0, 0, 0, 0.06);
-  border-color: rgba(0, 0, 0, 0.14);
-  color: var(--ink);
-}
-
 .arrow:hover {
   background: var(--accent);
   border-color: var(--accent);
@@ -382,23 +334,46 @@
 @media (max-width: 768px) {
   .wrap {
     height: auto;
-    min-height: 520px;
+    /* 520 -> 420 : à hauteur de bureau sur une colonne étroite, l'affiche
+       était presque entièrement recouverte par le texte et son voile. */
+    min-height: 420px;
     border-radius: 14px;
+  }
+
+  /* Le voile oblique du bureau (105deg) s'éteint à 65% de la largeur : sur
+     une colonne large il laisse voir la moitié droite de l'affiche, sur un
+     téléphone il la recouvre presque entièrement. On le redresse à la
+     verticale — le haut de l'image reste net, le texte garde son fond là où
+     il est posé, en bas. */
+  .bg::after {
+    background: linear-gradient(
+      180deg,
+      rgba(13, 11, 10, 0.15) 0%,
+      rgba(13, 11, 10, 0.5) 40%,
+      rgba(13, 11, 10, 0.93) 100%
+    );
   }
 
   .content {
     width: 100%;
-    padding: 28px 20px 140px;
+    /* Le contenu descend au lieu d'être centré : c'est ce qui dégage la
+       partie haute de l'affiche, là où se trouve presque toujours le sujet. */
+    justify-content: flex-end;
+    padding: 24px 20px 118px;
   }
 
   .title {
-    font-size: 34px;
-    min-height: 64px;
+    font-size: 28px;
+    min-height: 48px;
   }
 
   .titleLogo {
-    height: 64px;
-    width: 280px;
+    height: 48px;
+    width: 220px;
+  }
+
+  .meta {
+    margin-bottom: 12px;
   }
 
   .synopsis {

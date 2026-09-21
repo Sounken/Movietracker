@@ -79,10 +79,22 @@
   margin-bottom: 4px;
   opacity: 0.7;
 }
+/* ——— Chiffres en New Kansas ———
+   Les nombres de cette page passent de Geist Mono à la serif de titrage.
+   `lib`/`layout.tsx` explique pourquoi la mono est ailleurs la police des
+   chiffres : Blauer Nue n'a pas de chasse tabulaire et ferait danser une
+   valeur qui change. L'argument ne porte pas ici — aucun de ces nombres
+   n'est recalculé au survol, ils sont figés au rendu.
+   `font-weight: 400` là où il valait 500 : le fichier ne contient que le
+   gras, un poids intermédiaire produirait un gras synthétique.
+   `tabular-nums` : New Kansas embarque `tnum` mais sert des chiffres
+   proportionnels par défaut. Sans lui, rangs et compteurs empilés en colonne
+   ne s'alignent pas — c'était tout l'intérêt de la mono qu'ils quittent. */
 .statValue {
-  font-family: var(--font-geist-mono, monospace);
+  font-family: var(--font-serif), serif;
+  font-variant-numeric: tabular-nums;
   font-size: 22px;
-  font-weight: 500;
+  font-weight: 400;
   color: var(--ink);
   letter-spacing: -0.02em;
 }
@@ -137,10 +149,6 @@
   background: rgba(255, 255, 255, 0.02);
 }
 
-:global([data-theme="light"]) .sectionHead {
-  background: rgba(0, 0, 0, 0.02);
-}
-
 /* Filet d'accent devant le titre, pour marquer le début d'une partie. */
 .sectionTitle::before {
   content: "";
@@ -163,7 +171,8 @@
   background: var(--bg);
   border: 1px solid var(--line);
   border-radius: 999px;
-  font-family: var(--font-geist-mono, monospace);
+  font-family: var(--font-serif), serif;
+  font-variant-numeric: tabular-nums;
   font-size: 10px;
   padding: 1px 7px;
   color: var(--ink-dim);
@@ -219,9 +228,10 @@
   background: rgba(var(--accent-rgb), 0.04);
 }
 .rankNum {
-  font-family: var(--font-geist-mono, monospace);
+  font-family: var(--font-serif), serif;
+  font-variant-numeric: tabular-nums;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 400;
   color: var(--ink-mute);
   width: 20px;
   text-align: right;
@@ -284,7 +294,8 @@
   flex-shrink: 0;
 }
 .rankCount {
-  font-family: var(--font-geist-mono, monospace);
+  font-family: var(--font-serif), serif;
+  font-variant-numeric: tabular-nums;
   font-size: 12px;
   color: var(--ink-dim);
   background: var(--bg);
@@ -293,7 +304,8 @@
   padding: 2px 9px;
 }
 .rankRating {
-  font-family: var(--font-geist-mono, monospace);
+  font-family: var(--font-serif), serif;
+  font-variant-numeric: tabular-nums;
   font-size: 12px;
   color: var(--gold);
   background: rgba(var(--gold-rgb), 0.1);
@@ -325,7 +337,8 @@
   color: var(--ink);
 }
 .genrePercent {
-  font-family: var(--font-geist-mono, monospace);
+  font-family: var(--font-serif), serif;
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   color: var(--ink-mute);
 }
@@ -366,7 +379,8 @@
   background: rgba(var(--accent-rgb), 0.04);
 }
 .userRank {
-  font-family: var(--font-geist-mono, monospace);
+  font-family: var(--font-serif), serif;
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   color: var(--ink-mute);
   width: 16px;
@@ -406,7 +420,8 @@
   font-family: var(--font-geist-mono, monospace);
 }
 .userCount {
-  font-family: var(--font-geist-mono, monospace);
+  font-family: var(--font-serif), serif;
+  font-variant-numeric: tabular-nums;
   font-size: 12px;
   color: var(--ink-dim);
   background: var(--bg);
@@ -477,7 +492,8 @@
   text-decoration: underline;
 }
 .reviewRating {
-  font-family: var(--font-geist-mono, monospace);
+  font-family: var(--font-serif), serif;
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   color: var(--gold);
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Search, X, ArrowUp, ArrowDown } from "lucide-react";
+import { Search, X, ArrowUp, ArrowDown, ChevronDown } from "lucide-react";
 import FilmGrid from "./FilmGrid";
 import type { TmdbFilmCard } from "@/lib/tmdb";
 import { useRatingScale } from "@/lib/rating-scale";
@@ -54,6 +54,26 @@ export default function CollectionClient({
   const [query, setQuery] = useState("");
   const [search, setSearch] = useState("");
   const searchInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Repli des deux bornes de note dans un seul bouton : « Note min » et
+  // « Note max » côte à côte faisaient déborder la barre sur une deuxième
+  // ligne dès qu'on passait au téléphone.
+  const [noteOpen, setNoteOpen] = useState(false);
+  const noteRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!noteOpen) return;
+    const onPointer = (e: MouseEvent) => {
+      if (!noteRef.current?.contains(e.target as Node)) setNoteOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setNoteOpen(false);
+    document.addEventListener("mousedown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [noteOpen]);
 
   useEffect(() => {
     const id = setTimeout(() => setSearch(query.trim()), 300);
@@ -217,6 +237,17 @@ export default function CollectionClient({
   }
 
   const hasFilters = minRating !== null || maxRating !== null || yearFilter !== "" || search !== "";
+
+  // Libellé du bouton « Note » : il porte la valeur active, sans quoi un
+  // filtre replié deviendrait invisible.
+  const noteLabel =
+    minRating !== null && maxRating !== null
+      ? `${toDisplayRating(minRating, scale)} – ${toDisplayRating(maxRating, scale)}`
+      : minRating !== null
+        ? `≥ ${toDisplayRating(minRating, scale)}`
+        : maxRating !== null
+          ? `≤ ${toDisplayRating(maxRating, scale)}`
+          : "Note";
   const remaining = totalCount - films.length;
 
   return (
@@ -224,26 +255,52 @@ export default function CollectionClient({
       <div className={styles.toolbar}>
         <div className={styles.left}>
           <div className={styles.filterGroup}>
-            <select
-              className={styles.select}
-              value={minRating ?? ""}
-              onChange={(e) => setMinRating(e.target.value ? Number(e.target.value) : null)}
-            >
-              <option value="">Note min</option>
-              {RATINGS.slice(0, -1).map((r) => (
-                <option key={r} value={r}>≥ {toDisplayRating(r, scale)}</option>
-              ))}
-            </select>
-            <select
-              className={styles.select}
-              value={maxRating ?? ""}
-              onChange={(e) => setMaxRating(e.target.value ? Number(e.target.value) : null)}
-            >
-              <option value="">Note max</option>
-              {RATINGS.slice(1).map((r) => (
-                <option key={r} value={r}>≤ {toDisplayRating(r, scale)}</option>
-              ))}
-            </select>
+            <div className={styles.noteWrap} ref={noteRef}>
+              <button
+                type="button"
+                className={`${styles.select} ${styles.noteBtn} ${
+                  minRating !== null || maxRating !== null ? styles.noteOn : ""
+                }`}
+                onClick={() => setNoteOpen((o) => !o)}
+                aria-expanded={noteOpen}
+              >
+                {noteLabel}
+                <ChevronDown
+                  size={12}
+                  className={`${styles.noteChevron} ${noteOpen ? styles.noteChevronUp : ""}`}
+                />
+              </button>
+              {noteOpen && (
+                <div className={styles.notePanel}>
+                  <label className={styles.noteRow}>
+                    <span>Minimum</span>
+                    <select
+                      className={styles.select}
+                      value={minRating ?? ""}
+                      onChange={(e) => setMinRating(e.target.value ? Number(e.target.value) : null)}
+                    >
+                      <option value="">Aucun</option>
+                      {RATINGS.slice(0, -1).map((r) => (
+                        <option key={r} value={r}>≥ {toDisplayRating(r, scale)}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className={styles.noteRow}>
+                    <span>Maximum</span>
+                    <select
+                      className={styles.select}
+                      value={maxRating ?? ""}
+                      onChange={(e) => setMaxRating(e.target.value ? Number(e.target.value) : null)}
+                    >
+                      <option value="">Aucun</option>
+                      {RATINGS.slice(1).map((r) => (
+                        <option key={r} value={r}>≤ {toDisplayRating(r, scale)}</option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              )}
+            </div>
             <select
               className={styles.select}
               value={yearFilter}
@@ -264,7 +321,7 @@ export default function CollectionClient({
 
         <div className={styles.right}>
           {/* Loupe : se déplie en champ de recherche, à gauche des tris */}
-          <div className={`${styles.searchWrap} ${searchOpen ? styles.searchOpen : ""}`}>
+          <div className={styles.searchWrap}>
             <button
               type="button"
               className={`${styles.sortBtn} ${styles.iconBtn} ${searchOpen ? styles.sortOn : ""}`}

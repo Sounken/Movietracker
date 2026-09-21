@@ -122,10 +122,6 @@
   color: var(--ink-mute);
 }
 
-:global([data-theme="light"]) .note {
-  color: var(--accent);
-}
-
 /* Review block */
 .reviewBlock {
   margin-top: 16px;

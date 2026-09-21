@@ -151,10 +151,6 @@
   filter: invert(1) grayscale(1) brightness(1.7);
 }
 
-:global([data-theme="light"]) .thumbCompany {
-  filter: grayscale(1);
-}
-
 .resultInfo {
   min-width: 0;
 }

@@ -105,6 +105,15 @@
   border-color: var(--ink);
 }
 
+/* `.sortBtn:hover` (0,2,0) l'emportait sur `.sortOn` (0,1,0) : après un clic le
+   pointeur reste sur le bouton, la couleur repassait donc à `--ink` — celle-là
+   même que le fond de l'état actif. L'icône de la loupe, et le libellé du tri
+   courant, devenaient invisibles. Au doigt, le survol rémanent produisait le
+   même effet, durablement. */
+.sortOn:hover {
+  color: var(--bg);
+}
+
 /* Les boutons de tri portent maintenant une flèche de sens : on aligne. */
 .sortBtn {
   display: inline-flex;
@@ -193,6 +202,66 @@
 
 .searchClear:hover {
   color: var(--ink);
+}
+
+/* ——— Filtre de note replié ———
+   « Note min » et « Note max » étaient deux listes côte à côte : sur un
+   téléphone la barre passait à deux lignes. Elles vivent maintenant dans un
+   seul bouton, qui porte la valeur active pour qu'un filtre replié reste
+   visible. Le dépliant vaut à toutes les largeurs — deux mises en page
+   parallèles pour le même filtre dériveraient l'une de l'autre. */
+.noteWrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.noteBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  /* le chevron est un vrai élément ici, pas l'image de fond de `.select` */
+  background-image: none;
+  padding-right: 10px;
+}
+
+.noteOn {
+  border-color: var(--ink-mute);
+  color: var(--ink);
+}
+
+.noteChevron {
+  transition: transform 0.18s ease;
+  flex: none;
+}
+
+.noteChevronUp {
+  transform: rotate(180deg);
+}
+
+.notePanel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.noteRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 11px;
+  font-family: var(--font-geist-mono), monospace;
+  color: var(--ink-dim);
+  white-space: nowrap;
 }
 
 /* ——— No result ——— */

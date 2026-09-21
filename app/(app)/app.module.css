@@ -27,7 +27,14 @@
 .mainFlush {
   width: 100%;
   min-width: 0;
-  overflow-x: hidden;
+  /* `clip` et non `hidden` : `overflow-x: hidden` force le navigateur à
+     calculer `overflow-y: auto`, ce qui fait de cette colonne un conteneur de
+     défilement. La barre des fiches, en `position: sticky`, s'ancrait alors à
+     ce conteneur — qui ne défile jamais, puisque c'est la page qui défile — et
+     ne collait donc nulle part. `clip` rogne le débordement horizontal sans
+     créer de conteneur de défilement : le sticky retrouve la fenêtre comme
+     référence. */
+  overflow-x: clip;
 }
 
 /* Les fiches posent leur affiche en fond (`position: fixed; inset: 0`, floutée

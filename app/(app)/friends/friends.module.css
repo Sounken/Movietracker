@@ -1,3 +1,6 @@
+/* Échelle typographique remontée d'un cran (10->11, 11->12, 12->13, 13->14) :
+   la page était la plus petite de l'application, avec des noms et des
+   compteurs à 10px que l'on déchiffrait au lieu de les lire. */
 .page {
   padding: 36px 48px 80px;
 }
@@ -12,7 +15,7 @@
   flex-wrap: wrap;
 }
 .headerSub {
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--ink-mute);
@@ -54,7 +57,7 @@
   outline: 0;
   color: var(--ink);
   font-family: inherit;
-  font-size: 13px;
+  font-size: 14px;
   flex: 1;
   min-width: 0;
 }
@@ -99,7 +102,7 @@
   align-items: center;
   gap: 8px;
   padding: 16px 20px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -111,20 +114,108 @@
   border: 1px solid var(--line);
   border-radius: 999px;
   font-family: var(--font-geist-mono, monospace);
-  font-size: 10px;
+  font-size: 11px;
   padding: 1px 7px;
   color: var(--ink-dim);
 }
 
 .empty {
   padding: 28px 20px;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--ink-mute);
   text-align: center;
 }
 
 /* User list */
 .userList { padding: 8px 0; }
+
+/* ——— Listes bornées à cinq personnes ———
+   Les deux colonnes s'affichaient en entier : à vingt abonnements, la page
+   devenait un mur et le fil d'activité passait sous la ligne de flottaison.
+   Au-delà de cinq entrées la liste défile sur elle-même, et l'en-tête reçoit
+   une loupe pour retrouver un nom sans faire défiler.
+
+   La hauteur est exprimée en pixels plutôt qu'en nombre de lignes : les
+   cartes n'ont pas toutes la même hauteur (« Tu suis » porte une ligne de
+   méta en plus), d'où les deux valeurs. */
+.userList {
+  --row-h: 62px;
+}
+
+.userListTall {
+  --row-h: 72px;
+}
+
+.userListScroll {
+  max-height: calc(var(--row-h) * 5 + 16px);
+  overflow-y: auto;
+  /* même barre fine que le reste de l'application */
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+.userListScroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.userListScroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.userListScroll::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 999px;
+}
+
+.userListScroll::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-mute);
+}
+
+/* ——— Loupe des listes ——— */
+.listSearch {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  /* pousse la loupe à droite de l'en-tête, face au titre */
+  margin-left: auto;
+}
+
+.listSearchBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: none;
+  background: none;
+  color: var(--ink-mute);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.listSearchBtn:hover {
+  color: var(--ink);
+  background: var(--hover);
+}
+
+.listSearchInput {
+  width: 120px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 13px;
+  font-family: var(--font-geist-mono, monospace);
+  /* l'en-tête est en capitales : l'hériter rendrait la saisie illisible */
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.listSearchInput:focus {
+  outline: none;
+  border-color: var(--accent);
+}
 .userCard {
   display: flex;
   align-items: center;
@@ -158,7 +249,7 @@
   border-radius: 999px;
   background: var(--accent);
   color: #fff;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   font-family: var(--font-geist-mono), monospace;
   /* Anneau de la couleur du fond : détache la pastille de la photo */
@@ -182,7 +273,7 @@
   background: var(--panel);
   border: 1px solid var(--line);
   color: var(--ink-dim);
-  font-size: 12px;
+  font-size: 13px;
   text-decoration: none;
   white-space: nowrap;
   transition: color 0.15s, border-color 0.15s;
@@ -229,7 +320,7 @@
   text-overflow: ellipsis;
 }
 .userMeta {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--ink-mute);
   font-family: var(--font-geist-mono, monospace);
   margin-top: 2px;
@@ -237,7 +328,7 @@
 .mutualBadge {
   display: inline-flex;
   align-items: center;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--accent);
   background: rgba(var(--accent-rgb), 0.1);
   border: 1px solid rgba(var(--accent-rgb), 0.2);
@@ -250,7 +341,7 @@
 .btnFollow {
   padding: 6px 14px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 13px;
   background: var(--accent);
   color: #fff;
   border: 0;
@@ -267,7 +358,7 @@
 .btnUnfollow {
   padding: 6px 14px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 13px;
   background: transparent;
   color: var(--ink-mute);
   border: 1px solid var(--line);
@@ -295,7 +386,7 @@
 .feedItem:hover { background: rgba(var(--accent-rgb), 0.04); }
 .feedContent { flex: 1; min-width: 0; }
 .feedText {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--ink-dim);
   line-height: 1.5;
 }
@@ -309,12 +400,12 @@
 .feedFilm:hover { text-decoration: underline; }
 .feedRating {
   font-family: var(--font-geist-mono, monospace);
-  font-size: 11px;
+  font-size: 12px;
   color: var(--gold);
 }
-.feedLiked { font-size: 12px; color: var(--red); display: inline-flex; vertical-align: -2px; }
+.feedLiked { font-size: 13px; color: var(--red); display: inline-flex; vertical-align: -2px; }
 .feedTime {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--ink-mute);
   font-family: var(--font-geist-mono, monospace);
   margin-top: 3px;

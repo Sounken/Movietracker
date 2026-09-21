@@ -42,8 +42,6 @@
 .on { color: var(--gold); }
 .off { color: var(--ink-mute); }
 
-:global([data-theme="light"]) .on { color: var(--accent); }
-
 /* Demi-étoile : moitié pleine superposée au contour */
 .halfWrap {
   position: relative;
@@ -61,10 +59,6 @@
   color: var(--gold);
 }
 
-:global([data-theme="light"]) .halfFill {
-  color: var(--accent);
-}
-
 /* Le chiffre change de largeur au survol (« — » → « 8.5/10 » → « 10/10 ») et
    poussait les étoiles à chaque mouvement de souris : impossible de viser une
    valeur précise. Largeur réservée + chiffres à chasse fixe = rangée stable. */
@@ -79,6 +73,3 @@
   text-align: left;
 }
 
-:global([data-theme="light"]) .value {
-  color: var(--accent);
-}
