@@ -252,26 +252,62 @@ export async function fetchNewOnStreaming(): Promise<TmdbMovie[]> {
   }));
 }
 
+/**
+ * Films actuellement en salles en France, pour la pill « Cinémas » du
+ * carrousel d'accueil.
+ *
+ * **`/movie/now_playing` a été abandonné** : même avec `region=FR`, il
+ * remontait des ressorties et des titres jamais distribués ici — relevé le
+ * 2026-09-21, « Avengers : Endgame » (date de sortie renvoyée : 2019-04-24)
+ * arrivait en quatrième position, devant la moitié des vraies sorties du mois.
+ * L'endpoint applique une fenêtre maison et ne permet ni de la régler ni de
+ * filtrer le type de sortie.
+ *
+ * `/discover/movie` le remplace avec trois contraintes explicites :
+ *   - `region=FR` + `release_date` : la fenêtre porte sur la sortie
+ *     **française**, pas sur la date d'origine du film ;
+ *   - `with_release_type=3` : sortie nationale en salles. Le type 2 (sortie
+ *     limitée) est volontairement écarté — il fait entrer les projections de
+ *     festival et les exclusivités d'une salle, qui ne sont pas « cette
+ *     semaine en salles » ;
+ *   - fenêtre de 30 jours, la même que la pill « Streaming ».
+ *
+ * Mesuré sur ces réglages : 71 films au vivier, aucune ressortie.
+ */
+const THEATRICAL_WINDOW_DAYS = 30;
+
 export async function fetchNowPlaying(): Promise<TmdbMovie[]> {
   const key = process.env.TMDB_API_KEY;
   if (!key) return [];
+  const today = new Date().toISOString().split("T")[0];
+  const from = new Date(Date.now() - THEATRICAL_WINDOW_DAYS * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split("T")[0];
   try {
     const res = await fetch(
-      `${BASE}/movie/now_playing?api_key=${key}&language=fr-FR&region=FR`,
-      { next: { revalidate: 3600 } }
+      `${BASE}/discover/movie?api_key=${key}&language=fr-FR&region=FR` +
+        `&sort_by=popularity.desc` +
+        `&with_release_type=3` +
+        `&release_date.gte=${from}&release_date.lte=${today}`,
+      { next: { revalidate: 3600 } },
     );
     if (!res.ok) return [];
     const data = await res.json();
-    return (data.results ?? []).slice(0, 7).map((m: Record<string, unknown>) => ({
-      id: m.id,
-      title: m.title,
-      overview: m.overview,
-      posterUrl: m.poster_path ? `${IMG}/w500${m.poster_path}` : "",
-      backdropUrl: m.backdrop_path ? `${IMG}/${BACKDROP_SIZE}${m.backdrop_path}` : "",
-      year: typeof m.release_date === "string" ? m.release_date.slice(0, 4) : "",
-      voteAverage: Math.round((m.vote_average as number) * 10) / 10,
-      genreIds: (m.genre_ids as number[]) ?? [],
-    }));
+    return ((data.results ?? []) as Record<string, unknown>[])
+      // Le carrousel affiche une image pleine largeur : un film sans backdrop
+      // y laisserait un trou noir.
+      .filter((m) => Boolean(m.backdrop_path))
+      .slice(0, 7)
+      .map((m) => ({
+        id: m.id as number,
+        title: (m.title as string) ?? "",
+        overview: (m.overview as string) ?? "",
+        posterUrl: m.poster_path ? `${IMG}/w500${m.poster_path}` : "",
+        backdropUrl: m.backdrop_path ? `${IMG}/${BACKDROP_SIZE}${m.backdrop_path}` : "",
+        year: typeof m.release_date === "string" ? m.release_date.slice(0, 4) : "",
+        voteAverage: Math.round(((m.vote_average as number) ?? 0) * 10) / 10,
+        genreIds: (m.genre_ids as number[]) ?? [],
+      }));
   } catch {
     return [];
   }
