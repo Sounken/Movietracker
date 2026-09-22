@@ -1,0 +1,374 @@
+.board {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ——— En-tête ——— */
+.head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.sectionSub {
+  font-size: 12px;
+  color: var(--ink-mute);
+  margin-bottom: 4px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 500;
+  font-family: var(--font-geist-mono), monospace;
+}
+
+.title {
+  font-family: var(--font-serif), serif;
+  font-size: 30px;
+  margin: 0;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.streak {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  color: var(--gold);
+  background: rgba(var(--gold-rgb), 0.1);
+  border: 1px solid rgba(var(--gold-rgb), 0.2);
+  border-radius: 999px;
+  padding: 4px 12px;
+  white-space: nowrap;
+}
+
+/* ——— Saisie ——— */
+.searchWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 14px;
+  color: var(--ink-mute);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 13px 16px 13px 40px;
+  border-radius: 12px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color 0.15s;
+}
+
+.searchInput::placeholder {
+  color: var(--ink-mute);
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.suggestions {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+  border-radius: 12px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.suggestion {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.suggestion:hover:not(:disabled) {
+  background: var(--hover);
+}
+
+/* Déjà proposé : visible mais inerte. Le retirer de la liste laisserait
+   croire que le titre ne fait pas partie du jeu. */
+.suggestion:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.suggestionBlank {
+  width: 28px;
+  height: 42px;
+  border-radius: 4px;
+  background: var(--bg);
+  flex: none;
+}
+
+.suggestionTitle {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.suggestionYear {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  color: var(--ink-mute);
+  flex: none;
+}
+
+/* ——— Victoire ——— */
+.win {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  border-radius: var(--radius);
+  background: rgba(var(--accent-rgb), 0.08);
+  border: 1px solid rgba(var(--accent-rgb), 0.25);
+}
+
+.winPoster {
+  border-radius: 6px;
+  flex: none;
+}
+
+.winLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent-soft);
+  margin-bottom: 6px;
+}
+
+.winTitle {
+  font-family: var(--font-serif), serif;
+  font-size: 24px;
+  color: var(--ink);
+}
+
+.winTitle span {
+  color: var(--ink-mute);
+  font-size: 18px;
+}
+
+.winHint {
+  font-size: 12px;
+  color: var(--ink-dim);
+  margin-top: 4px;
+}
+
+/* ——— Grille ——— */
+/* Huit colonnes ne tiennent pas dans la largeur d'un téléphone. Plutôt que de
+   les empiler — ce qui ferait perdre la lecture en colonnes, tout l'intérêt du
+   jeu — la grille défile horizontalement, la colonne du titre restant collée. */
+.gridScroll {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+.gridScroll::-webkit-scrollbar {
+  height: 8px;
+}
+
+.gridScroll::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 999px;
+}
+
+.grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: max-content;
+}
+
+.rowHead,
+.row {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+}
+
+.cellHead {
+  width: 118px;
+  flex: none;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-mute);
+  padding: 0 4px 2px;
+}
+
+.cellHead:first-child {
+  width: 190px;
+}
+
+.cellTitle {
+  width: 190px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  font-size: 12px;
+  color: var(--ink);
+  position: sticky;
+  left: 0;
+  /* au-dessus des cellules qui défilent sous elle */
+  z-index: 2;
+}
+
+.cellTitle span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.cell {
+  width: 118px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  text-align: center;
+  padding: 8px 6px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-family: var(--font-geist-mono), monospace;
+  line-height: 1.3;
+  border: 1px solid transparent;
+  /* les cellules apparaissent ligne par ligne, pas toutes d'un coup */
+  animation: cellIn 0.26s var(--ease-out, ease) both;
+}
+
+@keyframes cellIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Les trois états ne se distinguent pas que par la teinte : le vert et le
+   rouge sont la première confusion de daltonisme. La bordure et le poids du
+   fond les séparent aussi. */
+.hit {
+  background: rgba(106, 138, 90, 0.28);
+  border-color: rgba(106, 138, 90, 0.55);
+  color: var(--ink);
+}
+
+.partial {
+  background: rgba(var(--gold-rgb), 0.2);
+  border-color: rgba(var(--gold-rgb), 0.45);
+  color: var(--ink);
+}
+
+.miss {
+  background: var(--panel);
+  border-color: var(--line);
+  color: var(--ink-dim);
+}
+
+/* ——— États ——— */
+.empty {
+  padding: 20px 22px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-dim);
+}
+
+.legendHit,
+.legendPartial,
+.legendMiss {
+  padding: 1px 7px;
+  border-radius: 5px;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+}
+
+.legendHit {
+  background: rgba(106, 138, 90, 0.28);
+  color: var(--ink);
+}
+
+.legendPartial {
+  background: rgba(var(--gold-rgb), 0.2);
+  color: var(--ink);
+}
+
+.legendMiss {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--ink-dim);
+}
+
+.error {
+  font-size: 13px;
+  color: var(--red);
+}
+
+@media (max-width: 768px) {
+  .title {
+    font-size: 22px;
+  }
+
+  .head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .cellTitle,
+  .cellHead:first-child {
+    width: 140px;
+  }
+
+  .cell,
+  .cellHead {
+    width: 96px;
+  }
+}

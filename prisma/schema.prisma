@@ -30,6 +30,7 @@ model User {
   favoriteSeries UserFavoriteSeries[]
   notifications  Notification[]       @relation("notificationRecipient")
   actedOn        Notification[]       @relation("notificationActor")
+  puzzlePlays    PuzzlePlay[]
 }
 
 /// Notification reçue par un utilisateur.
@@ -252,4 +253,76 @@ model WebVital {
   /// métrique sur une fenêtre de temps.
   @@index([metric, route, createdAt])
   @@index([createdAt])
+}
+
+/// Vivier du Moviedle : titres assez connus pour être devinables, films et
+/// séries confondus. Les attributs sont **figés au remplissage** — sans cette
+/// copie, chaque proposition d'un joueur coûterait un appel TMDB.
+///
+/// Rempli par `scripts/build-puzzle-pool.ts`, à relancer de temps en temps :
+/// le vivier n'a pas à être frais, seulement stable.
+model PuzzleEntry {
+  id          String   @id @default(cuid())
+  /// "movie" ou "tv" : les deux jeux partagent tables et logique.
+  media       String
+  tmdbId      Int
+  title       String
+  posterUrl   String   @default("")
+  /// Sortie (film) ou première diffusion (série).
+  year        Int
+  genres      String[]
+  countries   String[]
+  /// Trois premiers noms au générique.
+  actors      String[]
+  /// Réalisateur (film) ou créateur (série) — plusieurs possibles.
+  authors     String[]
+  /// Films seulement : durée en minutes.
+  runtime     Int?
+  /// Séries seulement : nombre de saisons.
+  seasons     Int?
+  /// Séries seulement : chaîne ou plateforme d'origine.
+  network     String?
+  /// Films seulement : saga (`belongs_to_collection`).
+  collection  String?
+  voteAverage Float
+  voteCount   Int
+  updatedAt   DateTime @updatedAt
+
+  @@unique([media, tmdbId])
+  @@index([media])
+  /// Autocomplétion : on cherche par titre dans un seul média.
+  @@index([media, title])
+}
+
+/// Réponse du jour, figée à la première consultation. Sans cette table, un
+/// tirage calculé à la volée changerait à chaque redéploiement — les caches
+/// applicatifs étant vidés à chaque fois (cf. G8).
+model DailyPuzzle {
+  id        String   @id @default(cuid())
+  media     String
+  /// Jour au fuseau Europe/Paris, `AAAA-MM-JJ`.
+  day       String
+  tmdbId    Int
+  createdAt DateTime @default(now())
+
+  @@unique([media, day])
+}
+
+/// Partie d'un joueur, un enregistrement par jour et par média.
+model PuzzlePlay {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  media     String
+  day       String
+  /// Identifiants TMDB proposés, dans l'ordre de jeu.
+  guesses   Int[]
+  solved    Boolean   @default(false)
+  solvedAt  DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([userId, media, day])
+  /// Série de victoires : on remonte les parties d'un joueur par jour.
+  @@index([userId, media, day])
 }

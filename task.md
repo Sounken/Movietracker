@@ -266,6 +266,75 @@ Les caches sont vidés à chaque déploiement. Deux tables à ajouter :
 
 ---
 
+## K. 🎲 Moviedle — film et série mystère du jour
+
+Jeu quotidien sur le modèle de LOLdle : un titre à trouver, une grille
+d'attributs qui se colore à chaque proposition. **Codé le 2026-09-22**,
+en attente de déploiement et de remplissage du vivier.
+
+**Décidé** : essais illimités · vivier ≥ 2 000 votes · films **et** séries.
+
+### K1. ✅ Vivier
+Planchers **volontairement différents** — les séries reçoivent bien moins de
+votes que les films. Mesuré : 2 807 films à ≥ 2 000 votes, mais **238 séries
+seulement** au même seuil, contre 1 156 à ≥ 500. Appliquer 2 000 partout aurait
+donné 8 mois de jeu côté séries contre 7,7 ans côté films. D'où `MIN_VOTES =
+{ movie: 2000, tv: 500 }` dans [puzzle-pool.ts](lib/puzzle-pool.ts) : une
+notoriété comparable, pas un seuil comparable.
+
+⚠️ **Le compteur TMDB penche vers l'anglophone et le récent.** Un classique
+français très connu ici peut rester sous le plancher. Non traité : à voir à
+l'usage, une seconde passe `with_origin_country=FR` reste possible.
+
+### K2. ✅ Colonnes de la grille
+Communes : Année · Genres · Pays · Réalisation/Création · Têtes d'affiche · Note.
+Propres aux films : Durée, Saga. Propres aux séries : Saisons, Chaîne.
+`budget`/`revenue` écartés — souvent `0` sur les films anciens.
+
+Trois états : exact, partiel (une partie commune sur une colonne à valeurs
+multiples, ou un écart sous tolérance sur une valeur numérique), rien.
+Tolérances : ±3 ans, ±15 min, ±1 saison, ±0,5 point. Flèches ↑↓ sur toutes les
+colonnes numériques.
+
+### K3. ✅ Tirage du jour
+`DailyPuzzle(media, day)` fige la réponse à la première partie de la journée :
+un tirage calculé à la volée changerait à chaque redéploiement, les caches
+étant vidés à chaque fois (cf. G8). Hachage FNV de `média:jour`, donc identique
+pour tout le monde, et `upsert` pour départager deux joueurs simultanés.
+**Les 180 derniers jours sont exclus du tirage** — sur 2 807 entrées, le hasard
+seul ramènerait un doublon bien avant que personne ne l'ait oublié.
+
+### K4. ✅ Anti-triche
+La réponse ne quitte jamais le serveur. `submitGuess` compare et ne renvoie que
+des couleurs ; le titre cherché n'est joint à l'état **qu'une fois la partie
+gagnée**. Une proposition hors vivier est refusée, pas enregistrée.
+
+### K5. ✅ Fuseau horaire
+`parisDay()` via `Intl` en `Europe/Paris`. **Vérifié** aux deux bascules :
+22h30 UTC le 1ᵉʳ juillet donne bien le 2 (heure d'été), 23h30 UTC le
+1ᵉʳ janvier aussi (heure d'hiver).
+
+### K6. 🔴 Reste à faire avant que le jeu tourne
+1. **Déployer** — la migration `20260922120000_add_moviedle` s'applique au
+   démarrage du conteneur.
+2. **Définir `PUZZLE_BUILD_TOKEN`** dans l'environnement. Sans lui la route de
+   remplissage renvoie 503 : un secret absent ne doit pas valoir « pas de
+   contrôle ».
+3. **Remplir le vivier** — `POST /api/puzzle/build?media=movie&from=1&pages=10`
+   en boucle jusqu'à `nextPage: null`, puis `media=tv`. Découpé en pages parce
+   qu'une seule requête ne peut pas porter les ~4 000 appels TMDB nécessaires.
+   À rejouer de temps en temps ; le vivier n'a pas à être frais, seulement
+   stable.
+4. **Vérifier une vraie partie** — rien n'a été testé contre une base, le
+   projet n'a pas d'environnement local.
+
+### K7. 💡 Pistes non traitées
+- Partage du résultat en grille d'émojis.
+- Indice après N essais (décennie, première lettre).
+- Page de statistiques : série en cours, moyenne d'essais, répartition.
+
+---
+
 ## Dette technique
 - ~~**Lint désactivé en CI**~~ ✅ **Résolu** : passe de nettoyage complète (erreurs `react-hooks` — setState dans les effets, ref lu pendant le rendu — et imports/vars inutilisés), `npx eslint` à **zéro erreur/warning**, étape **Lint bloquante** réactivée dans [.github/workflows/ci.yml](.github/workflows/ci.yml) (avant typecheck + build).
 

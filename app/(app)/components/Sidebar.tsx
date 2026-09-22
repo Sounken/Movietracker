@@ -41,6 +41,15 @@ const UsersIcon = () => (
     <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
   </svg>
 );
+const PuzzleIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="18" height="18" rx="3" />
+    <circle cx="8.5" cy="8.5" r="1.2" fill="currentColor" stroke="none" />
+    <circle cx="15.5" cy="15.5" r="1.2" fill="currentColor" stroke="none" />
+    <circle cx="15.5" cy="8.5" r="1.2" fill="currentColor" stroke="none" />
+    <circle cx="8.5" cy="15.5" r="1.2" fill="currentColor" stroke="none" />
+  </svg>
+);
 const TrendIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
     <path d="M3 17l6-6 4 4 8-8" />
@@ -87,10 +96,12 @@ const seriesNav: NavItem[] = [
 const filmSocial: NavItem[] = [
   { href: "/friends", label: "Amis", icon: UsersIcon, authOnly: true },
   { href: "/films/trends", label: "Tendances", icon: TrendIcon, authOnly: false },
+  { href: "/moviedle", label: "Moviedle", icon: PuzzleIcon, authOnly: true },
 ];
 const seriesSocial: NavItem[] = [
   { href: "/series/friends", label: "Amis", icon: UsersIcon, authOnly: true },
   { href: "/series/trends", label: "Tendances", icon: TrendIcon, authOnly: false },
+  { href: "/series/moviedle", label: "Moviedle", icon: PuzzleIcon, authOnly: true },
 ];
 
 const LoginIcon = () => (
