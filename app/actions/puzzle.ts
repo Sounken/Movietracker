@@ -22,6 +22,12 @@ import {
 
 export type PuzzleState = {
   day: string;
+  /**
+   * Faux quand le vivier est vide : l'écran doit le dire au lieu de laisser
+   * une recherche qui ne répond jamais — c'est exactement ce qui s'est
+   * produit au premier déploiement, avant le remplissage.
+   */
+  available: boolean;
   guesses: GuessResult[];
   solved: boolean;
   /** Le titre cherché, **uniquement** une fois la partie gagnée. */
@@ -32,7 +38,7 @@ export type PuzzleState = {
 async function loadState(media: PuzzleMedia, userId: string): Promise<PuzzleState> {
   const day = parisDay();
   const answer = await getDailySubject(media, day);
-  if (!answer) return { day, guesses: [], solved: false, answer: null };
+  if (!answer) return { day, available: false, guesses: [], solved: false, answer: null };
 
   const play = await prisma.puzzlePlay.findUnique({
     where: { userId_media_day: { userId, media, day } },
@@ -47,6 +53,7 @@ async function loadState(media: PuzzleMedia, userId: string): Promise<PuzzleStat
   const solved = play?.solved ?? false;
   return {
     day,
+    available: true,
     // Le plus récent en tête : c'est la ligne qu'on vient de jouer qu'on lit.
     guesses: guesses.reverse(),
     solved,

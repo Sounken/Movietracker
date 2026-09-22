@@ -312,6 +312,35 @@
 }
 
 /* ——— États ——— */
+.unavailable {
+  padding: 20px 22px;
+  border-radius: var(--radius);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-dim);
+}
+
+.unavailable strong {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.searchBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* La consigne prime sur le code couleur : c'est elle qui débloque un joueur
+   qui ouvre la page pour la première fois. */
+.instruction {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-dim);
+}
+
 .empty {
   padding: 20px 22px;
   border: 1px dashed var(--line);

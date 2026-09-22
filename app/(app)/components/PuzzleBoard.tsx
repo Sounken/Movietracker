@@ -74,6 +74,8 @@ export default function PuzzleBoard({
   }
 
   const noun = media === "movie" ? "film" : "série";
+  // « le film » mais « la série » : sans ça le titre de la page est fautif.
+  const determiner = media === "movie" ? "le" : "la";
   // La liste n'est montrée qu'à partir de deux caractères : en dessous, les
   // résultats affichés seraient ceux de la frappe précédente.
   const visible = query.trim().length >= 2 ? suggestions : [];
@@ -84,7 +86,9 @@ export default function PuzzleBoard({
         <div>
           <div className={styles.sectionSub}>Grille du jour</div>
           <h2 className={styles.title}>
-            {state.solved ? `Trouvé en ${state.guesses.length}` : `Quel est ce ${noun} ?`}
+            {state.solved
+              ? `Trouvé en ${state.guesses.length} essai${state.guesses.length > 1 ? "s" : ""}`
+              : `Devinez ${determiner} ${noun} du jour`}
           </h2>
         </div>
         {streak > 0 && (
@@ -94,7 +98,15 @@ export default function PuzzleBoard({
         )}
       </div>
 
-      {state.solved ? (
+      {!state.available ? (
+        /* Vivier vide : sans ce message, la recherche ne renvoie jamais rien
+           et l'écran passe pour cassé — c'est ce qu'on a vu au premier
+           déploiement, avant le remplissage. */
+        <div className={styles.unavailable}>
+          <strong>Aucune grille pour aujourd&apos;hui.</strong> Le catalogue du jeu n&apos;est
+          pas encore rempli — repassez d&apos;ici peu.
+        </div>
+      ) : state.solved ? (
         <div className={styles.win}>
           {state.answer?.posterUrl && (
             <Image
@@ -117,8 +129,14 @@ export default function PuzzleBoard({
           </div>
         </div>
       ) : (
-        <div className={styles.searchWrap} ref={wrapRef}>
-          <SearchGlyph size={15} className={styles.searchIcon} />
+        <div className={styles.searchBlock}>
+          <p className={styles.instruction}>
+            {state.guesses.length === 0
+              ? `Écrivez un ${noun} pour commencer.`
+              : `Écrivez un autre ${noun} pour affiner.`}
+          </p>
+          <div className={styles.searchWrap} ref={wrapRef}>
+            <SearchGlyph size={15} className={styles.searchIcon} />
           <input
             className={styles.searchInput}
             value={query}
@@ -153,19 +171,21 @@ export default function PuzzleBoard({
                 );
               })}
             </div>
-          )}
+            )}
+          </div>
         </div>
       )}
 
       {error && <div className={styles.error}>{error}</div>}
 
-      {state.guesses.length === 0 ? (
+      {!state.available ? null : state.guesses.length === 0 ? (
         <div className={styles.empty}>
-          Chaque colonne se colore selon ce que ta proposition partage avec le {noun} du
-          jour : <span className={styles.legendHit}>exact</span>,{" "}
-          <span className={styles.legendPartial}>partiel</span>,{" "}
-          <span className={styles.legendMiss}>rien en commun</span>. Les flèches indiquent
-          où chercher.
+          Proposez n&apos;importe quel {noun} connu : chacune de ses colonnes se compare
+          à celui du jour. <span className={styles.legendHit}>Vert</span> = identique,{" "}
+          <span className={styles.legendPartial}>orange</span> = proche ou partiellement
+          commun, <span className={styles.legendMiss}>gris</span> = rien en commun. Sur les
+          colonnes chiffrées, la flèche indique si le {noun} cherché est au-dessus ou
+          en dessous. Aucune limite d&apos;essais.
         </div>
       ) : (
         <div className={styles.gridScroll}>
