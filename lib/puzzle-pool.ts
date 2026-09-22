@@ -19,15 +19,24 @@ const BASE = "https://api.themoviedb.org/3";
 export type PuzzleMedia = "movie" | "tv";
 
 /**
- * Planchers de notoriété, **volontairement différents** : les séries reçoivent
- * bien moins de votes que les films. Mesuré le 2026-09-22 —
- *   films : 2 807 titres à ≥ 2 000 votes ;
- *   séries : 238 seulement au même seuil, mais 1 156 à ≥ 500.
- * Appliquer 2 000 partout aurait donné huit mois de jeu côté séries contre
- * près de huit ans côté films. 500 place les séries à une notoriété
+ * Planchers de notoriété.
+ *
+ * **Relevés le 2026-09-22**, en nombre de titres au-dessus du seuil :
+ *   films  — 2 000 : 2 807 · 5 000 : 1 065 · 7 000 : 688 · 8 000 : ~560 · 9 000 : 458
+ *   séries — 500 : 1 156 · 1 000 : 580 · 1 500 : 363 · 2 000 : 238
+ *
+ * Le premier réglage (2 000 / 500) donnait un jeu trop difficile : à ce seuil
+ * passent quantité de films corrects mais que personne n'a en tête, et une
+ * grille ne se déduit que si les propositions du joueur sont elles-mêmes dans
+ * le vivier. On vise donc **environ 500 titres par média** — assez pour ne pas
+ * tourner en rond (500 jours, et les 180 derniers sont exclus du tirage),
+ * assez peu pour que tout soit reconnaissable.
+ *
+ * Les deux valeurs restent volontairement différentes : les séries reçoivent
+ * bien moins de votes que les films. 1 000 les place à une notoriété
  * comparable, pas à un seuil comparable.
  */
-export const MIN_VOTES: Record<PuzzleMedia, number> = { movie: 2000, tv: 500 };
+export const MIN_VOTES: Record<PuzzleMedia, number> = { movie: 8000, tv: 1000 };
 
 /** Nombre de détails demandés en parallèle. TMDB tolère large, mais rien ne
  *  sert de saturer : le remplissage n'est pas dans le chemin d'un utilisateur. */
@@ -146,6 +155,8 @@ export type BuildReport = {
   totalPages: number;
   written: number;
   skipped: number;
+  /** Entrées supprimées parce que sous le plancher courant (dernière page). */
+  pruned: number;
 };
 
 /**
@@ -202,7 +213,21 @@ export async function buildPool(
   }
 
   const done = totalPages > 0 && page > totalPages;
+
+  // Le vivier est purgé **à la fin du parcours seulement** : le faire à chaque
+  // tranche supprimerait des titres encore valides avant de les avoir
+  // réécrits. Sans cette purge, relever le plancher laisserait en place tout
+  // ce qu'un réglage précédent y avait mis.
+  let pruned = 0;
+  if (done) {
+    const res = await prisma.puzzleEntry.deleteMany({
+      where: { media, voteCount: { lt: MIN_VOTES[media] } },
+    });
+    pruned = res.count;
+  }
+
   return {
+    pruned,
     media,
     from,
     to: page - 1,
