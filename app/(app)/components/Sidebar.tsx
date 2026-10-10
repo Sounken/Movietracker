@@ -96,12 +96,12 @@ const seriesNav: NavItem[] = [
 const filmSocial: NavItem[] = [
   { href: "/friends", label: "Amis", icon: UsersIcon, authOnly: true },
   { href: "/films/trends", label: "Tendances", icon: TrendIcon, authOnly: false },
-  { href: "/moviedle", label: "Moviedle", icon: PuzzleIcon, authOnly: true },
+  { href: "/moviedle", label: "Moviedle", icon: PuzzleIcon, authOnly: false },
 ];
 const seriesSocial: NavItem[] = [
   { href: "/series/friends", label: "Amis", icon: UsersIcon, authOnly: true },
   { href: "/series/trends", label: "Tendances", icon: TrendIcon, authOnly: false },
-  { href: "/series/moviedle", label: "Moviedle", icon: PuzzleIcon, authOnly: true },
+  { href: "/series/moviedle", label: "Moviedle", icon: PuzzleIcon, authOnly: false },
 ];
 
 const LoginIcon = () => (

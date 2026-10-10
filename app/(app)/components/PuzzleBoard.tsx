@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useId, useRef, useState, useTransition, type KeyboardEvent } from "react";
 import Image from "next/image";
-import { ArrowUp, ArrowDown, Check, Search as SearchGlyph } from "lucide-react";
+import Link from "next/link";
+import { ArrowUp, ArrowDown, Check, Lock, Lightbulb, Search as SearchGlyph } from "lucide-react";
 import { submitGuess, type PuzzleState } from "@/app/actions/puzzle";
 import type { PuzzleMedia } from "@/lib/puzzle";
 import styles from "./PuzzleBoard.module.css";
@@ -20,17 +21,32 @@ export default function PuzzleBoard({
   media,
   initial,
   streak,
+  guest = false,
 }: {
   media: PuzzleMedia;
   initial: PuzzleState;
   streak: number;
+  /** Visiteur sans compte : sa partie vit dans un cookie, sans série de victoires. */
+  guest?: boolean;
 }) {
   const [state, setState] = useState<PuzzleState>(initial);
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [error, setError] = useState<string | null>(null);
+  // Suggestion surlignée au clavier, repérée par identifiant et non par
+  // position : quand la liste change sous les doigts du joueur, un index
+  // pointerait sur un autre titre, alors qu'un identifiant absent de la
+  // nouvelle liste ne surligne simplement plus rien.
+  const [activeId, setActiveId] = useState<number | null>(null);
+  // Lignes déjà là au chargement : elles ne rejouent pas la révélation, seule
+  // une proposition faite pendant la visite se dévoile colonne par colonne.
+  const [initialIds] = useState(() => new Set(initial.guesses.map((g) => g.tmdbId)));
   const [pending, startTransition] = useTransition();
   const wrapRef = useRef<HTMLDivElement | null>(null);
+  const listId = useId();
+  // Un indice débloqué reste caché jusqu'au clic : le joueur qui veut trouver
+  // seul ne doit pas se le voir imposer en arrivant à son troisième essai.
+  const [revealed, setRevealed] = useState<Set<string>>(() => new Set());
 
   const played = new Set(state.guesses.map((g) => g.tmdbId));
 
@@ -38,9 +54,9 @@ export default function PuzzleBoard({
   // la collection.
   useEffect(() => {
     // Pas de `setSuggestions([])` ici : vider l'état depuis un effet déclenche
-    // un rendu en cascade (et le lint du projet le refuse). Sous deux
-    // caractères, on n'interroge rien et l'affichage est filtré plus bas.
-    if (query.trim().length < 2) return;
+    // un rendu en cascade (et le lint du projet le refuse). Champ vide : on
+    // n'interroge rien et l'affichage est filtré plus bas.
+    if (query.trim().length < 1) return;
     const id = setTimeout(async () => {
       const res = await fetch(
         `/api/puzzle/search?media=${media}&q=${encodeURIComponent(query.trim())}`,
@@ -63,6 +79,7 @@ export default function PuzzleBoard({
   function play(tmdbId: number) {
     setQuery("");
     setSuggestions([]);
+    setActiveId(null);
     setError(null);
     startTransition(async () => {
       try {
@@ -76,9 +93,46 @@ export default function PuzzleBoard({
   const noun = media === "movie" ? "film" : "série";
   // « le film » mais « la série » : sans ça le titre de la page est fautif.
   const determiner = media === "movie" ? "le" : "la";
-  // La liste n'est montrée qu'à partir de deux caractères : en dessous, les
-  // résultats affichés seraient ceux de la frappe précédente.
-  const visible = query.trim().length >= 2 ? suggestions : [];
+  // Champ vidé : les résultats encore en mémoire seraient ceux de la frappe
+  // précédente, on ne les montre pas.
+  const visible = query.trim().length >= 1 ? suggestions : [];
+  const selectable = visible.filter((s) => !played.has(s.tmdbId));
+  const active = selectable.find((s) => s.tmdbId === activeId) ?? null;
+  const optionId = (tmdbId: number) => `${listId}-${tmdbId}`;
+
+  function onKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Escape") {
+      setSuggestions([]);
+      setActiveId(null);
+      return;
+    }
+    if (e.key === "Enter") {
+      // Sans suggestion surlignée, Entrée ne joue rien : une proposition ne se
+      // reprend pas, elle ne doit pas partir sur le premier titre venu.
+      if (active) {
+        e.preventDefault();
+        play(active.tmdbId);
+      }
+      return;
+    }
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    if (selectable.length === 0) return;
+    e.preventDefault();
+    const current = active ? selectable.indexOf(active) : -1;
+    const step = e.key === "ArrowDown" ? 1 : -1;
+    // Premier appui vers le haut : on part de la fin, comme un menu natif.
+    const next =
+      current === -1
+        ? step === 1
+          ? 0
+          : selectable.length - 1
+        : (current + step + selectable.length) % selectable.length;
+    const target = selectable[next];
+    setActiveId(target.tmdbId);
+    // L'option existe déjà dans le DOM (seul son surlignage change) : on peut
+    // la faire défiler tout de suite, sans attendre le rendu.
+    document.getElementById(optionId(target.tmdbId))?.scrollIntoView({ block: "nearest" });
+  }
 
   return (
     <div className={styles.board}>
@@ -126,6 +180,14 @@ export default function PuzzleBoard({
               {state.answer?.title} <span>({state.answer?.year})</span>
             </div>
             <div className={styles.winHint}>Prochaine grille demain à minuit.</div>
+            {guest && (
+              <div className={styles.winHint}>
+                <Link href="/register" className={styles.winLink}>
+                  Créez un compte
+                </Link>{" "}
+                pour garder votre série de victoires.
+              </div>
+            )}
           </div>
         </div>
       ) : (
@@ -137,42 +199,95 @@ export default function PuzzleBoard({
           </p>
           <div className={styles.searchWrap} ref={wrapRef}>
             <SearchGlyph size={15} className={styles.searchIcon} />
-          <input
-            className={styles.searchInput}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={`Proposer un ${noun}…`}
-            disabled={pending}
-            aria-label={`Proposer un ${noun}`}
-          />
-          {visible.length > 0 && (
-            <div className={styles.suggestions}>
-              {visible.map((s) => {
-                const already = played.has(s.tmdbId);
+            <input
+              className={styles.searchInput}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={onKeyDown}
+              placeholder={`Proposer un ${noun}…`}
+              disabled={pending}
+              aria-label={`Proposer un ${noun}`}
+              role="combobox"
+              aria-autocomplete="list"
+              aria-expanded={visible.length > 0}
+              aria-controls={listId}
+              aria-activedescendant={active ? optionId(active.tmdbId) : undefined}
+            />
+            {visible.length > 0 && (
+              <ul id={listId} role="listbox" className={styles.suggestions}>
+                {visible.map((s) => {
+                  const already = played.has(s.tmdbId);
+                  const isActive = s.tmdbId === active?.tmdbId;
+                  return (
+                    // Des options plutôt que des boutons : le focus reste dans
+                    // le champ, et c'est `aria-activedescendant` qui annonce
+                    // la suggestion surlignée au lecteur d'écran.
+                    <li
+                      key={s.tmdbId}
+                      id={optionId(s.tmdbId)}
+                      role="option"
+                      aria-selected={isActive}
+                      aria-disabled={already}
+                      className={`${styles.suggestion} ${isActive ? styles.suggestionActive : ""}`}
+                      // `mousedown` empêché : sinon le champ perd le focus avant
+                      // le clic et le joueur doit y revenir pour continuer.
+                      onMouseDown={(e) => e.preventDefault()}
+                      onMouseEnter={() => !already && setActiveId(s.tmdbId)}
+                      onClick={() => !already && play(s.tmdbId)}
+                      // Un titre déjà joué reste visible mais inerte : le
+                      // masquer laisserait croire qu'il n'est pas dans le jeu.
+                      title={already ? "Déjà proposé" : undefined}
+                    >
+                      {s.posterUrl ? (
+                        <Image src={s.posterUrl} alt="" width={28} height={42} style={{ height: "auto" }} />
+                      ) : (
+                        <span className={styles.suggestionBlank} />
+                      )}
+                      <span className={styles.suggestionTitle}>{s.title}</span>
+                      <span className={styles.suggestionYear}>{s.year}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+
+          {state.hints.length > 0 && (
+            <div className={styles.hints}>
+              {state.hints.map((h) => {
+                if (h.value === null) {
+                  const left = h.unlockAt - state.guesses.length;
+                  return (
+                    <div key={h.key} className={`${styles.hint} ${styles.hintLocked}`}>
+                      <Lock size={12} />
+                      <span>
+                        {h.label} · dans {left} essai{left > 1 ? "s" : ""}
+                      </span>
+                    </div>
+                  );
+                }
+                if (!revealed.has(h.key)) {
+                  return (
+                    <button
+                      key={h.key}
+                      type="button"
+                      className={`${styles.hint} ${styles.hintReady}`}
+                      onClick={() => setRevealed((prev) => new Set(prev).add(h.key))}
+                    >
+                      <Lightbulb size={12} />
+                      <span>Indice : {h.label.toLowerCase()}</span>
+                    </button>
+                  );
+                }
                 return (
-                  <button
-                    key={s.tmdbId}
-                    type="button"
-                    className={styles.suggestion}
-                    onClick={() => !already && play(s.tmdbId)}
-                    disabled={already}
-                    // Un titre déjà joué reste visible mais inerte : le
-                    // masquer laisserait croire qu'il n'est pas dans le jeu.
-                    title={already ? "Déjà proposé" : undefined}
-                  >
-                    {s.posterUrl ? (
-                      <Image src={s.posterUrl} alt="" width={28} height={42} style={{ height: "auto" }} />
-                    ) : (
-                      <span className={styles.suggestionBlank} />
-                    )}
-                    <span className={styles.suggestionTitle}>{s.title}</span>
-                    <span className={styles.suggestionYear}>{s.year}</span>
-                  </button>
+                  <div key={h.key} className={`${styles.hint} ${styles.hintOpen}`}>
+                    <span className={styles.hintLabel}>{h.label}</span>
+                    <strong>{h.value}</strong>
+                  </div>
                 );
               })}
             </div>
-            )}
-          </div>
+          )}
         </div>
       )}
 
@@ -185,7 +300,8 @@ export default function PuzzleBoard({
           <span className={styles.legendPartial}>orange</span> = proche ou partiellement
           commun, <span className={styles.legendMiss}>gris</span> = rien en commun. Sur les
           colonnes chiffrées, la flèche indique si le {noun} cherché est au-dessus ou
-          en dessous. Aucune limite d&apos;essais.
+          en dessous. Aucune limite d&apos;essais, et des indices se débloquent au fil
+          des propositions.
         </div>
       ) : (
         <div className={styles.gridScroll}>
@@ -199,15 +315,22 @@ export default function PuzzleBoard({
               ))}
             </div>
             {state.guesses.map((g) => (
-              <div key={g.tmdbId} className={styles.row}>
+              <div
+                key={g.tmdbId}
+                className={`${styles.row} ${initialIds.has(g.tmdbId) ? "" : styles.fresh}`}
+              >
                 <div className={styles.cellTitle}>
                   {g.posterUrl && (
                     <Image src={g.posterUrl} alt="" width={28} height={42} style={{ height: "auto" }} />
                   )}
                   <span>{g.title}</span>
                 </div>
-                {g.cells.map((c) => (
-                  <div key={c.key} className={`${styles.cell} ${styles[c.state]}`}>
+                {g.cells.map((c, i) => (
+                  <div
+                    key={c.key}
+                    className={`${styles.cell} ${styles[c.state]}`}
+                    style={{ ["--i" as string]: i }}
+                  >
                     <span>{c.value}</span>
                     {c.direction === "higher" && <ArrowUp size={13} />}
                     {c.direction === "lower" && <ArrowDown size={13} />}

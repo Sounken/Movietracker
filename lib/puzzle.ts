@@ -310,6 +310,56 @@ export function compare(
   };
 }
 
+/* ————————————————————————————————————————————————————————————
+   Indices
+   ———————————————————————————————————————————————————————————— */
+
+export type PuzzleHint = {
+  key: string;
+  label: string;
+  /** Nombre d'essais à partir duquel l'indice se débloque. */
+  unlockAt: number;
+  /** `null` tant que l'indice est verrouillé : il ne quitte pas le serveur avant. */
+  value: string | null;
+};
+
+/**
+ * Indices débloqués au fil des essais, du plus vague au plus parlant.
+ *
+ * Sans eux, une partie s'enlisait : la grille dit ce que la réponse n'est pas,
+ * rarement ce qu'elle est, et neuf essais sans trouver ont été relevés dès la
+ * première semaine. Le réalisateur vient en premier parce qu'il resserre
+ * beaucoup sans donner le titre ; la première lettre en dernier, parce
+ * qu'elle le donne presque.
+ */
+export function hintsFor(
+  media: PuzzleMedia,
+  answer: PuzzleSubject,
+  guessCount: number,
+): PuzzleHint[] {
+  const hints = [
+    {
+      key: "author",
+      label: media === "movie" ? "Réalisation" : "Création",
+      unlockAt: 3,
+      value: answer.authors.join(", ") || "Inconnue",
+    },
+    {
+      key: "actor",
+      label: "Tête d'affiche",
+      unlockAt: 6,
+      value: answer.actors[0] ?? "Inconnue",
+    },
+    {
+      key: "letter",
+      label: "Première lettre",
+      unlockAt: 9,
+      value: `« ${answer.title.trim().charAt(0).toUpperCase()} »`,
+    },
+  ];
+  return hints.map((h) => ({ ...h, value: guessCount >= h.unlockAt ? h.value : null }));
+}
+
 /** Lecture d'une entrée du vivier par identifiant TMDB. */
 export async function getEntry(
   media: PuzzleMedia,

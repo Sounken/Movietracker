@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 
 /**
@@ -11,23 +10,35 @@ import { prisma } from "@/lib/db";
  */
 export const dynamic = "force-dynamic";
 
-export async function GET(req: NextRequest) {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ results: [] }, { status: 401 });
+const LIMIT = 8;
 
+// Ouverte sans compte : le Moviedle se joue en visiteur. La requête ne lit
+// que le vivier (titre, année, affiche), rien qui touche à un utilisateur.
+export async function GET(req: NextRequest) {
   const params = req.nextUrl.searchParams;
   const media = params.get("media") === "tv" ? "tv" : "movie";
   const q = (params.get("q") ?? "").trim();
-  if (q.length < 2) return NextResponse.json({ results: [] });
+  if (q.length < 1) return NextResponse.json({ results: [] });
 
-  const rows = await prisma.puzzleEntry.findMany({
-    where: { media, title: { contains: q, mode: "insensitive" } },
-    // Les plus connus d'abord : sur « star », on veut Star Wars avant un
-    // téléfilm homonyme.
-    orderBy: { voteCount: "desc" },
-    take: 8,
-    select: { tmdbId: true, title: true, year: true, posterUrl: true },
-  });
+  const query = (title: { startsWith: string } | { contains: string }) =>
+    prisma.puzzleEntry.findMany({
+      where: { media, title: { ...title, mode: "insensitive" } },
+      // Les plus connus d'abord : sur « star », on veut Star Wars avant un
+      // téléfilm homonyme.
+      orderBy: { voteCount: "desc" },
+      take: LIMIT,
+      select: { tmdbId: true, title: true, year: true, posterUrl: true },
+    });
 
-  return NextResponse.json({ results: rows });
+  // Dès une seule lettre, « contient » ramène presque tout le vivier : sans
+  // passer d'abord les titres qui commencent par la saisie, « a » proposerait
+  // Gladiator avant Avatar, ce que le joueur ne cherche pas.
+  const [prefix, inner] = await Promise.all([query({ startsWith: q }), query({ contains: q })]);
+
+  const seen = new Set<number>();
+  const results = [...prefix, ...inner]
+    .filter((row) => !seen.has(row.tmdbId) && seen.add(row.tmdbId))
+    .slice(0, LIMIT);
+
+  return NextResponse.json({ results });
 }

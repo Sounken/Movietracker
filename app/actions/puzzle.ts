@@ -1,14 +1,18 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import {
   compare,
   getDailySubject,
   getEntry,
+  hintsFor,
   parisDay,
   type GuessResult,
+  type PuzzleHint,
   type PuzzleMedia,
+  type PuzzleSubject,
 } from "@/lib/puzzle";
 
 /**
@@ -30,48 +34,121 @@ export type PuzzleState = {
   available: boolean;
   guesses: GuessResult[];
   solved: boolean;
+  hints: PuzzleHint[];
   /** Le titre cherché, **uniquement** une fois la partie gagnée. */
   answer: { title: string; posterUrl: string; year: number } | null;
 };
 
-/** Relit une partie et recompose les lignes déjà jouées. */
-async function loadState(media: PuzzleMedia, userId: string): Promise<PuzzleState> {
-  const day = parisDay();
-  const answer = await getDailySubject(media, day);
-  if (!answer) return { day, available: false, guesses: [], solved: false, answer: null };
+const unavailable = (day: string): PuzzleState => ({
+  day,
+  available: false,
+  guesses: [],
+  solved: false,
+  hints: [],
+  answer: null,
+});
 
-  const play = await prisma.puzzlePlay.findUnique({
-    where: { userId_media_day: { userId, media, day } },
-  });
-
+/** Recompose l'état d'une partie à partir de la liste des titres proposés. */
+async function composeState(
+  media: PuzzleMedia,
+  day: string,
+  answer: PuzzleSubject,
+  played: number[],
+): Promise<PuzzleState> {
   const guesses: GuessResult[] = [];
-  for (const tmdbId of play?.guesses ?? []) {
+  for (const tmdbId of played) {
     const entry = await getEntry(media, tmdbId);
     if (entry) guesses.push(compare(media, entry, answer));
   }
 
-  const solved = play?.solved ?? false;
+  const solved = played.includes(answer.tmdbId);
   return {
     day,
     available: true,
     // Le plus récent en tête : c'est la ligne qu'on vient de jouer qu'on lit.
     guesses: guesses.reverse(),
     solved,
+    hints: hintsFor(media, answer, guesses.length),
     answer: solved
       ? { title: answer.title, posterUrl: answer.posterUrl, year: answer.year }
       : null,
   };
 }
 
+/** Relit la partie d'un membre et recompose les lignes déjà jouées. */
+async function loadState(media: PuzzleMedia, userId: string): Promise<PuzzleState> {
+  const day = parisDay();
+  const answer = await getDailySubject(media, day);
+  if (!answer) return unavailable(day);
+
+  const play = await prisma.puzzlePlay.findUnique({
+    where: { userId_media_day: { userId, media, day } },
+  });
+  return composeState(media, day, answer, play?.guesses ?? []);
+}
+
+/* ————————————————————————————————————————————————————————————
+   Partie sans compte
+   ———————————————————————————————————————————————————————————— */
+
+/**
+ * Sans compte, la grille du jour vit dans un cookie plutôt qu'en base : un
+ * visiteur de passage n'a pas à créer de ligne, et le stockage Neon est
+ * compté. Le cookie ne contient que les identifiants proposés — jamais la
+ * réponse, que le serveur relit à chaque coup. Le modifier à la main ne sert
+ * à rien : chaque ligne est recalculée face au titre du jour.
+ */
+const guestCookie = (media: PuzzleMedia) => `moviedle-${media}`;
+/** Plafond défensif : le cookie est éditable, sa taille ne doit pas l'être sans limite. */
+const GUEST_MAX_GUESSES = 150;
+
+async function readGuestGuesses(media: PuzzleMedia, day: string): Promise<number[]> {
+  const raw = (await cookies()).get(guestCookie(media))?.value;
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw) as { day?: unknown; guesses?: unknown };
+    // Grille d'un autre jour : on repart de zéro, comme un membre.
+    if (parsed.day !== day || !Array.isArray(parsed.guesses)) return [];
+    return [...new Set(parsed.guesses)]
+      .filter((v): v is number => Number.isInteger(v) && (v as number) > 0)
+      .slice(0, GUEST_MAX_GUESSES);
+  } catch {
+    return [];
+  }
+}
+
+async function writeGuestGuesses(media: PuzzleMedia, day: string, guesses: number[]) {
+  (await cookies()).set(guestCookie(media), JSON.stringify({ day, guesses }), {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    // Deux jours : de quoi couvrir le passage de minuit, pas davantage.
+    maxAge: 60 * 60 * 48,
+  });
+}
+
+async function loadGuestState(media: PuzzleMedia): Promise<PuzzleState> {
+  const day = parisDay();
+  const answer = await getDailySubject(media, day);
+  if (!answer) return unavailable(day);
+  return composeState(media, day, answer, await readGuestGuesses(media, day));
+}
+
+/* ———————————————————————————————————————————————————————————— */
+
 export async function getPuzzleState(media: PuzzleMedia): Promise<PuzzleState> {
   const session = await getSession();
-  if (!session) throw new Error("Non authentifié");
+  if (!session) return loadGuestState(media);
   return loadState(media, session.userId);
 }
 
 export async function submitGuess(media: PuzzleMedia, tmdbId: number): Promise<PuzzleState> {
+  // Le média vient du client : on ne le laisse pas désigner autre chose.
+  if (media !== "movie" && media !== "tv") throw new Error("Jeu inconnu");
+  if (!Number.isInteger(tmdbId) || tmdbId <= 0) throw new Error("Proposition invalide");
+
   const session = await getSession();
-  if (!session) throw new Error("Non authentifié");
 
   const day = parisDay();
   const answer = await getDailySubject(media, day);
@@ -81,6 +158,20 @@ export async function submitGuess(media: PuzzleMedia, tmdbId: number): Promise<P
   // grille : on la refuse plutôt que de l'enregistrer.
   const entry = await getEntry(media, tmdbId);
   if (!entry) throw new Error("Ce titre ne fait pas partie du jeu");
+
+  if (!session) {
+    const played = await readGuestGuesses(media, day);
+    // Mêmes règles qu'un membre : rien après la victoire, pas de doublon.
+    if (
+      !played.includes(answer.tmdbId) &&
+      !played.includes(tmdbId) &&
+      played.length < GUEST_MAX_GUESSES
+    ) {
+      played.push(tmdbId);
+      await writeGuestGuesses(media, day, played);
+    }
+    return composeState(media, day, answer, played);
+  }
 
   const play = await prisma.puzzlePlay.findUnique({
     where: { userId_media_day: { userId: session.userId, media, day } },
