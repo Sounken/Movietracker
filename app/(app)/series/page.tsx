@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { ArrowUp, ArrowDown } from "lucide-react";
@@ -283,6 +284,9 @@ async function CollectionSection({ userId }: { userId: string }) {
 
 export default async function SeriesHomePage() {
   const session = await getSession();
+  // Comme pour les films : sans compte, l'accueil n'a que le carrousel à
+  // montrer. « Découvrir » le reprend en tête, suivi du catalogue à explorer.
+  if (!session) redirect("/series/discover");
 
   const greeting = getGreeting();
 
