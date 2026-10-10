@@ -40,6 +40,20 @@
   align-self: start;
 }
 
+/* Une colonne collante plus haute que l'écran ne montre jamais son bas : avec
+   « Où regarder » sous les actions, c'est le cas sur la plupart des portables.
+   Elle ne colle donc que là où elle tient en entier. */
+@media (max-height: 940px) {
+  .posterCol {
+    position: relative;
+    top: auto;
+  }
+}
+
+.posterProviders {
+  margin-top: 24px;
+}
+
 .poster {
   width: 280px;
   aspect-ratio: 2/3;
@@ -625,6 +639,13 @@
 
   .poster {
     width: 140px;
+  }
+
+  /* L'affiche et les actions occupent les deux colonnes : les plateformes
+     passent dessous, sur toute la largeur. */
+  .posterProviders {
+    grid-column: 1 / -1;
+    margin-top: 0;
   }
 
   .movieTitle {

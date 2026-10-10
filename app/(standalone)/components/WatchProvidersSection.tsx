@@ -2,10 +2,12 @@ import Image from "next/image";
 import type { WatchProviders } from "@/lib/tmdb";
 import styles from "./WatchProvidersSection.module.css";
 
+// L'achat définitif est écarté : presque personne n'achète un film en
+// numérique pour le regarder ce soir, et ce groupe doublait souvent la
+// location avec les mêmes plateformes.
 const GROUPS = [
   { key: "flatrate", label: "En abonnement" },
   { key: "rent", label: "En location" },
-  { key: "buy", label: "À l'achat" },
 ] as const;
 
 /**
@@ -19,11 +21,17 @@ export default function WatchProvidersSection({
   providers,
   sectionClassName,
   titleClassName,
+  compact = false,
 }: {
   providers: WatchProviders;
   /** Classes de la fiche hôte, pour que le bloc s'y fonde. */
   sectionClassName: string;
   titleClassName: string;
+  /**
+   * Logos seuls, le nom au survol : sous l'affiche, la colonne fait 280 px et
+   * des pastilles nommées y passeraient une par ligne.
+   */
+  compact?: boolean;
 }) {
   const groups = GROUPS.map((g) => ({ ...g, items: providers[g.key] })).filter(
     (g) => g.items.length > 0,
@@ -32,7 +40,7 @@ export default function WatchProvidersSection({
   if (groups.length === 0) return null;
 
   return (
-    <div className={sectionClassName}>
+    <div className={`${sectionClassName} ${compact ? styles.compact : ""}`}>
       <div className={titleClassName}>Où regarder</div>
 
       {groups.map((group) => (

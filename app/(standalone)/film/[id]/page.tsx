@@ -1,11 +1,15 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getSession } from "@/lib/session";
+import { BASE_OPEN_GRAPH } from "@/lib/site";
 import { prisma } from "@/lib/db";
 import { saveRating, deleteRating } from "@/app/actions/film";
-import { fetchFilmDetail, fetchFilmCredits, fetchSimilarFilms, fetchFilmKeywords, fetchFilmLogo, fetchFilmCollection, fetchWatchProviders, fetchExternalIds, fetchFilmExtras, formatMoney, formatRuntime } from "@/lib/tmdb";
+import { fetchFilmDetail, fetchFilmCredits, fetchSimilarFilms, fetchFilmKeywords, fetchFilmLogo, fetchFilmCollection, fetchWatchProviders, fetchExternalIds, fetchFilmExtras, fetchReviews, formatMoney, formatRuntime } from "@/lib/tmdb";
+import { buildReviewCards } from "@/lib/reviews";
 import WatchProvidersSection from "../../components/WatchProvidersSection";
+import ReviewsSection from "../../components/ReviewsSection";
 import AwardsAsync from "../../components/AwardsAsync";
 import TrailerSection from "../../components/TrailerSection";
 import ExternalLinks from "../../components/ExternalLinks";
@@ -15,7 +19,6 @@ import PosterActions from "./components/PosterActions";
 import RatingWidget from "./components/RatingWidget";
 import CastGrid from "./components/CastGrid";
 import SimilarFilms from "./components/SimilarFilms";
-import FriendReviews from "./components/FriendReviews";
 import styles from "./film.module.css";
 import { Rating } from "@/lib/rating-scale";
 
@@ -25,12 +28,51 @@ const LANG_NAMES: Record<string, string> = {
   ar: "Arabe", hi: "Hindi", nl: "Néerlandais", sv: "Suédois", da: "Danois",
 };
 
+/** Coupe un synopsis à la longueur qu'affichent les aperçus, sans trancher un mot. */
+function excerpt(text: string, max = 160): string {
+  if (text.length <= max) return text;
+  const cut = text.lastIndexOf(" ", max - 1);
+  return `${text.slice(0, cut > 0 ? cut : max)}…`;
+}
+
+/**
+ * Titre et aperçu de lien de la fiche.
+ *
+ * La fiche reste fermée aux moteurs (`robots.ts`) : ces balises servent
+ * surtout quand un membre partage le lien à un ami, où l'affiche et le
+ * synopsis donnent envie de cliquer. Même appel TMDB que la page, que Next.js
+ * ne fait qu'une fois par requête.
+ */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const id = parseInt((await params).id);
+  const film = Number.isNaN(id) ? null : await fetchFilmDetail(id);
+  if (!film) return {};
+
+  const title = film.year ? `${film.title} (${film.year})` : film.title;
+  const description = film.overview ? excerpt(film.overview) : `${film.title} sur MovieTracker.`;
+  return {
+    title,
+    description,
+    openGraph: {
+      ...BASE_OPEN_GRAPH,
+      title,
+      description,
+      images: film.posterUrl ? [{ url: film.posterUrl, alt: film.title }] : undefined,
+    },
+    twitter: { card: "summary" },
+  };
+}
+
 export default async function FilmPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: idStr } = await params;
   const id = parseInt(idStr);
   if (isNaN(id)) notFound();
 
-  const [session, film, credits, similar, keywords, logoUrl, providers, externalIds, extras] =
+  const [session, film, credits, similar, keywords, logoUrl, providers, externalIds, extras, tmdbReviews] =
     await Promise.all([
       getSession(),
       fetchFilmDetail(id),
@@ -41,6 +83,7 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
       fetchWatchProviders("movie", id),
       fetchExternalIds("movie", id),
       fetchFilmExtras(id),
+      fetchReviews("movie", id),
     ]);
 
   if (!film) notFound();
@@ -99,6 +142,7 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
     : [null, [], [], []];
 
   const listsWithFilm = (listsWithFilmRaw as { listId: string }[]).map((r) => r.listId);
+  const reviews = buildReviewCards(friendFilms, tmdbReviews);
 
   const roi =
     film.budget > 0
@@ -139,6 +183,14 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
             userLists={userLists}
             listsWithFilm={listsWithFilm}
             isAuthenticated={!!session}
+          />
+          {/* Juste sous les actions : « où le voir » est la question qui suit
+              « je veux le voir », pas une annexe en bas de fiche. */}
+          <WatchProvidersSection
+            providers={providers}
+            sectionClassName={styles.posterProviders}
+            titleClassName={styles.sectionTitle}
+            compact
           />
         </div>
 
@@ -214,22 +266,11 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
             </div>
           )}
 
-          {/* Les avis des amis passent avant la bande-annonce : c'est le
-              contenu propre au réseau de l'utilisateur, et le seul qu'il ne
-              trouvera pas ailleurs. La bande-annonce, elle, reste consultable
-              plus bas sans rien perdre. */}
-          {friendFilms.length > 0 && (
-            <FriendReviews
-              reviews={friendFilms.map((f) => ({
-                userId: f.user.id,
-                name: f.user.name ?? "Utilisateur",
-                avatarUrl: f.user.avatarUrl,
-                rating: f.rating,
-                review: f.review,
-                date: f.updatedAt.toLocaleDateString("fr-FR"),
-              }))}
-            />
-          )}
+          {/* Les avis passent avant la bande-annonce : ceux des amis sont le
+              contenu propre au réseau de l'utilisateur, le seul qu'il ne
+              trouvera pas ailleurs. La bande-annonce reste consultable plus
+              bas sans rien perdre. */}
+          <ReviewsSection reviews={reviews} />
 
           {extras.video && (
             <TrailerSection
@@ -376,14 +417,6 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
               </div>
             </div>
           )}
-
-          {/* Placé juste avant les suggestions : le bloc est haut, il repoussait
-              le reste de la fiche quand il était sous le synopsis. */}
-          <WatchProvidersSection
-            providers={providers}
-            sectionClassName={styles.section}
-            titleClassName={styles.sectionTitle}
-          />
 
           {sagaFilms.length > 0 && (
             <SimilarFilms

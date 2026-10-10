@@ -1,0 +1,48 @@
+/* Repoussée à droite : la source se lit après le nom et la note, pas avant. */
+.source {
+  margin-left: auto;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+/* Les sauts de ligne de l'auteur structurent souvent un long avis. */
+.text {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.clamped {
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.readMore {
+  margin-top: 6px;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 12px;
+  color: var(--accent-soft);
+  cursor: pointer;
+}
+
+.readMore:hover {
+  color: var(--accent);
+}
+
+.origin {
+  color: inherit;
+}
+
+.origin:hover {
+  color: var(--accent);
+}

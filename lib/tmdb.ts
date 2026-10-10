@@ -1973,3 +1973,82 @@ export async function fetchPersonPopularRank(id: number): Promise<number | null>
     return null;
   }
 }
+
+// ——————————————————————————————————————————————————————————————
+//  Avis TMDB
+// ——————————————————————————————————————————————————————————————
+
+export type TmdbReview = {
+  id: string;
+  author: string;
+  avatarUrl: string | null;
+  /** Sur 10, comme les notes stockées chez nous ; absente si l'auteur n'a pas noté. */
+  rating: number | null;
+  content: string;
+  date: string;
+  /** Page de l'avis sur TMDB — l'attribution de la source est exigée. */
+  url: string;
+};
+
+/** Nombre d'avis TMDB gardés : au-delà, la fiche devient un forum. */
+const REVIEWS_KEPT = 6;
+
+/**
+ * Les avis TMDB sont rédigés en Markdown ou en HTML léger selon les auteurs.
+ * On les affiche en texte brut : interpréter ce balisage reviendrait à injecter
+ * du HTML tiers dans la page.
+ */
+function plainReview(raw: string): string {
+  return raw
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/\*\*|__|~~/g, "")
+    .replace(/\r\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+/** Les avatars TMDB sont soit un chemin d'image, soit (anciens comptes) une URL Gravatar préfixée d'un « / ». */
+function reviewAvatar(path: unknown): string | null {
+  if (typeof path !== "string" || !path.startsWith("/") || path.startsWith("/http")) return null;
+  return `${IMG}/w45${path}`;
+}
+
+/**
+ * Avis publiés sur TMDB pour un film ou une série.
+ *
+ * Sans paramètre `language` : demandé en `fr-FR`, TMDB ne renvoie presque
+ * rien (zéro avis sur Inception, contre huit en anglais). Les plus récents
+ * d'abord, ce sont ceux qui parlent du titre tel qu'on le regarde aujourd'hui.
+ */
+export async function fetchReviews(media: "movie" | "tv", id: number): Promise<TmdbReview[]> {
+  const key = process.env.TMDB_API_KEY;
+  if (!key) return [];
+  try {
+    const res = await fetch(`${BASE}/${media}/${id}/reviews?api_key=${key}`, {
+      next: { revalidate: 86400 },
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const results = Array.isArray(data.results) ? (data.results as Record<string, unknown>[]) : [];
+    return results
+      .map((r) => {
+        const details = (r.author_details ?? {}) as Record<string, unknown>;
+        const rating = typeof details.rating === "number" ? details.rating : null;
+        return {
+          id: String(r.id),
+          author: String(details.name || r.author || "Anonyme"),
+          avatarUrl: reviewAvatar(details.avatar_path),
+          rating,
+          content: plainReview(String(r.content ?? "")),
+          date: String(r.updated_at ?? r.created_at ?? ""),
+          url: String(r.url ?? ""),
+        };
+      })
+      .filter((r) => r.content.length > 0)
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .slice(0, REVIEWS_KEPT);
+  } catch {
+    return [];
+  }
+}

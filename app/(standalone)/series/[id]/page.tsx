@@ -1,14 +1,18 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getSession } from "@/lib/session";
+import { BASE_OPEN_GRAPH } from "@/lib/site";
 import { prisma } from "@/lib/db";
-import { fetchSeriesBundle, formatRuntime } from "@/lib/tmdb";
+import { fetchSeriesBundle, fetchReviews, formatRuntime } from "@/lib/tmdb";
+import { buildReviewCards } from "@/lib/reviews";
 import FilmTopbar from "../../film/[id]/components/FilmTopbar";
 import FilmTitleLogo from "../../film/[id]/components/FilmTitleLogo";
 import CastGrid from "../../film/[id]/components/CastGrid";
 import SimilarFilms from "../../film/[id]/components/SimilarFilms";
 import WatchProvidersSection from "../../components/WatchProvidersSection";
+import ReviewsSection from "../../components/ReviewsSection";
 import AwardsAsync from "../../components/AwardsAsync";
 import TrailerSection from "../../components/TrailerSection";
 import ExternalLinks from "../../components/ExternalLinks";
@@ -59,6 +63,39 @@ function formatDate(iso: string): string {
   return Number.isNaN(d.getTime()) ? iso : DATE_FMT.format(d);
 }
 
+/** Coupe un synopsis à la longueur qu'affichent les aperçus, sans trancher un mot. */
+function excerpt(text: string, max = 160): string {
+  if (text.length <= max) return text;
+  const cut = text.lastIndexOf(" ", max - 1);
+  return `${text.slice(0, cut > 0 ? cut : max)}…`;
+}
+
+/** Titre et aperçu de lien de la fiche — voir la fiche film pour le pourquoi. */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const id = parseInt((await params).id);
+  const bundle = Number.isNaN(id) ? null : await fetchSeriesBundle(id);
+  if (!bundle) return {};
+
+  const series = bundle.detail;
+  const title = series.year ? `${series.name} (${series.year})` : series.name;
+  const description = series.overview ? excerpt(series.overview) : `${series.name} sur MovieTracker.`;
+  return {
+    title,
+    description,
+    openGraph: {
+      ...BASE_OPEN_GRAPH,
+      title,
+      description,
+      images: series.posterUrl ? [{ url: series.posterUrl, alt: series.name }] : undefined,
+    },
+    twitter: { card: "summary" },
+  };
+}
+
 export default async function SeriesPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: idStr } = await params;
   const id = parseInt(idStr);
@@ -66,7 +103,13 @@ export default async function SeriesPage({ params }: { params: Promise<{ id: str
 
   // Un seul appel TMDB pour toute la fiche (append_to_response) au lieu des
   // six requêtes indépendantes d'avant.
-  const [session, bundle] = await Promise.all([getSession(), fetchSeriesBundle(id)]);
+  // Les avis restent hors du bundle : il est demandé en `fr-FR`, langue dans
+  // laquelle TMDB n'a quasiment aucun avis.
+  const [session, bundle, tmdbReviews] = await Promise.all([
+    getSession(),
+    fetchSeriesBundle(id),
+    fetchReviews("tv", id),
+  ]);
 
   if (!bundle) notFound();
 
@@ -97,6 +140,26 @@ export default async function SeriesPage({ params }: { params: Promise<{ id: str
         }),
       ])
     : [null, [], []];
+
+  // Avis des personnes suivies, avec une note et/ou un texte (un avis vide est
+  // stocké comme ""), comme sur la fiche film.
+  const friendSeries = session
+    ? await prisma.userSeries.findMany({
+        where: {
+          tmdbId: id,
+          user: { followers: { some: { followerId: session.userId } } },
+          OR: [{ rating: { not: null } }, { review: { not: "" } }],
+        },
+        select: {
+          rating: true,
+          review: true,
+          updatedAt: true,
+          user: { select: { id: true, name: true, avatarUrl: true } },
+        },
+        orderBy: { updatedAt: "desc" },
+      })
+    : [];
+  const reviews = buildReviewCards(friendSeries, tmdbReviews);
 
   // Progression : nb d'épisodes vus par saison + total
   const watchedBySeason: Record<number, number> = {};
@@ -152,6 +215,13 @@ export default async function SeriesPage({ params }: { params: Promise<{ id: str
             initialWatchlist={userSeries?.watchlist ?? false}
             initialLiked={userSeries?.liked ?? false}
             isAuthenticated={!!session}
+          />
+          {/* Juste sous les actions, comme sur la fiche film. */}
+          <WatchProvidersSection
+            providers={providers}
+            sectionClassName={filmStyles.posterProviders}
+            titleClassName={filmStyles.sectionTitle}
+            compact
           />
         </div>
 
@@ -253,6 +323,8 @@ export default async function SeriesPage({ params }: { params: Promise<{ id: str
             </div>
           )}
 
+          <ReviewsSection reviews={reviews} />
+
           {video && (
             <TrailerSection
               video={video}
@@ -261,12 +333,6 @@ export default async function SeriesPage({ params }: { params: Promise<{ id: str
               titleClassName={filmStyles.sectionTitle}
             />
           )}
-
-          <WatchProvidersSection
-            providers={providers}
-            sectionClassName={filmStyles.section}
-            titleClassName={filmStyles.sectionTitle}
-          />
 
           {/* Suivi par saison / épisode */}
           {series.seasons.length > 0 && (
