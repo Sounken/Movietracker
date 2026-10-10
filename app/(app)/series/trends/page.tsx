@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { getSession } from "@/lib/session";
 import { getSeriesTrends, parsePeriod, type Period } from "@/lib/trends";
@@ -5,6 +6,15 @@ import Topbar from "../../components/Topbar";
 import TrendsClient from "../../films/trends/TrendsClient";
 import styles from "../../films/trends/trends.module.css";
 import { getGreeting } from "@/lib/greeting";
+
+export const metadata: Metadata = {
+  title: "Tendances séries : les plus suivies et les mieux notées",
+  description:
+    "Les séries les plus suivies, les plus aimées et les mieux notées par les membres de MovieTracker, sur la période de votre choix.",
+  // Les filtres passent par l'URL : sans canonique, chaque combinaison serait
+  // une page distincte pour Google.
+  alternates: { canonical: "/series/trends" },
+};
 
 // Même architecture que les tendances films : une seule agrégation cachée,
 // un seul boundary Suspense.

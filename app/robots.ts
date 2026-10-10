@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { SITE_URL } from "@/lib/site";
 
 /**
  * Consignes d'exploration.
@@ -16,16 +17,17 @@ import type { MetadataRoute } from "next";
  * retirer `/film/` d'ici suffit — la limite de débit du proxy protège toujours
  * contre un parcours abusif.
  *
- * `/series/` couvre aussi les pages privées et les fiches ; `/series/discover`
- * et `/series/trends` sont rouvertes explicitement. Les moteurs appliquent la
- * règle la plus précise, l'autorisation l'emporte donc sur ces deux chemins.
+ * `/series/` couvre aussi les pages privées et les fiches ; `/series/discover`,
+ * `/series/trends` et `/series/moviedle` sont rouvertes explicitement. Les moteurs appliquent la
+ * règle la plus précise, l'autorisation l'emporte donc sur ces chemins.
  */
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: "*",
-      allow: ["/series/discover", "/series/trends"],
+      allow: ["/series/discover", "/series/trends", "/series/moviedle"],
       disallow: ["/film/", "/series/", "/actor/", "/company/", "/compare/", "/user/", "/api/", "/vitals"],
     },
+    sitemap: `${SITE_URL}/sitemap.xml`,
   };
 }

@@ -3,6 +3,36 @@ import { Geist_Mono } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 import WebVitalsReporter from "./(app)/components/WebVitalsReporter";
+import { BASE_OPEN_GRAPH, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
+
+/**
+ * Données structurées : disent à Google ce qu'est le site (une application web
+ * gratuite) sans rien changer à l'affichage. Elles ne décrivent que ce qui est
+ * vrai sur toutes les pages — d'où un seul bloc, posé dans le layout racine.
+ */
+const STRUCTURED_DATA = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#website`,
+      url: SITE_URL,
+      name: SITE_NAME,
+      inLanguage: "fr-FR",
+    },
+    {
+      "@type": "WebApplication",
+      "@id": `${SITE_URL}/#app`,
+      name: SITE_NAME,
+      url: SITE_URL,
+      description: SITE_DESCRIPTION,
+      applicationCategory: "EntertainmentApplication",
+      operatingSystem: "Web",
+      inLanguage: "fr-FR",
+      offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
+    },
+  ],
+};
 
 /**
  * Blauer Nue (Webhance Studio) remplace Geist pour le texte courant, New Kansas
@@ -66,8 +96,17 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MovieTracker",
-  description: "Votre journal de cinéma personnel",
+  metadataBase: new URL(SITE_URL),
+  // Le gabarit garde le nom du site en fin de titre : dans un résultat Google,
+  // le début du titre est ce qu'on lit, et c'est là que doit être la page.
+  title: {
+    default: `${SITE_NAME} : journal de films et séries`,
+    template: `%s · ${SITE_NAME}`,
+  },
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  openGraph: BASE_OPEN_GRAPH,
+  twitter: { card: "summary_large_image" },
   // Nom + comportement de l'app une fois ajoutée à l'écran d'accueil iOS
   appleWebApp: {
     capable: true,
@@ -91,6 +130,11 @@ export default function RootLayout({
       style={{ fontFamily: "var(--font-sans), system-ui, sans-serif" }}
     >
       <body suppressHydrationWarning>
+        <script
+          type="application/ld+json"
+          // Contenu figé, écrit ici même : aucune donnée utilisateur n'y passe.
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA) }}
+        />
         {children}
 
         {/* Point d'ancrage des modales portées hors du flux.

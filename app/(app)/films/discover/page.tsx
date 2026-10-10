@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { getSession } from "@/lib/session";
 import { fetchDiscover, fetchNowPlaying, fetchFilmLogo } from "@/lib/tmdb";
@@ -9,6 +10,15 @@ import DiscoverFilters from "./DiscoverFilters";
 import DiscoverGrid from "./DiscoverGrid";
 import styles from "./discover.module.css";
 import { getGreeting } from "@/lib/greeting";
+
+export const metadata: Metadata = {
+  title: "Découvrir des films : populaires, mieux notés, au cinéma",
+  description:
+    "Explorez les films populaires, les mieux notés et les sorties en salles. Filtrez par genre, année, note ou plateforme de streaming : Netflix, Prime Video, Disney+…",
+  // Les filtres passent par l'URL : sans canonique, chaque combinaison serait
+  // une page distincte pour Google.
+  alternates: { canonical: "/films/discover" },
+};
 
 export default async function DiscoverPage({
   searchParams,

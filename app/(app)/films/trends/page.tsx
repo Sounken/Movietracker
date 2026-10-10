@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { getSession } from "@/lib/session";
 import { getFilmTrends, parsePeriod, type Period } from "@/lib/trends";
@@ -5,6 +6,15 @@ import Topbar from "../../components/Topbar";
 import TrendsClient from "./TrendsClient";
 import styles from "./trends.module.css";
 import { getGreeting } from "@/lib/greeting";
+
+export const metadata: Metadata = {
+  title: "Tendances films : les plus vus et les mieux notés",
+  description:
+    "Les films les plus vus, les plus aimés et les mieux notés par les membres de MovieTracker, sur la période de votre choix.",
+  // Les filtres passent par l'URL : sans canonique, chaque combinaison serait
+  // une page distincte pour Google.
+  alternates: { canonical: "/films/trends" },
+};
 
 // Toutes les données de la page viennent d'une seule agrégation (cachée) :
 // un seul boundary Suspense pour tout le contenu, la Topbar reste immédiate.
