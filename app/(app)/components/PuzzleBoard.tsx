@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowUp, ArrowDown, Check, Lock, Lightbulb, Search as SearchGlyph } from "lucide-react";
 import { submitGuess, type PuzzleState } from "@/app/actions/puzzle";
-import type { PuzzleMedia } from "@/lib/puzzle";
+import type { Cell, PuzzleMedia } from "@/lib/puzzle";
 import styles from "./PuzzleBoard.module.css";
 
 type Suggestion = { tmdbId: number; title: string; year: number; posterUrl: string };
@@ -28,6 +28,26 @@ function columnTemplate(keys: string[]): string {
         : "minmax(86px, 1fr)",
   );
   return ["minmax(150px, 1.4fr)", ...cols].join(" ");
+}
+
+/**
+ * Ordre des tuiles sur téléphone : les chiffres d'abord, sur une même ligne,
+ * puis les critères textuels deux par deux, et les têtes d'affiche — la liste
+ * la plus longue — en pleine largeur à la fin.
+ */
+function mobileOrder(cells: Cell[]): Cell[] {
+  const rank = (c: Cell) => (NUMERIC_COLUMNS.has(c.key) ? 0 : c.key === "actors" ? 2 : 1);
+  return [...cells].sort((a, b) => rank(a) - rank(b));
+}
+
+function tileSpan(key: string): string {
+  return NUMERIC_COLUMNS.has(key) ? styles.tileThird : key === "actors" ? styles.tileFull : styles.tileHalf;
+}
+
+function Arrow({ direction }: { direction?: Cell["direction"] }) {
+  if (direction === "higher") return <ArrowUp size={13} />;
+  if (direction === "lower") return <ArrowDown size={13} />;
+  return null;
 }
 
 /**
@@ -329,7 +349,6 @@ export default function PuzzleBoard({
             className={styles.grid}
             style={{
               ["--template" as string]: columnTemplate(state.guesses[0].cells.map((c) => c.key)),
-              ["--cols" as string]: state.guesses[0].cells.length,
             }}
           >
             <div className={styles.rowHead}>
@@ -358,14 +377,53 @@ export default function PuzzleBoard({
                     style={{ ["--i" as string]: i }}
                   >
                     <span>{c.value}</span>
-                    {c.direction === "higher" && <ArrowUp size={13} />}
-                    {c.direction === "lower" && <ArrowDown size={13} />}
+                    <Arrow direction={c.direction} />
                   </div>
                 ))}
               </div>
             ))}
           </div>
         </div>
+      )}
+
+      {/* Téléphone : une carte par proposition au lieu d'une ligne de tableau.
+          Huit colonnes imposaient un défilement horizontal où l'on perdait le
+          titre de vue ; ici tout se lit d'un coup d'œil, en défilant vers le
+          bas. Les deux vues sont rendues, le CSS choisit — pas de détection de
+          largeur en JS, donc pas d'écart entre rendu serveur et client. */}
+      {state.available && state.guesses.length > 0 && (
+        <ol className={styles.cards}>
+          {state.guesses.map((g, index) => (
+            <li
+              key={g.tmdbId}
+              className={`${styles.card} ${g.solved ? styles.cardSolved : ""} ${initialIds.has(g.tmdbId) ? "" : styles.fresh}`}
+            >
+              <div className={styles.cardHead}>
+                {g.posterUrl && (
+                  <Image src={g.posterUrl} alt="" width={30} height={45} style={{ height: "auto" }} />
+                )}
+                <span className={styles.cardTitle}>{g.title}</span>
+                {/* Les propositions arrivent de la plus récente à la plus ancienne. */}
+                <span className={styles.cardIndex}>#{state.guesses.length - index}</span>
+              </div>
+              <div className={styles.tiles}>
+                {mobileOrder(g.cells).map((c, i) => (
+                  <div
+                    key={c.key}
+                    className={`${styles.tile} ${tileSpan(c.key)} ${styles[c.state]}`}
+                    style={{ ["--i" as string]: i }}
+                  >
+                    <span className={styles.tileLabel}>{c.label}</span>
+                    <span className={styles.tileValue}>
+                      {c.value}
+                      <Arrow direction={c.direction} />
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </li>
+          ))}
+        </ol>
       )}
     </div>
   );

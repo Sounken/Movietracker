@@ -1,7 +1,11 @@
+/* Conteneur : le choix entre tableau et cartes dépend de la place réelle du
+   jeu, pas de l'écran — sur tablette, la barre latérale en mange une bonne
+   partie et le tableau n'y tient pas non plus. */
 .board {
   display: flex;
   flex-direction: column;
   gap: 18px;
+  container: puzzle / inline-size;
 }
 
 /* ——— En-tête ——— */
@@ -194,9 +198,9 @@
 }
 
 /* ——— Grille ——— */
-/* Huit colonnes ne tiennent pas dans la largeur d'un téléphone. Plutôt que de
-   les empiler — ce qui ferait perdre la lecture en colonnes, tout l'intérêt du
-   jeu — la grille défile horizontalement, la colonne du titre restant collée. */
+/* Filet de sécurité : sous la somme des minimums de colonnes, ce sont les
+   cartes qui prennent le relais (cf. plus bas) ; le défilement horizontal ne
+   sert plus qu'en cas d'imprévu, la colonne du titre restant collée. */
 .gridScroll {
   overflow-x: auto;
   scrollbar-width: thin;
@@ -303,13 +307,15 @@
    jouée : les lignes chargées avec la page sont déjà connues du joueur. Le
    décalage laisse lire chaque verdict avant le suivant, c'est le suspense du
    jeu. `both` masque les cellules pendant leur attente. */
-.fresh .cell {
+.fresh .cell,
+.fresh .tile {
   animation: cellIn 0.3s var(--ease-out, ease) both;
   animation-delay: calc(var(--i, 0) * 130ms);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .fresh .cell {
+  .fresh .cell,
+  .fresh .tile {
     animation: none;
   }
 }
@@ -473,6 +479,135 @@
   color: var(--red);
 }
 
+/* ——— Cartes (téléphone) ——— */
+.cards {
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  padding: 10px;
+  border-radius: var(--radius);
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+
+.cardSolved {
+  border-color: rgba(106, 138, 90, 0.7);
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.cardHead img {
+  border-radius: 4px;
+  flex: none;
+}
+
+.cardTitle {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.cardIndex {
+  flex: none;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  color: var(--ink-mute);
+}
+
+/* Six colonnes : trois chiffres par ligne (2 + 2 + 2), deux critères textuels
+   (3 + 3), les têtes d'affiche sur toute la largeur (6). */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.tileThird {
+  grid-column: span 2;
+}
+
+.tileHalf {
+  grid-column: span 3;
+}
+
+.tileFull {
+  grid-column: 1 / -1;
+}
+
+.tile {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+}
+
+.tileLabel {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-mute);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tileValue {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.25;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.tileValue svg {
+  flex: none;
+}
+
+/* Sur fond de carte, une tuile « rien en commun » doit rester visible. */
+.card .miss {
+  background: var(--bg);
+}
+
+/* Le tableau cède la place aux cartes quand ses colonnes ne tiennent plus :
+   150 (titre) + 3 × 78 (chiffres) + 110 (acteurs) + 4 × 86 + 8 × 6 (écarts)
+   = 886px. */
+@container puzzle (max-width: 885px) {
+  .gridScroll {
+    display: none;
+  }
+
+  .cards {
+    display: flex;
+  }
+}
+
 @media (max-width: 768px) {
   .title {
     font-size: 22px;
@@ -482,18 +617,5 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
-  }
-
-  /* Sur téléphone, huit colonnes ne tiennent pas : la grille défile, la
-     colonne du titre restant collée. On garde une taille de texte lisible et
-     on accepte des cellules sur deux ou trois lignes plutôt que de réduire la
-     police. */
-  .grid {
-    width: max-content;
-  }
-
-  .rowHead,
-  .row {
-    grid-template-columns: 150px repeat(var(--cols, 8), 116px);
   }
 }
