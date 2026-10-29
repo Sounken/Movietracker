@@ -7,10 +7,20 @@
  * résultats sur la pertinence plutôt que sur la seule popularité.
  */
 
+/**
+ * NFD ne décompose pas les ligatures : « cœur » perdait son « œ » avec la
+ * ponctuation et devenait « cur », qui ne correspond plus à « coeur » tapé au
+ * clavier.
+ */
+const LIGATURES: Record<string, string> = { "œ": "oe", "æ": "ae", "ß": "ss" };
+
+function unligature(s: string): string {
+  return s.replace(/[œæß]/g, (c) => LIGATURES[c]);
+}
+
 /** « X-Men » → « xmen », « WALL·E » → « walle », « Amélie » → « amelie ». */
 export function normalize(s: string): string {
-  return (s ?? "")
-    .toLowerCase()
+  return unligature((s ?? "").toLowerCase())
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
     .replace(/[^a-z0-9]/g, "");
@@ -18,8 +28,7 @@ export function normalize(s: string): string {
 
 /** Découpe en mots normalisés : « The Dark Knight » → ["the","dark","knight"]. */
 export function words(s: string): string[] {
-  return (s ?? "")
-    .toLowerCase()
+  return unligature((s ?? "").toLowerCase())
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
     .split(/[^a-z0-9]+/)
@@ -29,13 +38,25 @@ export function words(s: string): string[] {
 /**
  * Variantes envoyées à TMDB. La forme compacte rattrape les requêtes dont la
  * ponctuation ne correspond pas au titre officiel (« wall e » → « walle »).
+ *
+ * La forme accordée vient d'une limite de TMDB : seul le dernier mot de la
+ * requête peut n'être qu'un début de mot, les autres doivent correspondre en
+ * entier. « coeur noir » ne trouvait donc pas la série « Cœurs Noirs », alors
+ * que « coeurs noir » la trouve. On bascule les mots non finaux entre singulier
+ * et pluriel ; une variante sans écho chez TMDB ne coûte qu'une liste vide.
  */
 export function queryVariants(q: string): string[] {
   const raw = q.trim();
   const compact = normalize(raw);
-  const spaced = words(raw).join(" ");
+  const split = words(raw);
+  const spaced = split.join(" ");
+  const inflected = split
+    .map((w, i) =>
+      i === split.length - 1 || w.length < 3 ? w : /[sx]$/.test(w) ? w.slice(0, -1) : `${w}s`,
+    )
+    .join(" ");
   // Set : inutile d'appeler TMDB deux fois quand les formes coïncident.
-  return [...new Set([raw, compact, spaced])].filter((v) => v.length >= 2);
+  return [...new Set([raw, compact, spaced, inflected])].filter((v) => v.length >= 2);
 }
 
 /**
