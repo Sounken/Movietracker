@@ -93,6 +93,9 @@ export default function LoginPage() {
               className={styles.input}
               placeholder="••••••••"
             />
+            <Link href="/forgot-password" className={styles.forgotLink}>
+              Mot de passe oublié ?
+            </Link>
           </div>
 
           <button type="submit" disabled={pending} className={styles.btn}>

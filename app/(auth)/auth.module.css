@@ -94,6 +94,36 @@
   border-radius: 8px;
 }
 
+/* Confirmation (lien envoyé, mot de passe changé) : pendant vert de .error. */
+.success {
+  background: rgba(106, 138, 90, 0.12);
+  border: 1px solid rgba(106, 138, 90, 0.4);
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.6;
+  padding: 12px 14px;
+  border-radius: 8px;
+}
+
+/* Bouton principal rendu par un lien (« Se connecter » après réinitialisation). */
+.btnLink {
+  display: block;
+  margin-top: 16px;
+  text-align: center;
+  text-decoration: none;
+}
+
+/* « Mot de passe oublié ? » : sous le champ, aligné à droite, discret. */
+.forgotLink {
+  align-self: flex-end;
+  font-size: 12px;
+  color: var(--ink-dim);
+}
+
+.forgotLink:hover {
+  color: var(--accent-soft);
+}
+
 .field {
   display: flex;
   flex-direction: column;

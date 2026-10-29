@@ -18,6 +18,10 @@ model User {
   /// Échelle d'affichage des notes : 10 (défaut) ou 100. Les notes restent
   /// stockées sur 10 dans UserFilm/UserSeries, seul l'affichage change.
   ratingScale    Int                  @default(10)
+  /// Incrémenté à chaque réinitialisation du mot de passe. Chaque session
+  /// emporte la valeur du moment : une session plus ancienne n'est plus
+  /// reconnue, ce qui déconnecte tous les appareils d'un coup.
+  sessionVersion Int                  @default(0)
   createdAt      DateTime             @default(now())
   films          UserFilm[]
   favoriteFilms  UserFavoriteFilm[]
@@ -31,6 +35,23 @@ model User {
   notifications  Notification[]       @relation("notificationRecipient")
   actedOn        Notification[]       @relation("notificationActor")
   puzzlePlays    PuzzlePlay[]
+  passwordResets PasswordResetToken[]
+}
+
+/// Lien de réinitialisation du mot de passe, à usage unique.
+///
+/// Seule l'empreinte SHA-256 du jeton est conservée : une fuite de la base ne
+/// donne aucun lien utilisable. Les jetons d'un compte sont tous supprimés dès
+/// qu'une réinitialisation aboutit.
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
 }
 
 /// Notification reçue par un utilisateur.

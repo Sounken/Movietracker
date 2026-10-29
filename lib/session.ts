@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import * as Sentry from "@sentry/nextjs";
@@ -7,6 +8,12 @@ export type SessionPayload = {
   userId: string;
   name: string | null;
   expiresAt: Date;
+  /**
+   * `User.sessionVersion` au moment de la connexion. Absente des sessions
+   * ouvertes avant son introduction : elle vaut alors 0, comme la colonne par
+   * défaut — personne n'est déconnecté par le déploiement.
+   */
+  v?: number;
 };
 
 const secretKey = process.env.SESSION_SECRET;
@@ -33,9 +40,9 @@ export async function decrypt(
   }
 }
 
-export async function createSession(userId: string, name: string | null) {
+export async function createSession(userId: string, name: string | null, version: number) {
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-  const session = await encrypt({ userId, name, expiresAt });
+  const session = await encrypt({ userId, name, expiresAt, v: version });
   const cookieStore = await cookies();
   cookieStore.set("session", session, {
     httpOnly: true,
@@ -75,8 +82,33 @@ export async function getSession(): Promise<SessionPayload | null> {
   const cookieStore = await cookies();
   const session = cookieStore.get("session")?.value;
   const payload = await decrypt(session);
+  if (!payload) return null;
 
-  if (payload) Sentry.setUser({ id: payload.userId });
+  // Session ouverte avant une réinitialisation du mot de passe, ou compte
+  // supprimé : la signature est encore valide, mais elle ne vaut plus rien.
+  if ((await currentSessionVersion(payload.userId)) !== (payload.v ?? 0)) return null;
 
+  Sentry.setUser({ id: payload.userId });
   return payload;
 }
+
+/**
+ * Version courante du compte, pour révoquer les sessions d'un coup.
+ *
+ * Un jeton signé reste valide jusqu'à son expiration, sept jours : sans cette
+ * lecture, changer de mot de passe ne déconnectait personne, pas même l'intrus
+ * d'un compte compromis. `cache` la limite à une requête par rendu, alors que
+ * `getSession` est appelé par le layout, la page et leurs composants.
+ *
+ * Import dynamique : le proxy importe `decrypt` depuis ce module et n'a pas à
+ * embarquer Prisma. Il ne voit donc pas la révocation — d'où la redirection
+ * des pages de connexion déplacée dans leurs layouts, qui passent par ici.
+ */
+const currentSessionVersion = cache(async (userId: string): Promise<number | null> => {
+  const { prisma } = await import("./db");
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { sessionVersion: true },
+  });
+  return user?.sessionVersion ?? null;
+});

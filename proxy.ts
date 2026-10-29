@@ -8,7 +8,6 @@ const privateRoutes = [
   "/series/lists", "/series/watchlist", "/series/favorites", "/series/profile",
   "/friends", "/series/friends",
 ];
-const authRoutes = ["/login", "/register"];
 
 function isPrivateRoute(path: string): boolean {
   return privateRoutes.some(route => path === route || path.startsWith(route + "/"));
@@ -143,10 +142,6 @@ export default async function proxy(request: NextRequest) {
 
   if (isPrivateRoute(path) && !payload) {
     return NextResponse.redirect(new URL("/films/discover", request.nextUrl));
-  }
-
-  if (authRoutes.includes(path) && payload) {
-    return NextResponse.redirect(new URL("/films", request.nextUrl));
   }
 
   return NextResponse.next();
