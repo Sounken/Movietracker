@@ -1,11 +1,11 @@
 import { notFound, redirect } from "next/navigation";
 import Image from "next/image";
-import { Clapperboard, Star, Clock, Heart, Sparkles } from "lucide-react";
+import { Clapperboard, Star, Clock, Heart, Sparkles, ClipboardList } from "lucide-react";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { type TmdbFilmCard } from "@/lib/tmdb";
 import { getFilmCards } from "@/lib/films";
-import FilmGrid from "../../components/FilmGrid";
+import FavDisplay, { type FavDisplayItem } from "../../films/profile/FavDisplay";
 import CollectionClient from "../../components/CollectionClient";
 import FollowButton from "./FollowButton";
 import { computeXP, getLevelInfo } from "@/lib/xp";
@@ -27,13 +27,14 @@ export default async function PublicProfilePage({
   const user = await prisma.user.findUnique({ where: { id } });
   if (!user) notFound();
 
-  const [filmEntries, favoriteEntries, watchedCount, ratedCount, likedCount, runtimeAgg, follow] =
+  const [filmEntries, favoriteEntries, watchedCount, ratedCount, likedCount, watchlistCount, runtimeAgg, follow] =
     await Promise.all([
       prisma.userFilm.findMany({ where: { userId: id }, orderBy: { updatedAt: "desc" } }),
       prisma.userFavoriteFilm.findMany({ where: { userId: id }, orderBy: { position: "asc" } }),
       prisma.userFilm.count({ where: { userId: id, watched: true } }),
       prisma.userFilm.count({ where: { userId: id, rating: { not: null } } }),
       prisma.userFilm.count({ where: { userId: id, liked: true } }),
+      prisma.userFilm.count({ where: { userId: id, watchlist: true } }),
       prisma.userFilm.aggregate({
         where: { userId: id, runtime: { not: null } },
         _sum: { runtime: true },
@@ -73,11 +74,13 @@ export default async function PublicProfilePage({
     .filter(Boolean) as Array<TmdbFilmCard & { rating: number | null }>;
 
   const favoriteFilms = favoriteEntries
-    .map((entry) => {
+    .map((entry): FavDisplayItem | null => {
       const card = cards.get(entry.tmdbId);
-      return card ? { ...card, rating: null } : null;
+      return card
+        ? { position: entry.position, href: `/film/${card.id}`, title: card.title, posterUrl: card.posterUrl, year: card.year }
+        : null;
     })
-    .filter(Boolean) as Array<TmdbFilmCard & { rating: number | null }>;
+    .filter((x): x is FavDisplayItem => x !== null);
 
   const displayName = user.name ?? user.email.split("@")[0];
   const initial = displayName[0]?.toUpperCase() ?? "?";
@@ -166,6 +169,12 @@ export default async function PublicProfilePage({
             <div className={styles.statVal}>{likedCount}</div>
             <div className={styles.statSub}>films aimés</div>
           </div>
+          <div className={styles.statCard}>
+            <div className={styles.statDeco}><ClipboardList size={26} /></div>
+            <div className={styles.statLabel}>À voir</div>
+            <div className={styles.statVal}>{watchlistCount}</div>
+            <div className={styles.statSub}>dans la watchlist</div>
+          </div>
         </div>
       </div>
 
@@ -175,7 +184,7 @@ export default async function PublicProfilePage({
             <div className={styles.sectionHead}>
               <h2 className={styles.sectionTitle}>Films préférés</h2>
             </div>
-            <FilmGrid films={favoriteFilms} emptyTitle="" emptyHint="" />
+            <FavDisplay items={favoriteFilms} />
           </div>
         )}
 

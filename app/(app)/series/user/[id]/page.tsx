@@ -1,11 +1,11 @@
 import { notFound, redirect } from "next/navigation";
 import Image from "next/image";
-import { Tv, Star, Clapperboard, Heart, Sparkles } from "lucide-react";
+import { Tv, Star, Clapperboard, Heart, Sparkles, ClipboardList } from "lucide-react";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { getSeriesCards } from "@/lib/series";
 import { computeXP, getLevelInfo } from "@/lib/xp";
-import SeriesGrid, { type SeriesGridItem } from "../../../components/SeriesGrid";
+import FavDisplay, { type FavDisplayItem } from "../../../films/profile/FavDisplay";
 import SeriesCollectionClient from "../../../components/SeriesCollectionClient";
 import FollowButton from "../../../user/[id]/FollowButton";
 import styles from "../../../films/profile/profile.module.css";
@@ -40,6 +40,7 @@ export default async function PublicSeriesProfilePage({
     watchedCount,
     ratedCount,
     likedCount,
+    watchlistCount,
     episodeAgg,
     follow,
   ] = await Promise.all([
@@ -48,6 +49,7 @@ export default async function PublicSeriesProfilePage({
     prisma.userSeries.count({ where: { userId: id, watched: true } }),
     prisma.userSeries.count({ where: { userId: id, rating: { not: null } } }),
     prisma.userSeries.count({ where: { userId: id, liked: true } }),
+    prisma.userSeries.count({ where: { userId: id, watchlist: true } }),
     // Le temps de visionnage d'une série se compte en épisodes vus : UserSeries
     // n'a pas de champ `runtime`, contrairement à UserFilm.
     prisma.userEpisode.aggregate({
@@ -97,13 +99,13 @@ export default async function PublicSeriesProfilePage({
     .filter((x): x is NonNullable<typeof x> => x !== null);
 
   const favoriteSeries = favoriteEntries
-    .map((e): SeriesGridItem | null => {
+    .map((e): FavDisplayItem | null => {
       const c = cards.get(e.tmdbId);
       return c
-        ? { id: c.id, name: c.name, posterUrl: c.posterUrl, year: c.year, voteAverage: c.voteAverage }
+        ? { position: e.position, href: `/series/${c.id}`, title: c.name, posterUrl: c.posterUrl, year: c.year }
         : null;
     })
-    .filter((x): x is SeriesGridItem => x !== null);
+    .filter((x): x is FavDisplayItem => x !== null);
 
   const displayName = user.name ?? user.email.split("@")[0];
   const initial = displayName[0]?.toUpperCase() ?? "?";
@@ -196,6 +198,12 @@ export default async function PublicSeriesProfilePage({
             <div className={styles.statVal}>{likedCount}</div>
             <div className={styles.statSub}>séries aimées</div>
           </div>
+          <div className={styles.statCard}>
+            <div className={styles.statDeco}><ClipboardList size={26} /></div>
+            <div className={styles.statLabel}>À voir</div>
+            <div className={styles.statVal}>{watchlistCount}</div>
+            <div className={styles.statSub}>dans la watchlist</div>
+          </div>
         </div>
       </div>
 
@@ -205,7 +213,7 @@ export default async function PublicSeriesProfilePage({
             <div className={styles.sectionHead}>
               <h2 className={styles.sectionTitle}>Séries préférées</h2>
             </div>
-            <SeriesGrid items={favoriteSeries} />
+            <FavDisplay items={favoriteSeries} />
           </div>
         )}
 

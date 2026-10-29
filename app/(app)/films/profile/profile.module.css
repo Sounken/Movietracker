@@ -530,6 +530,13 @@
   background: var(--panel);
 }
 
+/* Variante lien (profil d'un autre utilisateur, cf. FavDisplay). */
+.favSlotLink {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
 .favSlot:hover {
   transform: translateY(-4px);
   border-color: rgba(var(--accent-rgb),0.35);
