@@ -11,6 +11,26 @@ import styles from "./PuzzleBoard.module.css";
 type Suggestion = { tmdbId: number; title: string; year: number; posterUrl: string };
 
 /**
+ * Largeur de chaque colonne de la grille, selon ce qu'elle contient.
+ *
+ * À parts égales, « Têtes d'affiche » s'étirait sur cinq lignes pendant que
+ * l'année ou la note flottaient dans une case trop large : les chiffres
+ * cèdent de la place aux listes de noms.
+ */
+const NUMERIC_COLUMNS = new Set(["year", "runtime", "seasons", "rating"]);
+
+function columnTemplate(keys: string[]): string {
+  const cols = keys.map((key) =>
+    NUMERIC_COLUMNS.has(key)
+      ? "minmax(78px, 0.8fr)"
+      : key === "actors"
+        ? "minmax(110px, 1.6fr)"
+        : "minmax(86px, 1fr)",
+  );
+  return ["minmax(150px, 1.4fr)", ...cols].join(" ");
+}
+
+/**
  * Grille du Moviedle.
  *
  * L'état complet vient du serveur à chaque proposition : c'est lui qui détient
@@ -305,7 +325,13 @@ export default function PuzzleBoard({
         </div>
       ) : (
         <div className={styles.gridScroll}>
-          <div className={styles.grid}>
+          <div
+            className={styles.grid}
+            style={{
+              ["--template" as string]: columnTemplate(state.guesses[0].cells.map((c) => c.key)),
+              ["--cols" as string]: state.guesses[0].cells.length,
+            }}
+          >
             <div className={styles.rowHead}>
               <div className={styles.cellHead}>{media === "movie" ? "Film" : "Série"}</div>
               {state.guesses[0].cells.map((c) => (

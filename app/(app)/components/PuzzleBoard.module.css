@@ -212,54 +212,52 @@
   border-radius: 999px;
 }
 
-/* Centrée par ses marges et non par `justify-content` sur le conteneur :
-   quand la grille déborde, des marges auto retombent à zéro et le défilement
-   part bien de la première colonne, alors qu'un centrage flex rognerait le
-   début hors d'atteinte. La largeur doit épouser le contenu, sinon le bloc
-   occupe toute la zone et les marges n'ont rien à répartir. */
+/* Colonnes fluides : elles se partagent la largeur disponible. À largeur fixe
+   (220 + 8 × 140 px), la grille débordait de tout écran de portable et les
+   dernières colonnes — Saga, Note — n'apparaissaient qu'en défilant. Chaque
+   ligne reprend le même gabarit ; des minimums explicites (et non `auto`)
+   garantissent que les colonnes restent alignées d'une ligne à l'autre. Sous
+   ces minimums, on retombe sur le défilement horizontal. Le gabarit vient du
+   composant (`--template`) : il pondère chaque colonne selon son contenu. */
 .grid {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  width: max-content;
-  margin-inline: auto;
 }
 
 .rowHead,
 .row {
-  display: flex;
+  display: grid;
+  grid-template-columns: var(--template);
   gap: 6px;
-  align-items: stretch;
+}
+
+.rowHead {
+  align-items: end;
 }
 
 .cellHead {
-  width: 140px;
-  flex: none;
+  min-width: 0;
   font-family: var(--font-geist-mono), monospace;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  /* resserré : en capitales, « Têtes d'affiche » passerait sur deux lignes */
   letter-spacing: 0.02em;
+  line-height: 1.25;
   color: var(--ink-mute);
   padding: 0 4px 2px;
 }
 
-.cellHead:first-child {
-  width: 220px;
-}
-
 .cellTitle {
-  width: 220px;
-  flex: none;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 10px;
+  padding: 6px 8px;
   border-radius: 10px;
   background: var(--panel);
   border: 1px solid var(--line);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   line-height: 1.3;
   color: var(--ink);
@@ -277,21 +275,28 @@
   -webkit-box-orient: vertical;
 }
 
+/* Police du texte courant plutôt que la chasse fixe : une liste d'acteurs
+   tenait sur quatre lignes et étirait chaque rangée. Les chiffres gardent une
+   largeur constante pour rester comparables d'une ligne à l'autre. */
 .cell {
-  width: 140px;
-  flex: none;
+  min-width: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
   text-align: center;
-  padding: 8px 6px;
+  padding: 6px;
   border-radius: 10px;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 600;
-  font-family: var(--font-geist-mono), monospace;
-  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
   border: 1px solid transparent;
+}
+
+.cell svg {
+  flex: none;
 }
 
 /* Révélation colonne après colonne, réservée à la ligne qui vient d'être
@@ -479,24 +484,16 @@
     gap: 10px;
   }
 
-  /* Sur téléphone la grille défile de toute façon : on garde une taille de
-     texte lisible et on accepte des cellules sur deux ou trois lignes plutôt
-     que de réduire la police. */
-  .cellTitle,
-  .cellHead:first-child {
-    width: 150px;
+  /* Sur téléphone, huit colonnes ne tiennent pas : la grille défile, la
+     colonne du titre restant collée. On garde une taille de texte lisible et
+     on accepte des cellules sur deux ou trois lignes plutôt que de réduire la
+     police. */
+  .grid {
+    width: max-content;
   }
 
-  .cellTitle {
-    font-size: 13px;
-  }
-
-  .cell,
-  .cellHead {
-    width: 116px;
-  }
-
-  .cellHead {
-    font-size: 12px;
+  .rowHead,
+  .row {
+    grid-template-columns: 150px repeat(var(--cols, 8), 116px);
   }
 }
