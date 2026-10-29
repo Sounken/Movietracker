@@ -621,6 +621,38 @@
 }
 
 /* ——— Responsive ——— */
+
+/* Tablette et petit portable : la barre latérale (240px) est encore là, et
+   l'affiche (280px) avec ses marges ne laissait à la colonne de droite que
+   180px à 800px de large — titre écrasé, chiffres empilés, widget de note
+   débordant. En dessous de 1100px on empile donc comme sur téléphone, avec une
+   affiche plus grande : affiche et actions côte à côte, le reste dessous. */
+@media (min-width: 769px) and (max-width: 1100px) {
+  .hero {
+    padding: 40px 32px 0;
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .posterCol {
+    position: relative;
+    top: auto;
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  .poster {
+    width: 200px;
+  }
+
+  .posterProviders {
+    grid-column: 1 / -1;
+    margin-top: 0;
+  }
+}
+
 @media (max-width: 768px) {
   .hero {
     padding: 24px 16px 0;
