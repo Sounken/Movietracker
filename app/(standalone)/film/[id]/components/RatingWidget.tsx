@@ -128,53 +128,65 @@ export default function RatingWidget({
           )}
         </div>
         <div className={styles.divider} />
-        <StarRating
-          value={rating}
-          onRate={handleRate}
-          onClear={handleClearRating}
-          onHoverChange={setHover}
-          showValue={false}
-        />
 
-        {/* Sur 100, les étoiles ne donnent que des multiples de 5 : le champ
-            permet la valeur exacte (87, 93…). Sur 10, simple affichage. */}
-        {scale === 100 ? (
-          <div className={styles.note}>
-            <input
-              type="number"
-              className={styles.noteInput}
-              min={0}
-              max={100}
-              step={1}
-              aria-label="Note sur 100"
-              value={draft ?? (displayed > 0 ? String(toDisplayRating(displayed, 100)) : "")}
-              placeholder="—"
-              onChange={(e) => setDraft(e.target.value)}
-              onBlur={commitDraft}
-              onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+        {/* Étoiles, chiffre et assistant forment une seule ligne qui ne se
+            coupe jamais : le chiffre se lit avec les étoiles, et l'assistant
+            sert au moment où l'on hésite dessus. Seul le libellé passe
+            au-dessus quand la place manque ; la taille des étoiles suit la
+            largeur de la ligne (requêtes de conteneur, cf. CSS). */}
+        <div className={styles.ratingRow}>
+          <div className={styles.starsSlot}>
+            <StarRating
+              value={rating}
+              onRate={handleRate}
+              onClear={handleClearRating}
+              onHoverChange={setHover}
+              showValue={false}
             />
-            <span className={styles.noteScale}>/100</span>
           </div>
-        ) : (
-          <div className={styles.note}>
-            {displayed > 0 ? `${formatRating(displayed, scale)}/10` : "—"}
-          </div>
-        )}
 
-        {/* Assistant : hésiter sur un chiffre est le cas courant, mais rien ne
-            l'impose — la note reste modifiable aux étoiles juste après. */}
-        <button
-          type="button"
-          className={styles.assistBtn}
-          onClick={() => {
-            if (!isAuthenticated) { router.push("/login"); return; }
-            setAssistantOpen(true);
-          }}
-          title="Se faire aider pour fixer la note"
-        >
-          <Sparkles size={14} />
-          M&apos;aider à noter
-        </button>
+          {/* Sur 100, les étoiles ne donnent que des multiples de 5 : le champ
+              permet la valeur exacte (87, 93…). Sur 10, simple affichage. */}
+          {scale === 100 ? (
+            <div className={styles.note}>
+              <input
+                type="number"
+                className={styles.noteInput}
+                min={0}
+                max={100}
+                step={1}
+                aria-label="Note sur 100"
+                value={draft ?? (displayed > 0 ? String(toDisplayRating(displayed, 100)) : "")}
+                placeholder="—"
+                onChange={(e) => setDraft(e.target.value)}
+                onBlur={commitDraft}
+                onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+              />
+              <span className={styles.noteScale}>/100</span>
+            </div>
+          ) : (
+            <div className={styles.note}>
+              {displayed > 0 ? `${formatRating(displayed, scale)}/10` : "—"}
+            </div>
+          )}
+
+          {/* Assistant : hésiter sur un chiffre est le cas courant, mais rien ne
+              l'impose — la note reste modifiable aux étoiles juste après. Le
+              texte disparaît quand la ligne est étroite, l'icône reste. */}
+          <button
+            type="button"
+            className={styles.assistBtn}
+            onClick={() => {
+              if (!isAuthenticated) { router.push("/login"); return; }
+              setAssistantOpen(true);
+            }}
+            title="Se faire aider pour fixer la note"
+            aria-label="M'aider à noter"
+          >
+            <Sparkles size={14} />
+            <span className={styles.assistText}>M&apos;aider à noter</span>
+          </button>
+        </div>
       </div>
 
       {assistantOpen && (

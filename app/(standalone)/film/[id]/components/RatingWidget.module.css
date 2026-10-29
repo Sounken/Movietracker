@@ -1,16 +1,33 @@
+/* La mise en page dépend de la place réelle du widget, pas de l'écran : la
+   colonne qui l'accueille change de largeur selon la fiche (affiche à côté ou
+   non). D'où des requêtes de conteneur plutôt que des media queries. */
 .wrap {
   margin-bottom: 40px;
+  container: rating-widget / inline-size;
 }
 
+/* Par défaut, empilé : libellé au-dessus, ligne de notation dessous. Un
+   `flex-wrap` laissait la ligne se casser n'importe où — chiffre et bouton
+   tombaient sous les étoiles, le séparateur restait seul sur sa ligne. */
 .widget {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 16px;
-  padding: 24px 28px;
+  padding: 20px 24px;
   display: flex;
-  align-items: center;
-  gap: 28px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+}
+
+/* Assez large pour tout aligner : libellé | séparateur | notation. */
+@container rating-widget (min-width: 900px) {
+  .widget {
+    flex-direction: row;
+    align-items: center;
+    gap: 28px;
+    padding: 24px 28px;
+  }
 }
 
 .label {
@@ -61,13 +78,49 @@
 }
 
 .divider {
+  display: none;
   width: 1px;
   height: 40px;
   background: var(--line);
+  flex: none;
 }
 
-/* Les étoiles sont désormais rendues par StarRating (composant partagé
-   films / séries / saisons) : leurs styles vivent dans StarRating.module.css. */
+@container rating-widget (min-width: 900px) {
+  .divider {
+    display: block;
+  }
+}
+
+/* Étoiles + chiffre + assistant : une ligne insécable. Elle est elle-même un
+   conteneur, pour que la taille des étoiles suive la place qui lui reste. */
+.ratingRow {
+  container: rating-row / inline-size;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Les étoiles sont rendues par StarRating (composant partagé films / séries /
+   saisons) ; on n'en ajuste ici que la taille, via `--star`. */
+/* Les variables vivent ici et non sur .ratingRow : une requête de conteneur
+   ne s'applique qu'aux descendants du conteneur, jamais à lui-même. */
+.starsSlot {
+  flex: none;
+  display: flex;
+  --star: 24px;
+  --star-pad: 3px;
+}
+
+.starsSlot svg {
+  width: var(--star);
+  height: var(--star);
+}
+
+.starsSlot button {
+  padding: 4px var(--star-pad);
+}
 
 /* Le chiffre suit maintenant le survol des étoiles : chasse fixe et largeur
    réservée pour que la prévisualisation ne fasse pas danser la mise en page. */
@@ -76,7 +129,9 @@
   font-variant-numeric: tabular-nums;
   font-size: 22px;
   color: var(--gold);
-  min-width: 7ch;
+  min-width: 6ch;
+  white-space: nowrap;
+  flex: none;
   display: flex;
   align-items: baseline;
   gap: 2px;
@@ -206,25 +261,7 @@
 
 @media (max-width: 768px) {
   .widget {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 12px;
-    padding: 18px;
-  }
-
-  .label {
-    grid-column: 1 / -1;
-  }
-
-  .divider {
-    display: none;
-  }
-
-  .note {
-    min-width: 44px;
-    font-size: 18px;
-    text-align: right;
+    padding: 16px;
   }
 }
 
@@ -249,4 +286,68 @@
 .assistBtn:hover {
   background: rgba(var(--accent-rgb), 0.18);
   border-color: rgba(var(--accent-rgb), 0.5);
+}
+
+/* Collé à droite de la ligne : toujours au même endroit, à portée de la note. */
+.assistBtn {
+  flex: none;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+/* Paliers de la ligne de notation, du plus large au plus étroit. Chaque palier
+   est calculé pour que dix étoiles, le chiffre et le bouton tiennent côte à
+   côte : avant, sur téléphone, le chiffre passait par-dessus la 10e étoile. */
+@container rating-row (max-width: 580px) {
+  /* D'abord le texte du bouton : l'icône suffit, le libellé reste en
+     aria-label et en infobulle. */
+  .assistText {
+    display: none;
+  }
+
+  .assistBtn {
+    padding: 9px;
+  }
+}
+
+@container rating-row (max-width: 460px) {
+  .starsSlot {
+    --star: 20px;
+    --star-pad: 2px;
+  }
+
+  .note {
+    font-size: 18px;
+  }
+
+  .noteScale {
+    font-size: 13px;
+  }
+}
+
+@container rating-row (max-width: 360px) {
+  .starsSlot {
+    --star: 17px;
+    --star-pad: 2px;
+  }
+
+  .note {
+    font-size: 16px;
+    min-width: 5ch;
+  }
+
+  .assistBtn {
+    padding: 7px;
+  }
+}
+
+@container rating-row (max-width: 300px) {
+  .starsSlot {
+    --star: 15px;
+    --star-pad: 1.5px;
+  }
+
+  .note {
+    font-size: 15px;
+  }
 }
