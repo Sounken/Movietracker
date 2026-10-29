@@ -29,6 +29,14 @@
   transition: filter 0.12s;
 }
 
+/* L'icône change d'arbre DOM à chaque cran (pleine / demie / vide) : si le
+   curseur sort pile sur un nœud qui vient d'être remplacé, React ne retrouve
+   plus son composant et n'émet jamais onMouseLeave → le survol reste figé sur
+   la dernière valeur. Le bouton, lui, est stable : il reçoit seul la souris. */
+.starBtn > * {
+  pointer-events: none;
+}
+
 /* Pas de scale au survol : l'étoile agrandie déborde sur sa voisine, l'étoile
    vue sous le curseur n'est alors plus celle qui reçoit le clic. */
 .starBtn:hover {

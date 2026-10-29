@@ -220,6 +220,12 @@
   border-radius: 4px;
 }
 
+/* Même piège que StarRating : l'icône est remplacée à chaque cran, et une
+   sortie sur un nœud détaché fait perdre onMouseLeave (survol figé). */
+.starBtn > * {
+  pointer-events: none;
+}
+
 .ratingVal {
   font-family: var(--font-geist-mono), monospace;
   font-size: 13px;
