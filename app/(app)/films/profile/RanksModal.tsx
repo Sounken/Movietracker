@@ -89,8 +89,8 @@ export default function RanksModal({
         </div>
 
         <footer className={styles.foot}>
-          Gagnez de l&apos;XP en notant (+15), en écrivant un avis (+20), en marquant
-          un titre comme vu (+8) et en ajoutant un coup de cœur (+5).
+          Gagnez de l&apos;XP en notant (+15), en écrivant un avis (+20) et en
+          ajoutant un coup de cœur (+5).
         </footer>
       </div>
     </div>
