@@ -26,6 +26,22 @@ const MAX_AGE_MS = 30 * 60 * 1000;
 /** Garde-fou : une grille très profonde ne doit pas saturer le stockage. */
 const MAX_ITEMS = 400;
 
+/**
+ * Ajoute une page à la liste en écartant ce qui y figure déjà.
+ *
+ * Chaque page TMDB est mise en cache séparément, à des moments différents : le
+ * classement « populaire » a pu bouger entre la page 1 et la page 2, et un
+ * titre en bas de l'une réapparaît en haut de l'autre. Sans ce filtre, la
+ * grille l'affichait deux fois (et React voyait deux fois la même `key`).
+ *
+ * La fin de liste se juge toujours sur la taille brute de la réponse : une page
+ * faite uniquement de doublons ne doit pas arrêter le défilement.
+ */
+export function appendUnique<T extends { id: number }>(prev: T[], more: T[]): T[] {
+  const seen = new Set(prev.map((item) => item.id));
+  return [...prev, ...more.filter((item) => !seen.has(item.id) && seen.add(item.id))];
+}
+
 type ListState<T> = { items: T[]; page: number; hasMore: boolean };
 
 type Snapshot<T> = ListState<T> & { scrollY: number; savedAt: number };

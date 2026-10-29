@@ -6,7 +6,7 @@ import Image from "next/image";
 import { Plus, Loader2 } from "lucide-react";
 import type { TmdbFilmCard } from "@/lib/tmdb";
 import { Rating } from "@/lib/rating-scale";
-import { useRestorableList } from "@/app/(app)/components/use-restorable-list";
+import { useRestorableList, appendUnique } from "@/app/(app)/components/use-restorable-list";
 import styles from "../../../(app)/films/discover/discover.module.css";
 
 export default function CompanyFilmsGrid({
@@ -53,7 +53,7 @@ export default function CompanyFilmsGrid({
     fetch(`/api/company/${companyId}?${params}`)
       .then((r) => (r.ok ? r.json() : []))
       .then((more: TmdbFilmCard[]) => {
-        setFilms((prev) => [...prev, ...more]);
+        setFilms((prev) => appendUnique(prev, more));
         setPage(nextPage);
         if (more.length < 15) setHasMore(false);
       })

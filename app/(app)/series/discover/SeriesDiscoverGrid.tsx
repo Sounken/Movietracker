@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Plus, Loader2 } from "lucide-react";
 import type { TmdbDiscoverSeries } from "@/lib/tmdb";
-import { useRestorableList } from "@/app/(app)/components/use-restorable-list";
+import { useRestorableList, appendUnique } from "@/app/(app)/components/use-restorable-list";
 import styles from "../../films/discover/discover.module.css";
 import { Rating } from "@/lib/rating-scale";
 
@@ -64,7 +64,7 @@ export default function SeriesDiscoverGrid({
     fetch(`/api/discover/tv?${params}`)
       .then((r) => (r.ok ? r.json() : []))
       .then((more: TmdbDiscoverSeries[]) => {
-        setSeries((prev) => [...prev, ...more]);
+        setSeries((prev) => appendUnique(prev, more));
         setPage(nextPage);
         if (more.length < 20) setHasMore(false);
       })

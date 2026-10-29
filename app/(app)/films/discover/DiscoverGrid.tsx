@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import type { TmdbDiscoverFilm } from "@/lib/tmdb";
-import { useRestorableList } from "@/app/(app)/components/use-restorable-list";
+import { useRestorableList, appendUnique } from "@/app/(app)/components/use-restorable-list";
 import styles from "./discover.module.css";
 import { Rating } from "@/lib/rating-scale";
 
@@ -73,7 +73,7 @@ export default function DiscoverGrid({
     fetch(`/api/discover?${params}`)
       .then((r) => (r.ok ? r.json() : []))
       .then((more: TmdbDiscoverFilm[]) => {
-        setFilms((prev) => [...prev, ...more]);
+        setFilms((prev) => appendUnique(prev, more));
         setPage(nextPage);
         if (more.length < 20) setHasMore(false);
       })
