@@ -6,6 +6,8 @@ import Image from "next/image";
 import type { TmdbDiscoverFilm } from "@/lib/tmdb";
 import { useRestorableList, appendUnique } from "@/app/(app)/components/use-restorable-list";
 import styles from "./discover.module.css";
+import LibraryBadge, { useLibraryLookup } from "./LibraryBadge";
+import type { LibraryStatus } from "@/lib/library-status";
 import { Rating } from "@/lib/rating-scale";
 
 const PlusIcon = () => (
@@ -29,6 +31,7 @@ export default function DiscoverGrid({
   minRating = "",
   providers = "",
   emptyMessage,
+  libraryStatus,
 }: {
   initialFilms: TmdbDiscoverFilm[];
   category: string;
@@ -38,7 +41,10 @@ export default function DiscoverGrid({
   minRating?: string;
   providers?: string;
   emptyMessage?: string;
+  /** Absent hors connexion : aucune pastille. */
+  libraryStatus?: LibraryStatus;
 }) {
+  const statusOf = useLibraryLookup(libraryStatus);
   // La clé inclut les filtres : changer de genre ou de plateforme doit repartir
   // d'une liste vierge, pas reprendre celle d'un autre réglage.
   const {
@@ -126,6 +132,7 @@ export default function DiscoverGrid({
             {film.voteAverage > 0 && (
               <div className={styles.score}>★ <Rating value={film.voteAverage} /></div>
             )}
+            <LibraryBadge kind={statusOf(film.id)} />
           </div>
           <div className={styles.info}>
             <div className={styles.title}>{film.title}</div>

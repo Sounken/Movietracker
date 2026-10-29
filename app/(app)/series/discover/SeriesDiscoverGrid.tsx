@@ -7,6 +7,8 @@ import { Plus, Loader2 } from "lucide-react";
 import type { TmdbDiscoverSeries } from "@/lib/tmdb";
 import { useRestorableList, appendUnique } from "@/app/(app)/components/use-restorable-list";
 import styles from "../../films/discover/discover.module.css";
+import LibraryBadge, { useLibraryLookup } from "../../films/discover/LibraryBadge";
+import type { LibraryStatus } from "@/lib/library-status";
 import { Rating } from "@/lib/rating-scale";
 
 export default function SeriesDiscoverGrid({
@@ -19,6 +21,7 @@ export default function SeriesDiscoverGrid({
   minRating = "",
   providers = "",
   emptyMessage,
+  libraryStatus,
 }: {
   initialSeries: TmdbDiscoverSeries[];
   category: string;
@@ -29,7 +32,10 @@ export default function SeriesDiscoverGrid({
   minRating?: string;
   providers?: string;
   emptyMessage?: string;
+  /** Absent hors connexion : aucune pastille. */
+  libraryStatus?: LibraryStatus;
 }) {
+  const statusOf = useLibraryLookup(libraryStatus);
   // Même clé composite que pour les films, avec le filtre anime en plus.
   const {
     items: series,
@@ -112,6 +118,7 @@ export default function SeriesDiscoverGrid({
               />
             )}
             {s.voteAverage > 0 && <div className={styles.score}>★ <Rating value={s.voteAverage} /></div>}
+            <LibraryBadge kind={statusOf(s.id)} />
           </div>
           <div className={styles.info}>
             <div className={styles.title}>{s.name}</div>

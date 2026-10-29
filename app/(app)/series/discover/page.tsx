@@ -4,6 +4,7 @@ import { getSession } from "@/lib/session";
 import { fetchDiscoverSeries, fetchOnTheAirSeries, fetchSeriesLogo } from "@/lib/tmdb";
 import { fetchForYouSeries } from "@/lib/recommendations";
 import { parseProviders } from "@/lib/watch-providers";
+import { getSeriesLibraryStatus } from "@/lib/library-status";
 import Topbar from "../../components/Topbar";
 import HeroCarousel from "../../components/HeroCarousel";
 import SeriesDiscoverFilters from "./SeriesDiscoverFilters";
@@ -50,7 +51,7 @@ export default async function SeriesDiscoverPage({
   // « Découvrir » côté films : les connectés l'ont déjà sur leur accueil.
   const showHero = !session;
 
-  const [series, onAir] = await Promise.all([
+  const [series, onAir, libraryStatus] = await Promise.all([
     category === "for_you" && session
       ? fetchForYouSeries(session.userId)
       : fetchDiscoverSeries(category, {
@@ -62,6 +63,7 @@ export default async function SeriesDiscoverPage({
           providers: parseProviders(providers),
         }),
     showHero ? fetchOnTheAirSeries() : Promise.resolve([]),
+    getSeriesLibraryStatus(session?.userId ?? null),
   ]);
 
   const heroLogos = Object.fromEntries(
@@ -119,6 +121,7 @@ export default async function SeriesDiscoverPage({
         maxYear={maxYear}
         minRating={minRating}
         providers={providers}
+        libraryStatus={libraryStatus}
         emptyMessage={
           category === "for_you"
             ? "Notez quelques séries pour que l'on puisse vous en conseiller."

@@ -4,6 +4,7 @@ import { getSession } from "@/lib/session";
 import { fetchDiscover, fetchNowPlaying, fetchFilmLogo } from "@/lib/tmdb";
 import { fetchForYouFilms } from "@/lib/recommendations";
 import { parseProviders } from "@/lib/watch-providers";
+import { getFilmLibraryStatus } from "@/lib/library-status";
 import Topbar from "../../components/Topbar";
 import HeroCarousel from "../../components/HeroCarousel";
 import DiscoverFilters from "./DiscoverFilters";
@@ -49,7 +50,7 @@ export default async function DiscoverPage({
   // les connectés l'ont déjà sur leur accueil. On évite donc aussi les appels TMDB.
   const showHero = !session;
 
-  const [films, nowPlaying] = await Promise.all([
+  const [films, nowPlaying, libraryStatus] = await Promise.all([
     category === "for_you" && session
       ? fetchForYouFilms(session.userId)
       : fetchDiscover(category, {
@@ -60,6 +61,7 @@ export default async function DiscoverPage({
           providers: parseProviders(providers),
         }),
     showHero ? fetchNowPlaying() : Promise.resolve([]),
+    getFilmLibraryStatus(session?.userId ?? null),
   ]);
 
   // Logos officiels des films du carrousel (repli sur le titre texte si absent)
@@ -119,6 +121,7 @@ export default async function DiscoverPage({
         maxYear={maxYear}
         minRating={minRating}
         providers={providers}
+        libraryStatus={libraryStatus}
         emptyMessage={
           category === "for_you"
             ? "Notez quelques films pour que l'on puisse vous en conseiller."
