@@ -1,4 +1,5 @@
 import { unstable_cache } from "next/cache";
+import { tmdbFetch } from "./tmdb-throttle";
 
 const BASE = "https://api.themoviedb.org/3";
 export const IMG = "https://image.tmdb.org/t/p";
@@ -158,7 +159,7 @@ export async function fetchFilmCard(id: number): Promise<TmdbFilmCard | null> {
   const key = process.env.TMDB_API_KEY;
   if (!key) return null;
   try {
-    const res = await fetch(
+    const res = await tmdbFetch(
       `${BASE}/movie/${id}?api_key=${key}&language=fr-FR`,
       { next: { revalidate: 86400 } }
     );
@@ -210,7 +211,7 @@ async function streamingReleases(days: number): Promise<Record<string, unknown>[
   const from = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
   const providers = WATCH_PROVIDERS.map((p) => p.id).join("|");
   try {
-    const res = await fetch(
+    const res = await tmdbFetch(
       `${BASE}/discover/movie?api_key=${key}&language=fr-FR&region=FR` +
         `&sort_by=popularity.desc` +
         `&primary_release_date.gte=${from}&primary_release_date.lte=${today}` +
@@ -284,7 +285,7 @@ export async function fetchNowPlaying(): Promise<TmdbMovie[]> {
     .toISOString()
     .split("T")[0];
   try {
-    const res = await fetch(
+    const res = await tmdbFetch(
       `${BASE}/discover/movie?api_key=${key}&language=fr-FR&region=FR` +
         `&sort_by=popularity.desc` +
         `&with_release_type=3` +
@@ -326,7 +327,7 @@ export async function fetchFilmLogo(id: number): Promise<string | null> {
   const key = process.env.TMDB_API_KEY;
   if (!key) return null;
   try {
-    const res = await fetch(
+    const res = await tmdbFetch(
       `${BASE}/movie/${id}/images?api_key=${key}&include_image_language=fr,en,null`,
       { next: { revalidate: 86400 } },
     );
@@ -361,7 +362,7 @@ export async function fetchOnTheAirSeries(): Promise<TmdbMovie[]> {
   const key = process.env.TMDB_API_KEY;
   if (!key) return [];
   try {
-    const res = await fetch(
+    const res = await tmdbFetch(
       `${BASE}/tv/on_the_air?api_key=${key}&language=fr-FR`,
       { next: { revalidate: 3600 } },
     );
@@ -454,7 +455,7 @@ async function fetchTmdb(url: string, path: string): Promise<Response | null> {
 
   for (let attempt = 0; ; attempt++) {
     try {
-      const res = await fetch(url, { next: { revalidate: 3600 } });
+      const res = await tmdbFetch(url, { next: { revalidate: 3600 } });
       if (res.status === 404) return null;
       if (res.ok) return res;
 
@@ -657,7 +658,7 @@ export async function fetchSeriesCard(id: number): Promise<TmdbSeriesCard | null
   const key = process.env.TMDB_API_KEY;
   if (!key) return null;
   try {
-    const res = await fetch(`${BASE}/tv/${id}?api_key=${key}&language=fr-FR`, {
+    const res = await tmdbFetch(`${BASE}/tv/${id}?api_key=${key}&language=fr-FR`, {
       next: { revalidate: 86400 },
     });
     if (!res.ok) return null;
@@ -772,7 +773,7 @@ export async function fetchSeason(
   const key = process.env.TMDB_API_KEY;
   if (!key) return EMPTY_SEASON;
   try {
-    const res = await fetch(
+    const res = await tmdbFetch(
       `${BASE}/tv/${seriesId}/season/${seasonNumber}?api_key=${key}&language=fr-FR`,
       { next: { revalidate: 3600 } },
     );
@@ -952,7 +953,7 @@ export async function fetchSeriesLogo(id: number): Promise<string | null> {
   const key = process.env.TMDB_API_KEY;
   if (!key) return null;
   try {
-    const res = await fetch(
+    const res = await tmdbFetch(
       `${BASE}/tv/${id}/images?api_key=${key}&include_image_language=fr,en,null`,
       { next: { revalidate: 86400 } },
     );
@@ -1069,7 +1070,7 @@ async function fetchRankedPool(
 
   const requests = sources.flatMap((source) =>
     Array.from({ length: POOL_PAGES }, (_, i) =>
-      fetch(
+      tmdbFetch(
         `${BASE}/discover/${media}?api_key=${key}&language=fr-FR&page=${i + 1}${source}${genreFilter}${extraFilter}`,
         { next: { revalidate: 86400 } },
       )
@@ -1143,7 +1144,7 @@ async function rankedPoolPage(
   const genreFilter = genreId ? `&with_genres=${genreId}` : "";
 
   try {
-    const res = await fetch(
+    const res = await tmdbFetch(
       `${BASE}/discover/${media}?api_key=${key}&language=fr-FR&page=${tmdbPage}` +
         `&sort_by=vote_average.desc&vote_count.gte=${weakVotes}${genreFilter}${extraFilter}`,
       { next: { revalidate: 86400 } },
@@ -1295,7 +1296,7 @@ export async function fetchDiscover(
         : filters;
 
     const url = `${BASE}/discover/movie?api_key=${key}&language=fr-FR&page=${page}${extra}`;
-    const res = await fetch(url, { next: { revalidate: 3600 } });
+    const res = await tmdbFetch(url, { next: { revalidate: 3600 } });
     if (!res.ok) return [];
     const data = await res.json();
     return ((data.results ?? []) as Record<string, unknown>[]).map(mapDiscoverFilm);
@@ -1370,7 +1371,7 @@ export async function fetchDiscoverSeries(
         : filters;
 
     const url = `${BASE}/discover/tv?api_key=${key}&language=fr-FR&page=${page}${extra}`;
-    const res = await fetch(url, { next: { revalidate: 3600 } });
+    const res = await tmdbFetch(url, { next: { revalidate: 3600 } });
     if (!res.ok) return [];
     const data = await res.json();
     return ((data.results ?? []) as Record<string, unknown>[]).map(mapDiscoverSeries);
@@ -1469,7 +1470,7 @@ export async function fetchFilmExtras(
   const key = process.env.TMDB_API_KEY;
   if (!key) return { video: null, certification: null };
   try {
-    const res = await fetch(
+    const res = await tmdbFetch(
       `${BASE}/movie/${id}?api_key=${key}&language=fr-FR&append_to_response=videos,release_dates`,
       { next: { revalidate: 86400 } },
     );
@@ -1523,7 +1524,7 @@ export async function fetchExternalIds(
   const key = process.env.TMDB_API_KEY;
   if (!key) return EMPTY_EXTERNAL_IDS;
   try {
-    const res = await fetch(`${BASE}/${media}/${id}/external_ids?api_key=${key}`, {
+    const res = await tmdbFetch(`${BASE}/${media}/${id}/external_ids?api_key=${key}`, {
       next: { revalidate: 86400 },
     });
     if (!res.ok) return EMPTY_EXTERNAL_IDS;
@@ -1550,7 +1551,7 @@ export async function fetchCompanyDetail(id: number): Promise<TmdbCompanyDetail 
   try {
     // Pas de `language=fr-FR` : l'endpoint company ne traduit rien et le
     // paramètre fait seulement du bruit.
-    const res = await fetch(`${BASE}/company/${id}?api_key=${key}`, {
+    const res = await tmdbFetch(`${BASE}/company/${id}?api_key=${key}`, {
       next: { revalidate: 86400 },
     });
     if (!res.ok) return null;
@@ -1635,7 +1636,7 @@ export async function fetchCompanyFilms(
   const genreTable = isTv ? TV_GENRES : GENRES;
 
   try {
-    const res = await fetch(
+    const res = await tmdbFetch(
       `${BASE}/discover/${media}?api_key=${key}&language=fr-FR&page=${page}` +
         `&with_companies=${companyId}${extra}`,
       { next: { revalidate: 86400 } },
@@ -1712,7 +1713,7 @@ export async function fetchWatchProviders(
   const key = process.env.TMDB_API_KEY;
   if (!key) return EMPTY_PROVIDERS;
   try {
-    const res = await fetch(`${BASE}/${media}/${id}/watch/providers?api_key=${key}`, {
+    const res = await tmdbFetch(`${BASE}/${media}/${id}/watch/providers?api_key=${key}`, {
       next: { revalidate: 86400 },
     });
     if (!res.ok) return EMPTY_PROVIDERS;
@@ -1735,7 +1736,7 @@ export async function fetchFilmCredits(id: number): Promise<TmdbCredits> {
   const key = process.env.TMDB_API_KEY;
   if (!key) return { cast: [], directors: [], writers: [] };
   try {
-    const res = await fetch(
+    const res = await tmdbFetch(
       `${BASE}/movie/${id}/credits?api_key=${key}&language=fr-FR`,
       { next: { revalidate: 3600 } }
     );
@@ -1769,7 +1770,7 @@ export async function fetchSimilarFilms(id: number): Promise<TmdbFilmCard[]> {
     // au départ, mais le bouton « de plus » doit avoir de quoi dérouler.
     const [p1, p2] = await Promise.all(
       [1, 2].map((page) =>
-        fetch(
+        tmdbFetch(
           `${BASE}/movie/${id}/recommendations?api_key=${key}&language=fr-FR&page=${page}`,
           { next: { revalidate: 86400 } },
         ).then((r) => (r.ok ? r.json() : { results: [] }))
@@ -1807,7 +1808,7 @@ export async function fetchFilmCollection(collectionId: number): Promise<TmdbFil
   const key = process.env.TMDB_API_KEY;
   if (!key) return [];
   try {
-    const res = await fetch(
+    const res = await tmdbFetch(
       `${BASE}/collection/${collectionId}?api_key=${key}&language=fr-FR`,
       { next: { revalidate: 86400 } }
     );
@@ -1843,7 +1844,7 @@ export async function fetchKeywords(media: "movie" | "tv", id: number): Promise<
   const key = process.env.TMDB_API_KEY;
   if (!key) return [];
   try {
-    const res = await fetch(`${BASE}/${media}/${id}/keywords?api_key=${key}`, {
+    const res = await tmdbFetch(`${BASE}/${media}/${id}/keywords?api_key=${key}`, {
       next: { revalidate: 86400 },
     });
     if (!res.ok) return [];
@@ -1863,7 +1864,7 @@ export async function fetchPersonDetail(id: number): Promise<TmdbPerson | null> 
   const key = process.env.TMDB_API_KEY;
   if (!key) return null;
   try {
-    const res = await fetch(
+    const res = await tmdbFetch(
       `${BASE}/person/${id}?api_key=${key}&language=fr-FR&append_to_response=external_ids`,
       { next: { revalidate: 86400 } }
     );
@@ -1923,7 +1924,7 @@ export async function fetchPersonCredits(id: number): Promise<TmdbPersonCredit[]
   const key = process.env.TMDB_API_KEY;
   if (!key) return [];
   try {
-    const res = await fetch(
+    const res = await tmdbFetch(
       `${BASE}/person/${id}/movie_credits?api_key=${key}&language=fr-FR`,
       { next: { revalidate: 86400 } }
     );
@@ -1993,7 +1994,7 @@ const getPopularPersonIds = unstable_cache(
     const pageNums = Array.from({ length: RANK_PAGES }, (_, i) => i + 1);
     const pages = await Promise.all(
       pageNums.map((page) =>
-        fetch(`${BASE}/person/popular?api_key=${key}&page=${page}`, { next: { revalidate: 86400 } })
+        tmdbFetch(`${BASE}/person/popular?api_key=${key}&page=${page}`, { next: { revalidate: 86400 } })
           .then((r) => (r.ok ? r.json() : { results: [] })),
       ),
     );
@@ -2066,7 +2067,7 @@ export async function fetchReviews(media: "movie" | "tv", id: number): Promise<T
   const key = process.env.TMDB_API_KEY;
   if (!key) return [];
   try {
-    const res = await fetch(`${BASE}/${media}/${id}/reviews?api_key=${key}`, {
+    const res = await tmdbFetch(`${BASE}/${media}/${id}/reviews?api_key=${key}`, {
       next: { revalidate: 86400 },
     });
     if (!res.ok) return [];

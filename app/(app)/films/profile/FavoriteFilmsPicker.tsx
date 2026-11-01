@@ -28,13 +28,21 @@ export default function FavoriteFilmsPicker({ slots }: { slots: Slot[] }) {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (!q.trim()) { setResults([]); return; }
     debounceRef.current = setTimeout(async () => {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
-      const data = await res.json();
+      let data: SearchResult[];
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+        if (!res.ok) return;
+        data = await res.json();
+      } catch {
+        // Coupure réseau (« Load failed » sur Safari) : on garde les résultats
+        // précédents plutôt que de laisser une promesse rejetée sans gestion.
+        return;
+      }
       if (inputRef.current) {
         const r = inputRef.current.getBoundingClientRect();
         setDropdownStyle({ top: r.bottom + 4, left: r.left, width: r.width });
       }
-      setResults((data as SearchResult[]).slice(0, 6));
+      setResults(data.slice(0, 6));
     }, 280);
   };
 

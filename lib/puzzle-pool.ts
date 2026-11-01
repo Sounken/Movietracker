@@ -13,6 +13,7 @@
  */
 
 import { prisma } from "@/lib/db";
+import { tmdbFetch } from "@/lib/tmdb-throttle";
 
 const BASE = "https://api.themoviedb.org/3";
 
@@ -49,7 +50,7 @@ async function tmdb(path: string): Promise<Json | null> {
   if (!key) return null;
   const sep = path.includes("?") ? "&" : "?";
   try {
-    const res = await fetch(`${BASE}${path}${sep}api_key=${key}&language=fr-FR`, {
+    const res = await tmdbFetch(`${BASE}${path}${sep}api_key=${key}&language=fr-FR`, {
       cache: "no-store",
     });
     if (!res.ok) return null;

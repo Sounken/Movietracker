@@ -98,12 +98,17 @@ export default function PuzzleBoard({
     // n'interroge rien et l'affichage est filtré plus bas.
     if (query.trim().length < 1) return;
     const id = setTimeout(async () => {
-      const res = await fetch(
-        `/api/puzzle/search?media=${media}&q=${encodeURIComponent(query.trim())}`,
-      );
-      if (!res.ok) return;
-      const data = await res.json();
-      setSuggestions(data.results ?? []);
+      try {
+        const res = await fetch(
+          `/api/puzzle/search?media=${media}&q=${encodeURIComponent(query.trim())}`,
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        setSuggestions(data.results ?? []);
+      } catch {
+        // Coupure réseau (« Load failed » sur Safari) : on garde les résultats
+        // précédents plutôt que de laisser une promesse rejetée sans gestion.
+      }
     }, 250);
     return () => clearTimeout(id);
   }, [query, media]);

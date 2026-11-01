@@ -42,7 +42,28 @@ const DETAIL_ROUTE = /^\/(?:film|series|actor|company)\/\d+(?:\/|$)/;
  */
 const DETAIL_WINDOW_MS = 5 * 60 * 1000;
 const DETAIL_MAX_PER_WINDOW = 60;
-const detailHits = new Map<string, { count: number; resetAt: number; reported: boolean }>();
+
+/**
+ * Plafond de rafale, en plus du précédent.
+ *
+ * Le robot observé en novembre 2026 restait sous les soixante fiches par cinq
+ * minutes, mais par salves : jusqu'à douze fiches distinctes dans la même
+ * seconde, soit plus de cent appels TMDB d'un coup — et des centaines
+ * d'erreurs 429 pour lui comme pour les visiteurs présents. Huit chargements
+ * de page en dix secondes, c'est déjà ouvrir une fiche toutes les secondes
+ * en tapant l'adresse : la navigation dans l'application n'est pas comptée.
+ */
+const DETAIL_BURST_WINDOW_MS = 10 * 1000;
+const DETAIL_MAX_PER_BURST = 8;
+
+type DetailEntry = {
+  count: number;
+  resetAt: number;
+  burst: number;
+  burstResetAt: number;
+  reported: boolean;
+};
+const detailHits = new Map<string, DetailEntry>();
 
 /**
  * Adresse du client. Le proxy de Coolify (Traefik) écarte les en-têtes
@@ -102,10 +123,21 @@ function hitDetailLimit(ip: string, now: number) {
 
   let entry = detailHits.get(ip);
   if (!entry || entry.resetAt <= now) {
-    entry = { count: 0, resetAt: now + DETAIL_WINDOW_MS, reported: false };
+    entry = {
+      count: 0,
+      resetAt: now + DETAIL_WINDOW_MS,
+      burst: 0,
+      burstResetAt: now + DETAIL_BURST_WINDOW_MS,
+      reported: false,
+    };
     detailHits.set(ip, entry);
   }
+  if (entry.burstResetAt <= now) {
+    entry.burst = 0;
+    entry.burstResetAt = now + DETAIL_BURST_WINDOW_MS;
+  }
   entry.count++;
+  entry.burst++;
   return entry;
 }
 
@@ -120,21 +152,23 @@ export default async function proxy(request: NextRequest) {
     const ip = clientIp(request);
     const entry = hitDetailLimit(ip, now);
 
-    if (entry.count > DETAIL_MAX_PER_WINDOW) {
+    const overWindow = entry.count > DETAIL_MAX_PER_WINDOW;
+    const overBurst = entry.burst > DETAIL_MAX_PER_BURST;
+    if (overWindow || overBurst) {
       // Journalisé une fois par fenêtre, pas à chaque refus : c'est ce qui
       // permet d'identifier le robot dans les journaux du conteneur sans les
       // noyer sous des milliers de lignes identiques.
       if (!entry.reported) {
         entry.reported = true;
         console.warn(
-          `[proxy] limite de fiches atteinte : ip=${ip} ua="${request.headers.get("user-agent") ?? ""}"`,
+          `[proxy] limite de fiches atteinte (${overWindow ? "fenêtre" : "rafale"}) : ip=${ip} ua="${request.headers.get("user-agent") ?? ""}"`,
         );
       }
       return new NextResponse("Trop de requêtes. Réessayez dans quelques minutes.", {
         status: 429,
         headers: {
           "Content-Type": "text/plain; charset=utf-8",
-          "Retry-After": String(Math.ceil((entry.resetAt - now) / 1000)),
+          "Retry-After": String(Math.ceil(((overWindow ? entry.resetAt : entry.burstResetAt) - now) / 1000)),
         },
       });
     }

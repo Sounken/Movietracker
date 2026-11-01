@@ -50,11 +50,17 @@ export default function FavFilmsClient({
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (!q.trim()) { setResults([]); return; }
     debounceRef.current = setTimeout(async () => {
-      const res = await fetch(
-        `/api/search?q=${encodeURIComponent(q)}${searchType === "tv" ? "&type=tv" : ""}`,
-      );
-      const data = await res.json();
-      setResults((data as SearchResult[]).slice(0, 6));
+      try {
+        const res = await fetch(
+          `/api/search?q=${encodeURIComponent(q)}${searchType === "tv" ? "&type=tv" : ""}`,
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        setResults((data as SearchResult[]).slice(0, 6));
+      } catch {
+        // Coupure réseau (« Load failed » sur Safari) : on garde les résultats
+        // précédents plutôt que de laisser une promesse rejetée sans gestion.
+      }
     }, 280);
   };
 

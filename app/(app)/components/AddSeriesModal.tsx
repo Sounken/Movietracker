@@ -63,8 +63,13 @@ export default function AddSeriesModal({ onClose }: { onClose: () => void }) {
     if (query.length < 2) return;
     const t = setTimeout(async () => {
       // `type=tv` : la recherche globale mélangerait films et personnes.
-      const res = await fetch(`/api/search?type=tv&q=${encodeURIComponent(query)}`);
-      if (res.ok) setResults(await res.json());
+      try {
+        const res = await fetch(`/api/search?type=tv&q=${encodeURIComponent(query)}`);
+        if (res.ok) setResults(await res.json());
+      } catch {
+        // Coupure réseau (« Load failed » sur Safari) : on garde les résultats
+        // précédents plutôt que de laisser une promesse rejetée sans gestion.
+      }
     }, 300);
     return () => clearTimeout(t);
   }, [query]);

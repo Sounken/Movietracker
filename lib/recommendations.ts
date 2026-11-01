@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { tmdbFetch } from "@/lib/tmdb-throttle";
 import {
   GENRES,
   TV_GENRES,
@@ -120,7 +121,7 @@ type RawItem = Record<string, unknown>;
 
 async function tmdbJson(url: string): Promise<RawItem[]> {
   try {
-    const res = await fetch(url, { next: { revalidate: 3600 } });
+    const res = await tmdbFetch(url, { next: { revalidate: 3600 } });
     if (!res.ok) return [];
     const data = await res.json();
     return (data.results ?? []) as RawItem[];

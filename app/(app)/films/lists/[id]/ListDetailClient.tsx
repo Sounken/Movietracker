@@ -53,8 +53,13 @@ export default function ListDetailClient({ list, films: initialFilms }: { list: 
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (!q.trim()) return;
     debounceRef.current = setTimeout(async () => {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
-      if (res.ok) setResults(await res.json());
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+        if (res.ok) setResults(await res.json());
+      } catch {
+        // Coupure réseau (« Load failed » sur Safari) : on garde les résultats
+        // précédents plutôt que de laisser une promesse rejetée sans gestion.
+      }
     }, 300);
   }, []);
 

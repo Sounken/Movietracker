@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import JSZip from "jszip";
+import { tmdbFetch } from "@/lib/tmdb-throttle";
 
 const TMDB_KEY = process.env.TMDB_API_KEY;
 
@@ -49,7 +50,7 @@ async function findTMDBId(name: string, year: string): Promise<number | null> {
   if (!TMDB_KEY) return null;
 
   const search = async (url: string) => {
-    const res = await fetch(url, { next: { revalidate: 3600 } });
+    const res = await tmdbFetch(url, { next: { revalidate: 3600 } });
     if (!res.ok) return null;
     const data = await res.json();
     return (data.results as Array<{ id: number }>)?.[0]?.id ?? null;
@@ -67,7 +68,7 @@ async function findTMDBId(name: string, year: string): Promise<number | null> {
 
 async function fetchRuntime(tmdbId: number): Promise<number | null> {
   if (!TMDB_KEY) return null;
-  const res = await fetch(
+  const res = await tmdbFetch(
     `https://api.themoviedb.org/3/movie/${tmdbId}?api_key=${TMDB_KEY}`,
     { next: { revalidate: 86400 } }
   );

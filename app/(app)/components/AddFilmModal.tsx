@@ -58,8 +58,13 @@ export default function AddFilmModal({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     if (query.length < 2) return;
     const t = setTimeout(async () => {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-      setResults(await res.json());
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+        if (res.ok) setResults(await res.json());
+      } catch {
+        // Coupure réseau (« Load failed » sur Safari) : on garde les résultats
+        // précédents plutôt que de laisser une promesse rejetée sans gestion.
+      }
     }, 300);
     return () => clearTimeout(t);
   }, [query]);

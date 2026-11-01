@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { relevance, queryVariants, effectiveScore, MEDIA_PRIORITY } from "@/lib/search";
+import { tmdbFetch } from "@/lib/tmdb-throttle";
 
 const IMG = "https://image.tmdb.org/t/p/w185";
 const PROFILE_IMG = "https://image.tmdb.org/t/p/w185";
@@ -44,7 +45,7 @@ export async function GET(request: NextRequest) {
   const search = async (kind: string, query: string) => {
     const url = `https://api.themoviedb.org/3/search/${kind}?api_key=${key}&query=${encodeURIComponent(query)}&language=fr-FR`;
     try {
-      const res = await fetch(url, { next: { revalidate: 300 } });
+      const res = await tmdbFetch(url, { next: { revalidate: 300 } });
       if (!res.ok) return [] as Record<string, unknown>[];
       const data = await res.json();
       return (data.results ?? []) as Record<string, unknown>[];
