@@ -18,6 +18,7 @@ import TrailerSection from "../../components/TrailerSection";
 import ExternalLinks from "../../components/ExternalLinks";
 import SeriesActions from "./SeriesActions";
 import SeasonTracker from "./SeasonTracker";
+import RemovedTitle from "../../components/RemovedTitle";
 import RatingWidget from "../../film/[id]/components/RatingWidget";
 import { saveSeriesRating, deleteSeriesRating } from "@/app/actions/series";
 import filmStyles from "../../film/[id]/film.module.css";
@@ -111,7 +112,9 @@ export default async function SeriesPage({ params }: { params: Promise<{ id: str
     fetchReviews("tv", id),
   ]);
 
-  if (!bundle) notFound();
+  // Inconnue de TMDB : supprimée ou fusionnée si l'application la connaît
+  // encore, sinon vraie 404 (décidé par RemovedTitle).
+  if (!bundle) return <RemovedTitle kind="tv" tmdbId={id} />;
 
   const {
     detail: series,

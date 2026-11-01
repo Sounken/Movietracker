@@ -474,6 +474,47 @@ async function fetchTmdb(url: string, path: string): Promise<Response | null> {
   throw lastError instanceof Error ? lastError : new Error(`TMDB injoignable sur ${path}`);
 }
 
+/**
+ * Le titre existe-t-il encore chez TMDB ?
+ *
+ * `false` seulement sur un vrai 404 : une panne lève une erreur, comme partout
+ * ailleurs. Un titre supprimé ou fusionné côté TMDB (une saison d'abord
+ * publiée à part, puis rattachée à sa série) ne doit pas être confondu avec
+ * un hoquet du service — c'est ce qui autorise à le retirer d'une bibliothèque.
+ */
+export async function tmdbTitleExists(kind: "movie" | "tv", id: number): Promise<boolean> {
+  const key = process.env.TMDB_API_KEY;
+  if (!key) throw new Error("TMDB_API_KEY manquante");
+  return (await fetchTmdb(`${BASE}/${kind}/${id}?api_key=${key}`, `/${kind}/${id}`)) !== null;
+}
+
+export type TmdbTitleHit = { id: number; title: string; posterUrl: string; year: string };
+
+/** Premiers résultats d'une recherche par nom, pour proposer un titre de remplacement. */
+export async function searchTmdbTitles(
+  kind: "movie" | "tv",
+  query: string,
+  limit = 4,
+): Promise<TmdbTitleHit[]> {
+  const key = process.env.TMDB_API_KEY;
+  if (!key || !query.trim()) return [];
+  const res = await fetchTmdb(
+    `${BASE}/search/${kind}?api_key=${key}&language=fr-FR&query=${encodeURIComponent(query)}`,
+    `/search/${kind}`,
+  );
+  if (!res) return [];
+  const data = (await res.json()) as { results?: Record<string, unknown>[] };
+  return (data.results ?? []).slice(0, limit).map((r) => {
+    const date = (kind === "movie" ? r.release_date : r.first_air_date) as string | undefined;
+    return {
+      id: r.id as number,
+      title: ((kind === "movie" ? r.title : r.name) as string) ?? "",
+      posterUrl: r.poster_path ? `${IMG}/w185${r.poster_path}` : "",
+      year: date?.slice(0, 4) ?? "",
+    };
+  });
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- payload TMDB brut, typé par l'appelant
 async function fetchTmdbDetail(path: string): Promise<any | null> {
   const key = process.env.TMDB_API_KEY;

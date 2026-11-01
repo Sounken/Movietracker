@@ -17,6 +17,7 @@ import FilmTopbar from "./components/FilmTopbar";
 import FilmTitleLogo from "./components/FilmTitleLogo";
 import PosterActions from "./components/PosterActions";
 import RatingWidget from "./components/RatingWidget";
+import RemovedTitle from "../../components/RemovedTitle";
 import CastGrid from "./components/CastGrid";
 import SimilarFilms from "./components/SimilarFilms";
 import styles from "./film.module.css";
@@ -86,7 +87,9 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
       fetchReviews("movie", id),
     ]);
 
-  if (!film) notFound();
+  // Inconnu de TMDB : supprimé ou fusionné si l'application le connaît
+  // encore, sinon vraie 404 (décidé par RemovedTitle).
+  if (!film) return <RemovedTitle kind="movie" tmdbId={id} />;
 
   /**
    * Second temps : les films de la saga, qui dépendent de `film.collectionId`

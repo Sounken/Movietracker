@@ -2,8 +2,9 @@
 
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import { fetchFilmDetail } from "@/lib/tmdb";
+import { fetchFilmDetail, tmdbTitleExists } from "@/lib/tmdb";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 // Toutes les pages « monde Films » qui affichent la collection de l'utilisateur.
 // `/` n'existe plus (redirigé vers /films par next.config), il fallait donc
@@ -16,6 +17,25 @@ function revalidateFilmPages(tmdbId: number) {
   revalidatePath("/films/favorites");
   revalidatePath("/films/lists");
   revalidatePath(`/film/${tmdbId}`);
+}
+
+/**
+ * Retire de sa bibliothèque un film que TMDB a supprimé ou fusionné.
+ * Pendant de `removeDeletedSeries`, mêmes garde-fous.
+ */
+export async function removeDeletedFilm(tmdbId: number) {
+  const session = await getSession();
+  if (!session) throw new Error("Non authentifié");
+  if (await tmdbTitleExists("movie", tmdbId)) throw new Error("Ce film existe toujours");
+
+  const userId = session.userId;
+  await prisma.$transaction([
+    prisma.userFilm.deleteMany({ where: { userId, tmdbId } }),
+    prisma.userFavoriteFilm.deleteMany({ where: { userId, tmdbId } }),
+    prisma.userListFilm.deleteMany({ where: { tmdbId, list: { userId } } }),
+  ]);
+  revalidateFilmPages(tmdbId);
+  redirect("/films/watchlist");
 }
 
 export async function saveRating(tmdbId: number, rating: number, review: string) {

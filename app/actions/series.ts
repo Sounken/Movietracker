@@ -3,6 +3,8 @@
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { tmdbTitleExists } from "@/lib/tmdb";
 
 // Mêmes anciennes routes que pour les films : `/`, `/watchlist` et `/profile`
 // n'existent plus depuis la scission Films / Séries, elles ne revalidaient
@@ -13,6 +15,30 @@ function revalidateSeriesPages(tmdbId?: number) {
   revalidatePath("/series/watchlist");
   revalidatePath("/series/favorites");
   if (tmdbId !== undefined) revalidatePath(`/series/${tmdbId}`);
+}
+
+/**
+ * Retire de sa bibliothèque une série que TMDB a supprimée ou fusionnée.
+ *
+ * La fiche n'existant plus, aucun bouton habituel n'est atteignable : sans
+ * cette action, l'entrée restait dans la watchlist pour toujours, menant à
+ * une 404. Refusé tant que TMDB connaît le titre, pour qu'on ne s'en serve
+ * pas à la place des actions normales.
+ */
+export async function removeDeletedSeries(tmdbId: number) {
+  const session = await getSession();
+  if (!session) throw new Error("Non authentifié");
+  if (await tmdbTitleExists("tv", tmdbId)) throw new Error("Cette série existe toujours");
+
+  const userId = session.userId;
+  await prisma.$transaction([
+    prisma.userSeries.deleteMany({ where: { userId, tmdbId } }),
+    prisma.userFavoriteSeries.deleteMany({ where: { userId, tmdbId } }),
+    prisma.userEpisode.deleteMany({ where: { userId, seriesId: tmdbId } }),
+    prisma.userSeason.deleteMany({ where: { userId, seriesId: tmdbId } }),
+  ]);
+  revalidateSeriesPages(tmdbId);
+  redirect("/series/watchlist");
 }
 
 // ——— Niveau série (note / avis / watchlist / like) ———
