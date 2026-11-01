@@ -71,6 +71,24 @@ export function useRestorableList<T>(key: string, initialItems: T[], initialHasM
   const storageKey = `mt:list:${key}`;
 
   /**
+   * Dernière position connue tant que la liste est affichée.
+   *
+   * `window.scrollY` lu au démontage ne vaut plus rien : Next a déjà remonté la
+   * page en haut pour afficher la fiche. La sauvegarde du démontage écrasait
+   * ainsi celle, juste, faite au clic — et le retour ramenait en haut d'une
+   * liste de cent films. L'écouteur est passif et ne fait qu'une affectation.
+   */
+  const scrollRef = useRef(0);
+  useEffect(() => {
+    const onScroll = () => {
+      scrollRef.current = window.scrollY;
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  /**
    * Restauration après le montage, et non dans l'initialiseur d'état : lire le
    * stockage au premier rendu donnerait un HTML client différent de celui du
    * serveur, donc un avertissement d'hydratation. L'application est différée
@@ -136,21 +154,32 @@ export function useRestorableList<T>(key: string, initialItems: T[], initialHasM
     }));
   }, []);
 
-  /** Enregistre l'état courant ; appelé au départ vers une fiche. */
+  /**
+   * Enregistre l'état courant ; appelé au départ vers une fiche.
+   *
+   * Rien n'est écrit tant que la liste n'a pas dépassé sa première page : il
+   * n'y aurait rien à restaurer (Next rétablit seul la position sur une page
+   * courte), et c'est surtout ce qui écrasait la sauvegarde au retour. React
+   * démonte puis remonte chaque composant à son premier affichage en
+   * développement (`StrictMode`) — et un démontage peut aussi survenir avant
+   * que la restauration n'ait eu lieu : la sauvegarde partait alors avec les
+   * seuls vingt films initiaux, par-dessus la liste complète.
+   */
   const save = useCallback(() => {
+    if (state.page <= 1 && state.items.length <= initialItems.length) return;
     try {
       const snapshot: Snapshot<T> = {
         items: state.items.slice(0, MAX_ITEMS),
         page: state.page,
         hasMore: state.hasMore,
-        scrollY: window.scrollY,
+        scrollY: scrollRef.current,
         savedAt: Date.now(),
       };
       sessionStorage.setItem(storageKey, JSON.stringify(snapshot));
     } catch {
       // Quota dépassé : tant pis pour la reprise, ce n'est pas bloquant.
     }
-  }, [state, storageKey]);
+  }, [state, storageKey, initialItems.length]);
 
   /**
    * On enregistre au démontage plutôt qu'à chaque défilement : c'est le moment
