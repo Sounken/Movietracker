@@ -186,8 +186,9 @@ export default function SeasonTracker({
               {/* Moyenne TMDB de la saison. Elle vient de la liste des saisons
                   de /tv/{id}, donc elle est connue sans déplier ni requête. */}
               {season.voteAverage > 0 && (
-                <span className={styles.seasonAvg}>
-                  Moyenne saison • ★ <Rating value={season.voteAverage} />
+                <span className={styles.seasonAvg} title="Moyenne de la saison sur TMDB">
+                  <span className={styles.seasonAvgLabel}>Moyenne saison • </span>★{" "}
+                  <Rating value={season.voteAverage} />
                 </span>
               )}
               {(ratings[season.seasonNumber] ?? 0) > 0 && (

@@ -67,7 +67,10 @@
 }
 
 /* ——— Meta column ——— */
+/* Élément de grille : sans `min-width: 0`, sa largeur minimale est celle de
+   son contenu le plus large, qui peut dépasser la colonne. */
 .metaCol {
+  min-width: 0;
   padding-bottom: 80px;
 }
 
@@ -630,7 +633,7 @@
 @media (min-width: 769px) and (max-width: 1100px) {
   .hero {
     padding: 40px 32px 0;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 32px;
   }
 
@@ -654,9 +657,13 @@
 }
 
 @media (max-width: 768px) {
+  /* `minmax(0, 1fr)` et non `1fr` : ce dernier vaut `minmax(auto, 1fr)`, et
+     un seul enfant incompressible (l'en-tête d'une saison, constaté sur la
+     fiche série) élargissait toute la colonne au-delà de l'écran — synopsis,
+     widget de note et casting coupés à droite. */
   .hero {
     padding: 24px 16px 0;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 24px;
   }
 
