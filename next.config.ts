@@ -61,21 +61,17 @@ const nextConfig: NextConfig = {
      */
     maximumDiskCacheSize: 256 * 1024 * 1024,
 
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "image.tmdb.org",
-        pathname: "/t/p/**",
-      },
-      // Vignettes des bandes-annonces : on affiche l'image YouTube tant que
-      // l'utilisateur n'a pas lancé la lecture, pour ne pas charger le lecteur
-      // (ni ses cookies tiers) sur chaque fiche.
-      {
-        protocol: "https",
-        hostname: "i.ytimg.com",
-        pathname: "/vi/**",
-      },
-    ],
+    /**
+     * Aucune source distante. **Ne pas y remettre TMDB ni YouTube.**
+     *
+     * Depuis le loader, aucune page ne fait passer leurs visuels par
+     * `/_next/image` ; les autoriser ne servait plus qu'à un tiers. Mesuré le
+     * 2026-11-16 : `/_next/image?url=…/t/p/original/…&w=1920` téléchargeait
+     * l'original de plusieurs mégaoctets, le réencodait (0,7 à 1,5 s de CPU),
+     * et une rafale suffisait à saturer le serveur — principale source des
+     * 502 sous charge. Désormais refusé (400) avant tout téléchargement.
+     */
+    remotePatterns: [],
     // URLs locales avec query string (cache-busting `?v=…` après upload) :
     // Next 16 les rejette par défaut, il faut les autoriser explicitement.
     localPatterns: [

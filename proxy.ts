@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { decrypt } from "@/lib/session";
+import { discoverQuery, parseDiscoverParams } from "@/lib/discover-params";
 
 // Routes nécessitant une connexion. /films et /series (accueils) + discover/trends
 // restent publics ; seules les pages perso sont protégées.
@@ -29,41 +30,96 @@ function isPrivateRoute(path: string): boolean {
 const DETAIL_ROUTE = /^\/(?:film|series|actor|company)\/\d+(?:\/|$)/;
 
 /**
- * Plafond de fiches par adresse, pour les visiteurs non connectés.
+ * Limite de débit par adresse : un quota sur une fenêtre longue, et un plafond
+ * de rafale sur une fenêtre courte.
+ *
+ * Compteurs en mémoire du processus, suffisants tant qu'un seul conteneur sert
+ * l'application — c'est le cas depuis le passage à un nom de conteneur
+ * statique dans Coolify.
+ */
+type Limit = {
+  /** Nom porté par le journal des refus. */
+  name: string;
+  windowMs: number;
+  maxPerWindow: number;
+  burstWindowMs: number;
+  maxPerBurst: number;
+};
+
+/**
+ * Fiches, pour les visiteurs non connectés.
  *
  * `robots.txt` écarte les robots qui le respectent ; ceci est le filet pour
  * les autres. Soixante pages en cinq minutes, c'est une toutes les cinq
  * secondes pendant cinq minutes d'affilée : aucun humain ne navigue ainsi. Les
  * utilisateurs connectés ne sont jamais comptés.
  *
- * Compteur en mémoire du processus, suffisant tant qu'un seul conteneur sert
- * l'application — c'est le cas depuis le passage à un nom de conteneur
- * statique dans Coolify.
+ * Plafond de rafale en plus : le robot observé en novembre 2026 restait sous
+ * les soixante fiches par cinq minutes, mais par salves — jusqu'à douze fiches
+ * distinctes dans la même seconde, soit plus de cent appels TMDB d'un coup, et
+ * des centaines d'erreurs 429 pour lui comme pour les visiteurs présents. Huit
+ * chargements de page en dix secondes, c'est déjà ouvrir une fiche toutes les
+ * secondes en tapant l'adresse : la navigation dans l'application n'est pas
+ * comptée.
  */
-const DETAIL_WINDOW_MS = 5 * 60 * 1000;
-const DETAIL_MAX_PER_WINDOW = 60;
+const DETAIL_LIMIT: Limit = {
+  name: "fiches",
+  windowMs: 5 * 60 * 1000,
+  maxPerWindow: 60,
+  burstWindowMs: 10 * 1000,
+  maxPerBurst: 8,
+};
 
 /**
- * Plafond de rafale, en plus du précédent.
+ * Routes qui coûtent cher à chaque appel, quel que soit le visiteur : rendu
+ * complet de « Découvrir » et « Tendances », API qui interrogent TMDB (ou la
+ * base, pour le Moviedle). Mesuré le 2026-11-16 : 90 requêtes par seconde
+ * pendant 90 s depuis une seule adresse, toutes servies, et les visiteurs
+ * présents attendaient jusqu'à 41 s.
  *
- * Le robot observé en novembre 2026 restait sous les soixante fiches par cinq
- * minutes, mais par salves : jusqu'à douze fiches distinctes dans la même
- * seconde, soit plus de cent appels TMDB d'un coup — et des centaines
- * d'erreurs 429 pour lui comme pour les visiteurs présents. Huit chargements
- * de page en dix secondes, c'est déjà ouvrir une fiche toutes les secondes
- * en tapant l'adresse : la navigation dans l'application n'est pas comptée.
+ * Contrairement aux fiches, les connectés sont comptés aussi (un compte se
+ * crée en une minute) et les requêtes émises par une page ouverte également :
+ * les seuils sont donc larges. Défilement infini, frappe dans la recherche ou
+ * changement de filtre restent bien en dessous — une requête par seconde
+ * soutenue, quelques-unes en rafale.
  */
-const DETAIL_BURST_WINDOW_MS = 10 * 1000;
-const DETAIL_MAX_PER_BURST = 8;
+const COSTLY_ROUTE =
+  /^\/(?:(?:films|series)\/(?:discover|trends)|api\/(?:search|discover|company|puzzle\/search))(?:\/|$)/;
 
-type DetailEntry = {
+const COSTLY_LIMIT: Limit = {
+  name: "routes coûteuses",
+  windowMs: 60 * 1000,
+  maxPerWindow: 120,
+  burstWindowMs: 10 * 1000,
+  maxPerBurst: 30,
+};
+
+/**
+ * Optimiseur d'images : il ne sert plus que nos avatars et bannières, mais
+ * une page d'amis peut en demander plusieurs dizaines d'un coup au premier
+ * affichage (le navigateur les garde ensuite). D'où une limite à part, plus
+ * large que celle des routes coûteuses.
+ */
+const IMAGE_ROUTE = /^\/_next\/image(?:\/|$)/;
+
+const IMAGE_LIMIT: Limit = {
+  name: "images",
+  windowMs: 60 * 1000,
+  maxPerWindow: 600,
+  burstWindowMs: 10 * 1000,
+  maxPerBurst: 150,
+};
+
+type LimitEntry = {
   count: number;
   resetAt: number;
   burst: number;
   burstResetAt: number;
   reported: boolean;
 };
-const detailHits = new Map<string, DetailEntry>();
+
+/** Un compteur par limite : une adresse a un quota distinct pour chacune. */
+const hits = new Map<Limit, Map<string, LimitEntry>>();
 
 /**
  * Adresse du client. Le proxy de Coolify (Traefik) écarte les en-têtes
@@ -112,66 +168,101 @@ function isInPageRequest(request: NextRequest): boolean {
   );
 }
 
-function hitDetailLimit(ip: string, now: number) {
+function hitLimit(limit: Limit, ip: string, now: number) {
+  let table = hits.get(limit);
+  if (!table) {
+    table = new Map();
+    hits.set(limit, table);
+  }
+
   // Purge des fenêtres expirées, déclenchée sur seuil : sans elle, la table
   // grossirait avec chaque adresse vue depuis le démarrage.
-  if (detailHits.size > 5_000) {
-    for (const [key, entry] of detailHits) {
-      if (entry.resetAt <= now) detailHits.delete(key);
+  if (table.size > 5_000) {
+    for (const [key, entry] of table) {
+      if (entry.resetAt <= now) table.delete(key);
     }
   }
 
-  let entry = detailHits.get(ip);
+  let entry = table.get(ip);
   if (!entry || entry.resetAt <= now) {
     entry = {
       count: 0,
-      resetAt: now + DETAIL_WINDOW_MS,
+      resetAt: now + limit.windowMs,
       burst: 0,
-      burstResetAt: now + DETAIL_BURST_WINDOW_MS,
+      burstResetAt: now + limit.burstWindowMs,
       reported: false,
     };
-    detailHits.set(ip, entry);
+    table.set(ip, entry);
   }
   if (entry.burstResetAt <= now) {
     entry.burst = 0;
-    entry.burstResetAt = now + DETAIL_BURST_WINDOW_MS;
+    entry.burstResetAt = now + limit.burstWindowMs;
   }
   entry.count++;
   entry.burst++;
   return entry;
 }
 
+/** Compte la requête ; renvoie la réponse 429 si l'adresse a dépassé la limite. */
+function enforceLimit(limit: Limit, request: NextRequest): NextResponse | null {
+  const now = Date.now();
+  const ip = clientIp(request);
+  const entry = hitLimit(limit, ip, now);
+
+  const overWindow = entry.count > limit.maxPerWindow;
+  const overBurst = entry.burst > limit.maxPerBurst;
+  if (!overWindow && !overBurst) return null;
+
+  // Journalisé une fois par fenêtre, pas à chaque refus : c'est ce qui
+  // permet d'identifier le robot dans les journaux du conteneur sans les
+  // noyer sous des milliers de lignes identiques.
+  if (!entry.reported) {
+    entry.reported = true;
+    console.warn(
+      `[proxy] limite ${limit.name} atteinte (${overWindow ? "fenêtre" : "rafale"}) : ip=${ip} ua="${request.headers.get("user-agent") ?? ""}"`,
+    );
+  }
+  return new NextResponse("Trop de requêtes. Réessayez dans quelques minutes.", {
+    status: 429,
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Retry-After": String(Math.ceil(((overWindow ? entry.resetAt : entry.burstResetAt) - now) / 1000)),
+      // Un refus ne doit jamais être gardé par un cache intermédiaire.
+      "Cache-Control": "no-store",
+    },
+  });
+}
+
 export default async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
+
+  // Avant tout le reste, session comprise : un refus doit coûter le moins
+  // possible.
+  const costlyLimit = IMAGE_ROUTE.test(path) ? IMAGE_LIMIT : COSTLY_ROUTE.test(path) ? COSTLY_LIMIT : null;
+  if (costlyLimit) {
+    const refused = enforceLimit(costlyLimit, request);
+    if (refused) return refused;
+  }
+  // Ni l'optimiseur d'images ni les API ne relèvent de la suite (fiches,
+  // pages privées).
+  if (path.startsWith("/api/") || IMAGE_ROUTE.test(path)) return NextResponse.next();
+
+  // Filtres de « Découvrir » invalides : redirection vers l'adresse nettoyée,
+  // ici et non dans la page. La page est rendue en flux (`loading.tsx`) : un
+  // `redirect()` y arrive après l'envoi des en-têtes et devient un 200 de
+  // 45 Ko avec une balise meta refresh, squelette rendu pour rien.
+  const discoverMedia = path === "/films/discover" ? "movie" : path === "/series/discover" ? "tv" : null;
+  if (discoverMedia) {
+    const { params, valid } = parseDiscoverParams((k) => request.nextUrl.searchParams.get(k), discoverMedia);
+    if (!valid) return NextResponse.redirect(new URL(`${path}${discoverQuery(params)}`, request.nextUrl));
+  }
 
   const session = request.cookies.get("session")?.value;
   const payload = await decrypt(session);
 
   if (!payload && DETAIL_ROUTE.test(path) && !isInPageRequest(request)) {
-    const now = Date.now();
-    const ip = clientIp(request);
-    const entry = hitDetailLimit(ip, now);
-
-    const overWindow = entry.count > DETAIL_MAX_PER_WINDOW;
-    const overBurst = entry.burst > DETAIL_MAX_PER_BURST;
-    if (overWindow || overBurst) {
-      // Journalisé une fois par fenêtre, pas à chaque refus : c'est ce qui
-      // permet d'identifier le robot dans les journaux du conteneur sans les
-      // noyer sous des milliers de lignes identiques.
-      if (!entry.reported) {
-        entry.reported = true;
-        console.warn(
-          `[proxy] limite de fiches atteinte (${overWindow ? "fenêtre" : "rafale"}) : ip=${ip} ua="${request.headers.get("user-agent") ?? ""}"`,
-        );
-      }
-      return new NextResponse("Trop de requêtes. Réessayez dans quelques minutes.", {
-        status: 429,
-        headers: {
-          "Content-Type": "text/plain; charset=utf-8",
-          "Retry-After": String(Math.ceil(((overWindow ? entry.resetAt : entry.burstResetAt) - now) / 1000)),
-        },
-      });
-    }
+    const refused = enforceLimit(DETAIL_LIMIT, request);
+    if (refused) return refused;
   }
 
   if (isPrivateRoute(path) && !payload) {
@@ -182,5 +273,13 @@ export default async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|.*\\.png$|favicon.ico).*)"],
+  matcher: [
+    "/((?!api|_next/static|_next/image|.*\\.png$|favicon.ico).*)",
+    // Pour la limite de débit seulement (cf. COSTLY_ROUTE, IMAGE_ROUTE).
+    "/api/search",
+    "/api/discover/:path*",
+    "/api/company/:path*",
+    "/api/puzzle/search",
+    "/_next/image",
+  ],
 };

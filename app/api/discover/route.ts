@@ -3,13 +3,17 @@ import { fetchDiscover } from "@/lib/tmdb";
 import { fetchForYouFilms } from "@/lib/recommendations";
 import { getSession } from "@/lib/session";
 import { parseProviders } from "@/lib/watch-providers";
+import { parseDiscoverPage, parseDiscoverParams } from "@/lib/discover-params";
 
 export async function GET(request: NextRequest) {
   const p = request.nextUrl.searchParams;
-  const category = p.get("category") ?? "popular";
-  const genre = p.get("genre");
-  const minRating = p.get("minRating");
-  const page = parseInt(p.get("page") ?? "1");
+  // Filtres hors de ce que l'interface produit : refus net, sans appel TMDB.
+  const { params, valid } = parseDiscoverParams((k) => p.get(k), "movie");
+  const page = parseDiscoverPage(p.get("page"));
+  if (!valid || page === null) {
+    return NextResponse.json({ error: "Paramètres invalides" }, { status: 400 });
+  }
+  const { category, genre, minYear, maxYear, minRating, providers } = params;
 
   // Recommandations personnelles : hors session, il n'y a rien à recommander.
   if (category === "for_you") {
@@ -19,12 +23,12 @@ export async function GET(request: NextRequest) {
   }
 
   const films = await fetchDiscover(category, {
-    genreId: genre ? parseInt(genre) : null,
+    genreId: genre ? Number(genre) : null,
     page,
-    minYear: p.get("minYear") ?? undefined,
-    maxYear: p.get("maxYear") ?? undefined,
+    minYear: minYear || undefined,
+    maxYear: maxYear || undefined,
     minRating: minRating ? Number(minRating) : undefined,
-    providers: parseProviders(p.get("providers")),
+    providers: parseProviders(providers),
   });
   return NextResponse.json(films);
 }

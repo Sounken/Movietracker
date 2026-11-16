@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { fetchDiscover, fetchNowPlaying, fetchFilmLogo } from "@/lib/tmdb";
 import { fetchForYouFilms } from "@/lib/recommendations";
 import { parseProviders } from "@/lib/watch-providers";
+import { discoverQuery, parseDiscoverParams } from "@/lib/discover-params";
 import { getFilmLibraryStatus } from "@/lib/library-status";
 import Topbar from "../../components/Topbar";
 import HeroCarousel from "../../components/HeroCarousel";
@@ -33,18 +35,18 @@ export default async function DiscoverPage({
     providers?: string;
   }>;
 }) {
-  const [session, params] = await Promise.all([getSession(), searchParams]);
+  const [session, raw] = await Promise.all([getSession(), searchParams]);
 
-  const genre = params.genre ?? "";
-  const genreId = genre ? parseInt(genre) : null;
-  const minYear = params.minYear ?? "";
-  const maxYear = params.maxYear ?? "";
-  const minRating = params.minRating ?? "";
-  const providers = params.providers ?? "";
+  // Les filtres invalides sont déjà redirigés par le proxy ; ce renvoi n'est
+  // qu'un filet si la page était atteinte autrement.
+  const { params, valid } = parseDiscoverParams((k) => raw[k as keyof typeof raw], "movie");
+  if (!valid) redirect(`/films/discover${discoverQuery(params)}`);
+
+  const { genre, minYear, maxYear, minRating, providers } = params;
+  const genreId = genre ? Number(genre) : null;
 
   // « Pour vous » n'a de sens qu'avec un compte : sinon on retombe sur Populaires.
-  const requested = params.category ?? "popular";
-  const category = requested === "for_you" && !session ? "popular" : requested;
+  const category = params.category === "for_you" && !session ? "popular" : params.category;
 
   // Le carrousel des sorties n'est destiné qu'aux visiteurs non connectés :
   // les connectés l'ont déjà sur leur accueil. On évite donc aussi les appels TMDB.

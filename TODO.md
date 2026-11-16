@@ -92,6 +92,17 @@ Légende : `[ ]` à faire · `[x]` fait · `[?]` besoin d'une décision de Damie
 
 ---
 
+## 🔒 Infra & sécurité (16/11/2026)
+
+Suite du rapport de charge du 16/11. Côté code, c'est fait : régulateur TMDB derrière le cache (3,9 → 162 pages/s sur Découvrir), `/_next/image` fermé aux sources distantes, limites de débit par IP sur les routes coûteuses, validation des filtres de Découvrir, route `/api/health`. Restent les réglages hors dépôt :
+
+- [ ] **I1** — Coolify : health check sur `/api/health` (port 3000), **puis** nom de conteneur en « rolling updates ». Les deux ensemble : rolling sans health check empile les conteneurs (septembre 2026). Supprime la coupure de chaque déploiement.
+- [ ] **I2** — Pare-feu OVH : n'ouvrir que 80/443 (+ SSH restreint). Vérifier d'abord les ports utilisés (`ss -tlnp`).
+- [?] **I3** — CDN Cloudflare devant movietracker.fr : TLS/HTTP3 et en-têtes malformés gérés chez lui, limite de débit en bordure, IP d'origine masquée (points 9-11 et 13 du rapport). **Avant de basculer** : adapter `clientIp()` dans `proxy.ts` (CF-Connecting-IP ou trustedIPs Traefik), sinon toutes les requêtes semblent venir de Cloudflare et les limites par IP bloquent tout le monde.
+- [ ] **I4** — Moniteur de disponibilité GlitchTip sur `/api/health`.
+
+---
+
 ## Notes techniques
 
 **F4 / S5 — algorithme « Mieux notés »**

@@ -67,8 +67,11 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 
+# `curl` : le health check de Coolify s'exécute *dans* le conteneur, avec curl
+# ou wget — l'image slim n'a ni l'un ni l'autre, et la sonde échouerait
+# toujours. Il vise `/api/health` (cf. la route).
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && apt-get install -y --no-install-recommends openssl ca-certificates curl \
   && rm -rf /var/lib/apt/lists/*
 
 # Récupère le résultat du build

@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { fetchDiscoverSeries, fetchOnTheAirSeries, fetchSeriesLogo } from "@/lib/tmdb";
 import { fetchForYouSeries } from "@/lib/recommendations";
 import { parseProviders } from "@/lib/watch-providers";
+import { discoverQuery, parseDiscoverParams } from "@/lib/discover-params";
 import { getSeriesLibraryStatus } from "@/lib/library-status";
 import Topbar from "../../components/Topbar";
 import HeroCarousel from "../../components/HeroCarousel";
@@ -34,18 +36,16 @@ export default async function SeriesDiscoverPage({
     providers?: string;
   }>;
 }) {
-  const [session, params] = await Promise.all([getSession(), searchParams]);
+  const [session, raw] = await Promise.all([getSession(), searchParams]);
 
-  const genre = params.genre ?? "";
-  const anime = params.anime === "1";
-  const minYear = params.minYear ?? "";
-  const maxYear = params.maxYear ?? "";
-  const minRating = params.minRating ?? "";
-  const providers = params.providers ?? "";
+  // Filtres invalides déjà redirigés par le proxy ; filet (cf. films/discover).
+  const { params, valid } = parseDiscoverParams((k) => raw[k as keyof typeof raw], "tv");
+  if (!valid) redirect(`/series/discover${discoverQuery(params)}`);
+
+  const { genre, anime, minYear, maxYear, minRating, providers } = params;
 
   // Sans compte, « Pour vous » n'a rien sur quoi se baser : on retombe sur Populaires.
-  const requested = params.category ?? "popular";
-  const category = requested === "for_you" && !session ? "popular" : requested;
+  const category = params.category === "for_you" && !session ? "popular" : params.category;
 
   // Le carrousel n'est destiné qu'aux visiteurs non connectés, comme sur
   // « Découvrir » côté films : les connectés l'ont déjà sur leur accueil.
@@ -55,7 +55,7 @@ export default async function SeriesDiscoverPage({
     category === "for_you" && session
       ? fetchForYouSeries(session.userId)
       : fetchDiscoverSeries(category, {
-          genreId: genre ? parseInt(genre) : null,
+          genreId: genre ? Number(genre) : null,
           anime,
           minYear,
           maxYear,

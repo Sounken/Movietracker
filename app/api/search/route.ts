@@ -30,16 +30,39 @@ type Row = {
   score: number;
 };
 
+/**
+ * Une recherche globale coûte jusqu'à seize appels TMDB (quatre variantes de
+ * la requête × films, séries, personnes, studios). Aucun titre ne dépasse
+ * cette longueur ; au-delà, c'est une requête fabriquée pour contourner le
+ * cache.
+ */
+const MAX_QUERY_LENGTH = 100;
+
+// "multi"        = films + séries + personnes + studios (monde Films)
+// "series-multi"  = séries + personnes ayant travaillé en série + studios
+// "movie" / "tv"  = un seul média (pickers de favoris) ; absent = "movie"
+const TYPES = new Set(["multi", "series-multi", "movie", "tv"]);
+
+/**
+ * Les résultats ne dépendent que de la requête, jamais du compte : le
+ * navigateur peut les garder une minute. Effacer puis retaper un mot ne
+ * repasse plus par le serveur.
+ */
+const reply = (data: unknown, status = 200) =>
+  NextResponse.json(data, {
+    status,
+    headers: { "Cache-Control": "public, max-age=60" },
+  });
+
 export async function GET(request: NextRequest) {
   const q = request.nextUrl.searchParams.get("q");
-  // "multi"        = films + séries + personnes + studios (monde Films)
-  // "series-multi"  = séries + personnes ayant travaillé en série + studios
-  // "movie" / "tv"  = un seul média (pickers de favoris)
   const type = request.nextUrl.searchParams.get("type");
-  if (!q || q.trim().length < 2) return NextResponse.json([]);
+  if (type !== null && !TYPES.has(type)) return reply({ error: "Type inconnu" }, 400);
+  if (!q || q.trim().length < 2) return reply([]);
+  if (q.length > MAX_QUERY_LENGTH) return reply({ error: "Requête trop longue" }, 400);
 
   const key = process.env.TMDB_API_KEY;
-  if (!key) return NextResponse.json([]);
+  if (!key) return reply([]);
 
   const variants = queryVariants(q);
   const search = async (kind: string, query: string) => {
@@ -174,7 +197,7 @@ export async function GET(request: NextRequest) {
   // ——— Séries uniquement (picker « séries préférées ») ———
   if (type === "tv") {
     const rows = (await searchAll("tv")).map(toSeries).filter((r) => r.score > 0);
-    return NextResponse.json(rows.sort(byRelevance).slice(0, 6).map(strip));
+    return reply(rows.sort(byRelevance).slice(0, 6).map(strip));
   }
 
   // ——— Monde Séries : séries + gens de série + studios ———
@@ -195,13 +218,13 @@ export async function GET(request: NextRequest) {
       .slice(0, 3);
 
     const merged = [...series, ...people, ...companies].sort(byRelevance).slice(0, 10);
-    return NextResponse.json(merged.map(strip));
+    return reply(merged.map(strip));
   }
 
   // ——— Films uniquement (picker « films préférés ») ———
   if (type !== "multi") {
     const rows = (await searchAll("movie")).map(toMovie).filter((r) => r.score > 0);
-    return NextResponse.json(rows.sort(byRelevance).slice(0, 6).map(strip));
+    return reply(rows.sort(byRelevance).slice(0, 6).map(strip));
   }
 
   // ——— Recherche globale : films + séries + personnes + studios ———
@@ -227,5 +250,5 @@ export async function GET(request: NextRequest) {
 
   const merged = [...titles, ...people, ...companies].sort(byRelevance).slice(0, 10);
 
-  return NextResponse.json(merged.map(strip));
+  return reply(merged.map(strip));
 }

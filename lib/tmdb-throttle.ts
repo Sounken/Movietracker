@@ -10,8 +10,16 @@
  *
  * Ici, au-delà du débit, les requêtes attendent leur tour au lieu de partir
  * pour se faire refuser. Le débit retenu laisse une marge sous la limite de
- * TMDB : les réponses servies par le cache de `fetch` consomment aussi un
- * jeton, on ne sait pas les distinguer avant l'appel.
+ * TMDB.
+ *
+ * **Seuls les vrais appels réseau passent par la file.** Les réponses déjà en
+ * cache sont servies avant elle (cf. `tmdbFetch`). Ce n'était pas le cas : le
+ * cache vivait à l'intérieur de `fetch`, donc *après* la file, et chaque
+ * réponse servie de mémoire attendait quand même son jeton. Une page
+ * « Découvrir » anonyme en consomme une vingtaine (liste, sorties, un logo par
+ * film du carrousel) : à 35 jetons par seconde, le site plafonnait vers deux
+ * pages par seconde alors que tout était en cache, et sous une rafale la file
+ * portait le temps de réponse à 40 s.
  *
  * État en mémoire du processus, comme les compteurs du proxy : suffisant tant
  * qu'un seul conteneur sert l'application.
@@ -20,6 +28,8 @@
  * clients pour ses constantes (genres, plateformes). Le module y est inerte —
  * rien ne l'appelle côté navigateur — et ne contient aucun secret.
  */
+import { unstable_cache } from "next/cache";
+
 const RATE_PER_SECOND = 35;
 const MAX_CONCURRENT = 16;
 
@@ -59,8 +69,8 @@ function pump() {
   }
 }
 
-/** `fetch` régulé, à utiliser pour toute requête vers api.themoviedb.org. */
-export async function tmdbFetch(input: string, init?: RequestInit): Promise<Response> {
+/** Appel réseau, après avoir obtenu un jeton. */
+async function throttledFetch(input: string, init?: RequestInit): Promise<Response> {
   if (queue.length >= MAX_QUEUED) {
     throw new Error("TMDB saturé : file d'attente pleine");
   }
@@ -73,5 +83,56 @@ export async function tmdbFetch(input: string, init?: RequestInit): Promise<Resp
   } finally {
     active--;
     pump();
+  }
+}
+
+/** Réponse mise en cache : statut et corps, seuls éléments lus par les appelants. */
+type CachedResponse = { status: number; body: string };
+
+/**
+ * Réponse à ne pas garder : saturation (429) ou panne de TMDB (5xx). La lever
+ * empêche `unstable_cache` de la conserver ; elle est rendue telle quelle à
+ * l'appelant, qui lit encore son `Retry-After` pour réessayer.
+ */
+class TransientTmdbResponse extends Error {
+  constructor(readonly response: Response) {
+    super(`TMDB a répondu ${response.status}`);
+  }
+}
+
+/**
+ * `fetch` régulé et mis en cache, à utiliser pour toute requête vers
+ * api.themoviedb.org.
+ *
+ * Avec `next.revalidate`, la réponse est gardée par `unstable_cache` (même
+ * stockage que le cache de `fetch` : en mémoire, borné par
+ * `cacheMaxMemorySize`) et une réponse présente ne touche jamais la file. Une
+ * entrée expirée est encore servie pendant que sa remplaçante se charge en
+ * arrière-plan : sous une rafale, on sert du périmé plutôt que d'attendre.
+ *
+ * L'appel réseau lui-même part en `no-store` : sans quoi le cache de `fetch`
+ * garderait une seconde copie de chaque réponse.
+ */
+export async function tmdbFetch(input: string, init?: RequestInit): Promise<Response> {
+  const revalidate = init?.next?.revalidate;
+  if (typeof revalidate !== "number" || revalidate <= 0) return throttledFetch(input, init);
+
+  try {
+    const cached = await unstable_cache(
+      async (): Promise<CachedResponse> => {
+        const res = await throttledFetch(input, { ...init, next: undefined, cache: "no-store" });
+        if (res.status === 429 || res.status >= 500) throw new TransientTmdbResponse(res);
+        return { status: res.status, body: await res.text() };
+      },
+      ["tmdb", input],
+      { revalidate },
+    )();
+    return new Response(cached.body, {
+      status: cached.status,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (err) {
+    if (err instanceof TransientTmdbResponse) return err.response;
+    throw err;
   }
 }

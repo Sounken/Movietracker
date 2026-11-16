@@ -1,4 +1,4 @@
-import { WATCH_PROVIDERS } from "@/lib/tmdb";
+import { WATCH_PROVIDERS } from "@/lib/tmdb-catalog";
 
 /** Identifiants autorisés — tout le reste est ignoré. */
 const KNOWN = new Set(WATCH_PROVIDERS.map((p) => p.id));

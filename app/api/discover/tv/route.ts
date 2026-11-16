@@ -3,13 +3,17 @@ import { fetchDiscoverSeries } from "@/lib/tmdb";
 import { fetchForYouSeries } from "@/lib/recommendations";
 import { getSession } from "@/lib/session";
 import { parseProviders } from "@/lib/watch-providers";
+import { parseDiscoverPage, parseDiscoverParams } from "@/lib/discover-params";
 
 export async function GET(request: NextRequest) {
   const sp = request.nextUrl.searchParams;
-  const category = sp.get("category") ?? "popular";
-  const genre = sp.get("genre");
-  const minRating = sp.get("minRating");
-  const page = parseInt(sp.get("page") ?? "1");
+  // Filtres hors de ce que l'interface produit : refus net, sans appel TMDB.
+  const { params, valid } = parseDiscoverParams((k) => sp.get(k), "tv");
+  const page = parseDiscoverPage(sp.get("page"));
+  if (!valid || page === null) {
+    return NextResponse.json({ error: "Paramètres invalides" }, { status: 400 });
+  }
+  const { category, genre, minYear, maxYear, minRating, providers } = params;
 
   if (category === "for_you") {
     const session = await getSession();
@@ -18,13 +22,13 @@ export async function GET(request: NextRequest) {
   }
 
   const series = await fetchDiscoverSeries(category, {
-    genreId: genre ? parseInt(genre) : null,
+    genreId: genre ? Number(genre) : null,
     page,
-    anime: sp.get("anime") === "1",
-    minYear: sp.get("minYear") ?? undefined,
-    maxYear: sp.get("maxYear") ?? undefined,
+    anime: params.anime,
+    minYear: minYear || undefined,
+    maxYear: maxYear || undefined,
     minRating: minRating ? Number(minRating) : undefined,
-    providers: parseProviders(sp.get("providers")),
+    providers: parseProviders(providers),
   });
   return NextResponse.json(series);
 }
