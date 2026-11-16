@@ -317,6 +317,17 @@
     justify-content: space-between;
     padding: 0 10px 8px;
   }
+
+  /* Les étoiles de 16px, serrées à droite, faisaient des demi-crans de 11px :
+     elles prennent toute la largeur restante, et grossissent un peu. */
+  .seasonStars {
+    flex: 1;
+  }
+
+  .seasonStars svg {
+    width: 20px;
+    height: 20px;
+  }
 }
 
 .episode {

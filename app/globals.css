@@ -60,6 +60,22 @@ a {
   text-decoration: none;
 }
 
+/* Safari iOS zoome sur tout champ dont le texte fait moins de 16px dès qu'il
+   reçoit le focus, et ne dézoome pas en le quittant : l'application restait
+   agrandie, et il fallait pincer pour retrouver l'affichage. Nos champs
+   étaient à 13-15px (recherche, connexion, modales…). Sur écran tactile on
+   les porte à 16px minimum ; `1em` (la taille du parent) préserve les champs
+   déjà plus grands, comme la saisie de la note sur 100.
+   Plutôt que `maximum-scale=1` dans le viewport, qui supprimerait aussi le
+   zoom au pincement sur Android — un réglage d'accessibilité. */
+@media (pointer: coarse) {
+  input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"]),
+  textarea,
+  select {
+    font-size: max(16px, 1em) !important;
+  }
+}
+
 /* ——————————————————————————————————————————————————————————————
    Motion — socle partagé
    ——————————————————————————————————————————————————————————————

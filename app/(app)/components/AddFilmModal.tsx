@@ -5,35 +5,12 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { X, ArrowLeft, Check } from "lucide-react";
 import { addFilm } from "@/app/actions/film";
+import StarRating from "./StarRating";
 import styles from "./AddFilmModal.module.css";
 import { Rating, useRatingScale } from "@/lib/rating-scale";
 import { toDisplayRating, toStoredRating, formatRating } from "@/lib/rating";
 
 type SearchResult = { id: number; title: string; year: string; posterUrl: string; voteAverage: number | null };
-
-const StarFilled = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
-    <path d="m12 2 3 7 7 .5-5.5 4.5L18 22l-6-4-6 4 1.5-8L2 9.5 9 9z" />
-  </svg>
-);
-const StarOutline = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" width="22" height="22">
-    <path d="m12 2 3 7 7 .5-5.5 4.5L18 22l-6-4-6 4 1.5-8L2 9.5 9 9z" />
-  </svg>
-);
-function StarHalf() {
-  return (
-    <span className={styles.halfWrap}>
-      <span className={styles.halfFill}><StarFilled /></span>
-      <StarOutline />
-    </span>
-  );
-}
-function StarIcon({ value, position }: { value: number; position: number }) {
-  if (value >= position) return <span style={{ color: "var(--gold)" }}><StarFilled /></span>;
-  if (value >= position - 0.5) return <StarHalf />;
-  return <span style={{ color: "var(--ink-mute)" }}><StarOutline /></span>;
-}
 
 export default function AddFilmModal({ onClose }: { onClose: () => void }) {
   const router = useRouter();
@@ -75,11 +52,6 @@ export default function AddFilmModal({ onClose }: { onClose: () => void }) {
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, [onClose]);
-
-  const getHoverVal = (e: React.MouseEvent<HTMLButtonElement>, n: number) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    return e.clientX - rect.left < rect.width / 2 ? n - 0.5 : n;
-  };
 
   const handleSubmit = () => {
     if (!selected) return;
@@ -171,18 +143,16 @@ export default function AddFilmModal({ onClose }: { onClose: () => void }) {
 
             <div className={styles.field}>
               <div className={styles.fieldLabel}>Votre note</div>
-              <div className={styles.stars} onMouseLeave={() => setHover(null)}>
-                {[1,2,3,4,5,6,7,8,9,10].map((n) => (
-                  <button
-                    key={n}
-                    className={styles.starBtn}
-                    aria-label={`Noter ${toDisplayRating(n, scale)}/${scale}`}
-                    onMouseMove={(e) => setHover(getHoverVal(e, n))}
-                    onClick={(e) => { setRating(getHoverVal(e, n)); setHover(null); }}
-                  >
-                    <StarIcon value={displayed} position={n} />
-                  </button>
-                ))}
+              <div className={styles.stars}>
+                <StarRating
+                  className={styles.starRating}
+                  value={rating}
+                  size={22}
+                  showValue={false}
+                  onRate={setRating}
+                  onClear={() => setRating(0)}
+                  onHoverChange={setHover}
+                />
                 {/* Sur 100 : saisie exacte, les étoiles ne font que des pas de 5. */}
                 {scale === 100 ? (
                   <span className={styles.ratingVal}>

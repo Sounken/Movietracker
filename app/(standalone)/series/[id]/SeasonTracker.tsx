@@ -224,6 +224,7 @@ export default function SeasonTracker({
                       <div className={styles.seasonRating}>
                         <span className={styles.seasonRatingLabel}>Ma note</span>
                         <StarRating
+                          className={styles.seasonStars}
                           value={ratings[season.seasonNumber] ?? 0}
                           size={16}
                           label={season.name}

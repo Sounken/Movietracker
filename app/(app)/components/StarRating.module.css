@@ -8,9 +8,20 @@
 /* Aucun gap : les zones cliquables doivent se toucher, sinon un pixel « mort »
    entre deux étoiles avale le clic ou fait perdre le survol. L'espacement
    visuel vient du padding, qui fait partie de la zone cliquable. */
+/* `touch-action: pan-y` : un glissé horizontal sur la rangée note, un glissé
+   vertical fait toujours défiler la page (le geste de note est alors annulé).
+   `flex: 1 1 auto` sur la rangée et les étoiles ne change rien tant que
+   l'appelant laisse le composant à sa taille ; s'il l'étire (`className`), les
+   étoiles se partagent la largeur à parts égales — de quoi viser au doigt. */
 .stars {
+  position: relative;
   display: flex;
+  flex: 1 1 auto;
   gap: 0;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .disabled {
@@ -23,10 +34,26 @@
   border: 0;
   cursor: pointer;
   padding: 4px 3px;
+  flex: 1 1 auto;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   color: inherit;
   transition: filter 0.12s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Au doigt, zone de contact plus haute : la largeur est contrainte par les dix
+   étoiles, la hauteur ne l'est pas. Et pas d'enfoncement au tap (règle globale
+   des boutons) : l'étoile rétrécie sous le doigt brouillait la lecture. */
+@media (pointer: coarse) {
+  .starBtn {
+    padding-block: 10px;
+  }
+
+  .starBtn:not(:disabled):active {
+    transform: none;
+  }
 }
 
 /* L'icône change d'arbre DOM à chaque cran (pleine / demie / vide) : si le
@@ -65,6 +92,31 @@
   width: 50%;
   overflow: hidden;
   color: var(--gold);
+}
+
+/* Note en cours de glissé, au-dessus du doigt. `left` est posé en ligne
+   (position de la note sur la rangée) ; le `clamp` la garde dans la rangée aux
+   extrémités, où elle déborderait de l'écran. */
+.bubble {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  translate: -50% 0;
+  min-width: 44px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: var(--panel);
+  border: 1px solid rgba(var(--gold-rgb), 0.45);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  color: var(--gold);
+  font-family: var(--font-geist-mono), monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 18px;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 5;
 }
 
 /* Le chiffre change de largeur au survol (« — » → « 8.5/10 » → « 10/10 ») et

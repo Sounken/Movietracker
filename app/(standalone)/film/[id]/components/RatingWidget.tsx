@@ -122,21 +122,27 @@ export default function RatingWidget({
             <span className={styles.savedInline}><Check size={13} /> Note enregistrée</span>
           ) : (
             <>
-              {scale === 100 ? "Cliquez ou saisissez une valeur" : "Cliquez pour noter"}
+              {/* Consigne adaptée au moyen de pointage (cf. CSS). */}
+              <span className={styles.hintMouse}>
+                {scale === 100 ? "Cliquez ou saisissez une valeur" : "Cliquez pour noter"}
+              </span>
+              <span className={styles.hintTouch}>
+                {scale === 100 ? "Glissez ou saisissez une valeur" : "Glissez sur les étoiles"}
+              </span>
               <span className={styles.autoHint}> — enregistrement immédiat</span>
             </>
           )}
         </div>
         <div className={styles.divider} />
 
-        {/* Étoiles, chiffre et assistant forment une seule ligne qui ne se
-            coupe jamais : le chiffre se lit avec les étoiles, et l'assistant
-            sert au moment où l'on hésite dessus. Seul le libellé passe
-            au-dessus quand la place manque ; la taille des étoiles suit la
-            largeur de la ligne (requêtes de conteneur, cf. CSS). */}
+        {/* Étoiles, chiffre et assistant sur une ligne quand la place le
+            permet. Sur téléphone, les étoiles passent dessous en pleine
+            largeur, pour être visées au doigt ; le chiffre reste au-dessus,
+            là où la main ne le cache pas (requêtes de conteneur, cf. CSS). */}
         <div className={styles.ratingRow}>
           <div className={styles.starsSlot}>
             <StarRating
+              className={styles.stars}
               value={rating}
               onRate={handleRate}
               onClear={handleClearRating}

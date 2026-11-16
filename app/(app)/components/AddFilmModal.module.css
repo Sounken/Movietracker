@@ -202,28 +202,19 @@
 }
 
 /* ——— Stars ——— */
-/* Zones cliquables jointives (cf. RatingWidget) : le gap créait des pixels
-   morts entre deux étoiles. L'espacement visuel passe par le padding. */
+/* Les étoiles viennent de StarRating, partagé avec les fiches. */
 .stars {
   display: flex;
   align-items: center;
   gap: 0;
 }
 
-.starBtn {
-  background: none;
-  border: none;
-  padding: 4px 3px;
-  cursor: pointer;
-  display: grid;
-  place-items: center;
-  border-radius: 4px;
-}
-
-/* Même piège que StarRating : l'icône est remplacée à chaque cran, et une
-   sortie sur un nœud détaché fait perdre onMouseLeave (survol figé). */
-.starBtn > * {
-  pointer-events: none;
+/* Sur téléphone, elles prennent toute la largeur de la modale pour être
+   visées au doigt ; le chiffre reste calé à droite. */
+@media (max-width: 768px) {
+  .starRating {
+    flex: 1;
+  }
 }
 
 .ratingVal {
@@ -261,22 +252,6 @@
 .ratingInput::-webkit-inner-spin-button {
   appearance: none;
   margin: 0;
-}
-
-/* Half star */
-.halfWrap {
-  position: relative;
-  display: inline-grid;
-  place-items: center;
-}
-
-.halfFill {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 50%;
-  overflow: hidden;
-  color: var(--gold);
 }
 
 /* ——— Fields ——— */

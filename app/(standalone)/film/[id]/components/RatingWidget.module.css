@@ -71,6 +71,21 @@
   color: var(--ink-mute);
 }
 
+/* Au doigt, on glisse sur les étoiles plutôt qu'on ne clique. */
+.hintTouch {
+  display: none;
+}
+
+@media (pointer: coarse) {
+  .hintMouse {
+    display: none;
+  }
+
+  .hintTouch {
+    display: inline;
+  }
+}
+
 .optional {
   color: var(--ink-mute);
   text-transform: none;
@@ -118,8 +133,10 @@
   height: var(--star);
 }
 
+/* Horizontal seulement : la hauteur de la zone de contact (agrandie au doigt)
+   reste celle de StarRating. */
 .starsSlot button {
-  padding: 4px var(--star-pad);
+  padding-inline: var(--star-pad);
 }
 
 /* Le chiffre suit maintenant le survol des étoiles : chasse fixe et largeur
@@ -295,12 +312,9 @@
   white-space: nowrap;
 }
 
-/* Paliers de la ligne de notation, du plus large au plus étroit. Chaque palier
-   est calculé pour que dix étoiles, le chiffre et le bouton tiennent côte à
-   côte : avant, sur téléphone, le chiffre passait par-dessus la 10e étoile. */
+/* Le texte du bouton d'assistance cède d'abord : l'icône suffit, le libellé
+   reste en aria-label et en infobulle. */
 @container rating-row (max-width: 580px) {
-  /* D'abord le texte du bouton : l'icône suffit, le libellé reste en
-     aria-label et en infobulle. */
   .assistText {
     display: none;
   }
@@ -310,44 +324,34 @@
   }
 }
 
-@container rating-row (max-width: 460px) {
+/* Téléphone. Les étoiles partageaient la ligne avec le chiffre et le bouton,
+   et tombaient à 17px : une demi-étoile faisait 10px de large, impossible à
+   viser au doigt. Elles passent sur leur propre ligne, en pleine largeur, et
+   se partagent la place (près de 32px par étoile sur un écran de 390px). Le
+   chiffre et le bouton remontent au-dessus : le doigt posé sur les étoiles
+   ne les cache pas.
+   Requête sur le widget et non sur la ligne : une requête de conteneur ne
+   s'applique pas au conteneur lui-même, or c'est la ligne qui doit passer à
+   la ligne. */
+@container rating-widget (max-width: 520px) {
+  .ratingRow {
+    flex-wrap: wrap;
+    row-gap: 2px;
+  }
+
   .starsSlot {
-    --star: 20px;
-    --star-pad: 2px;
+    order: 1;
+    flex: 1 0 100%;
+    /* `cqi` : 1% de la largeur de la ligne, donc 10cqi = la part d'une étoile. */
+    --star: min(28px, calc(10cqi - 6px));
+    --star-pad: 0px;
+  }
+
+  .stars {
+    width: 100%;
   }
 
   .note {
-    font-size: 18px;
-  }
-
-  .noteScale {
-    font-size: 13px;
-  }
-}
-
-@container rating-row (max-width: 360px) {
-  .starsSlot {
-    --star: 17px;
-    --star-pad: 2px;
-  }
-
-  .note {
-    font-size: 16px;
-    min-width: 5ch;
-  }
-
-  .assistBtn {
-    padding: 7px;
-  }
-}
-
-@container rating-row (max-width: 300px) {
-  .starsSlot {
-    --star: 15px;
-    --star-pad: 1.5px;
-  }
-
-  .note {
-    font-size: 15px;
+    font-size: 20px;
   }
 }
