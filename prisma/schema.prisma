@@ -22,6 +22,12 @@ model User {
   /// `WATCH_PROVIDERS`). Sert au raccourci « Mes plateformes » de Découvrir
   /// et à signaler, sur les fiches, ce qui est inclus dans ses abonnements.
   watchProviders Int[]                @default([])
+  /// Notifications push, par catégorie (cf. lib/push.ts). L'activité des
+  /// amis est coupée par défaut : elle peut vite devenir bavarde.
+  pushAvailable  Boolean              @default(true)
+  pushReleases   Boolean              @default(true)
+  pushSocial     Boolean              @default(true)
+  pushFriends    Boolean              @default(false)
   /// Incrémenté à chaque réinitialisation du mot de passe. Chaque session
   /// emporte la valeur du moment : une session plus ancienne n'est plus
   /// reconnue, ce qui déconnecte tous les appareils d'un coup.
@@ -44,6 +50,7 @@ model User {
   activities     Activity[]
   reactions      ActivityReaction[]
   reminders      ReleaseReminder[]
+  pushDevices    PushSubscription[]
 }
 
 /// Lien de réinitialisation du mot de passe, à usage unique.
@@ -339,6 +346,21 @@ model ReleaseReminder {
 
   @@unique([userId, tmdbId])
   @@index([notifiedAt])
+}
+
+/// Abonnement Web Push d'un appareil (navigateur, ou app ajoutée à l'écran
+/// d'accueil sur iPhone). Supprimé dès que le service push le déclare expiré.
+model PushSubscription {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint   String   @unique
+  p256dh     String
+  auth       String
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
 }
 
 /// Mesure de performance perçue, envoyée par le navigateur du visiteur.

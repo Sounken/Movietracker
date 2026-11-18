@@ -99,3 +99,131 @@
     font-size: 28px;
   }
 }
+
+/* Notifications */
+.callout {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 13px;
+  color: var(--ink-dim);
+  line-height: 1.6;
+  margin: 10px 0 18px;
+}
+.callout strong {
+  color: var(--ink);
+  font-weight: 500;
+}
+.callout ol {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+.deviceRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.deviceRow .cardText {
+  margin: 8px 0;
+}
+.deviceActions {
+  display: flex;
+  gap: 8px;
+}
+.btn {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+  color: var(--ink-dim);
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.btn:hover:not(:disabled) {
+  color: var(--ink);
+  border-color: var(--ink-mute);
+}
+.btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.btnAccent {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.btnAccent:hover:not(:disabled) {
+  color: #fff;
+  border-color: var(--accent);
+  filter: brightness(1.1);
+}
+
+.switches {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--line);
+}
+.switchRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.switchRow:last-child {
+  border-bottom: none;
+}
+.switchLabel {
+  display: block;
+  font-size: 14px;
+  color: var(--ink);
+}
+.switchHint {
+  display: block;
+  font-size: 12px;
+  color: var(--ink-mute);
+  margin-top: 2px;
+}
+.switch {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--track);
+  cursor: pointer;
+  flex: none;
+  padding: 0;
+  transition: background var(--dur-fast), border-color var(--dur-fast);
+}
+.switchThumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--ink-dim);
+  transition: transform var(--dur-fast) var(--ease-out), background var(--dur-fast);
+}
+.switchOn {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.switchOn .switchThumb {
+  transform: translateX(18px);
+  background: #fff;
+}
+@media (prefers-reduced-motion: reduce) {
+  .switchThumb {
+    transition: none;
+  }
+}

@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/db";
+import { sendPushes, type PushMessage } from "@/lib/push";
 
 /** Notification envoyée par l'application (sortie, épisode, disponibilité). */
 export type SystemNotification = {
@@ -42,5 +43,31 @@ export async function sendSystemNotifications(
     // Filet si deux passages se chevauchent : la contrainte d'unicité tranche.
     skipDuplicates: true,
   });
+  await sendPushes(fresh.map(toPush));
   return fresh;
+}
+
+function toPush(n: SystemNotification): PushMessage {
+  const url = n.media === "tv" ? `/series/${n.tmdbId}` : `/film/${n.tmdbId}`;
+  const tag = `${n.type}:${n.media}:${n.tmdbId}`;
+  switch (n.type) {
+    case "release":
+      return {
+        userId: n.userId,
+        category: "releases",
+        payload: { title: "Sortie du jour", body: `${n.title} sort aujourd'hui ${n.detail ?? ""}.`.replace(" .", "."), url, tag },
+      };
+    case "episode":
+      return {
+        userId: n.userId,
+        category: "releases",
+        payload: { title: n.title, body: `Nouvel épisode : ${n.detail ?? ""}`.trim(), url, tag },
+      };
+    case "available":
+      return {
+        userId: n.userId,
+        category: "available",
+        payload: { title: "Disponible en streaming", body: `${n.title} est disponible ${n.detail ?? ""}.`.replace(" .", "."), url, tag },
+      };
+  }
 }

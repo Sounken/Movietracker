@@ -3,6 +3,9 @@ import * as Sentry from "@sentry/nextjs";
 import { prisma } from "@/lib/db";
 import { getFilmCards } from "@/lib/films";
 import { getSeriesCards } from "@/lib/series";
+import { after } from "next/server";
+import { sendPushes } from "@/lib/push";
+import { formatRatingOutOf, toRatingScale } from "@/lib/rating";
 
 /**
  * Fil d'activité : ce que font les personnes qu'on suit (et soi-même).
@@ -51,6 +54,53 @@ function recentActivity(userId: string, media: ActivityMedia, tmdbId: number) {
   });
 }
 
+/**
+ * Prévient les abonnés qui ont choisi « activité des amis » d'une nouvelle
+ * activité. Seulement à la création : compléter une activité récente (la
+ * note après le visionnage) ne renvoie pas de notification.
+ */
+function pushToFollowers(activity: {
+  id: string;
+  userId: string;
+  media: string;
+  tmdbId: number;
+  kind: string;
+  rating: number | null;
+}) {
+  after(async () => {
+    const [author, followers, cards] = await Promise.all([
+      prisma.user.findUnique({ where: { id: activity.userId }, select: { name: true, email: true } }),
+      prisma.userFollow.findMany({
+        where: { followingId: activity.userId, follower: { pushFriends: true } },
+        select: { follower: { select: { id: true, ratingScale: true } } },
+      }),
+      activity.media === "tv" ? getSeriesCards([activity.tmdbId]) : getFilmCards([activity.tmdbId]),
+    ]);
+    if (!author || followers.length === 0) return;
+    const card = cards.get(activity.tmdbId);
+    const title = card ? ("name" in card ? card.name : card.title) : "un titre";
+    const name = author.name ?? author.email.split("@")[0];
+    const verb = activity.kind === "rewatched" ? "a revu" : activity.kind === "watched" ? "a vu" : "a noté";
+    const feed = activity.media === "tv" ? "/series/friends" : "/friends";
+    await sendPushes(
+      followers.map(({ follower }) => ({
+        userId: follower.id,
+        category: "friends",
+        payload: {
+          title: name,
+          body:
+            `${verb} ${title}` +
+            (activity.rating != null
+              ? ` · ★ ${formatRatingOutOf(activity.rating, toRatingScale(follower.ratingScale))}`
+              : ""),
+          url: `${feed}#activite-${activity.id}`,
+          tag: `activity:${activity.id}`,
+        },
+      })),
+    );
+  });
+}
+
 /** Une note (et son avis) vient d'être enregistrée. */
 export async function recordRating(
   userId: string,
@@ -79,9 +129,10 @@ export async function recordRating(
   });
   if (last && last.rating === rating && last.review === reviewSnapshot) return;
 
-  await prisma.activity.create({
+  const created = await prisma.activity.create({
     data: { userId, media, tmdbId, kind: "rated", rating, review: reviewSnapshot },
   });
+  pushToFollowers(created);
 }
 
 /** Un visionnage vient d'être ajouté au journal. */
@@ -102,9 +153,10 @@ export async function recordWatch(
     where: { userId_tmdbId: { userId, tmdbId } },
     select: { rating: true },
   });
-  await prisma.activity.create({
+  const created = await prisma.activity.create({
     data: { userId, media: "movie", tmdbId, kind, filmWatchId, rating: film?.rating ?? null },
   });
+  pushToFollowers(created);
 }
 
 /**

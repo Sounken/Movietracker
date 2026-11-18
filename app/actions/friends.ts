@@ -3,6 +3,8 @@
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
+import { sendPushes } from "@/lib/push";
 
 export async function followUser(targetId: string) {
   const session = await getSession();
@@ -31,6 +33,17 @@ export async function followUser(targetId: string) {
       update: { readAt: null, createdAt: new Date() },
     }),
   ]);
+
+  const actor = session.name ?? "Quelqu'un";
+  after(() =>
+    sendPushes([
+      {
+        userId: targetId,
+        category: "social",
+        payload: { title: "Nouvel abonné", body: `${actor} s'est abonné à vous.`, url: `/user/${session.userId}` },
+      },
+    ]),
+  );
 
   revalidatePath("/friends");
 }

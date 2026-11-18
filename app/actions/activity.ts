@@ -1,6 +1,10 @@
 "use server";
 
+import { after } from "next/server";
 import { getSession } from "@/lib/session";
+import { getFilmCard } from "@/lib/films";
+import { getSeriesCard } from "@/lib/series";
+import { sendPushes } from "@/lib/push";
 import { prisma } from "@/lib/db";
 import {
   canSeeActivity,
@@ -25,7 +29,7 @@ export async function toggleReaction(activityId: string, emoji: string): Promise
 
   const activity = await prisma.activity.findUnique({
     where: { id: activityId },
-    select: { userId: true },
+    select: { userId: true, media: true, tmdbId: true },
   });
   if (!activity || !(await canSeeActivity(userId, activity.userId))) {
     throw new Error("Activité introuvable");
@@ -45,6 +49,26 @@ export async function toggleReaction(activityId: string, emoji: string): Promise
         where: { userId_actorId_type: { userId: activity.userId, actorId: userId, type: "reaction" } },
         create: { userId: activity.userId, actorId: userId, type: "reaction", activityId, emoji },
         update: { activityId, emoji, readAt: null, createdAt: new Date() },
+      });
+      const actor = session.name ?? "Quelqu'un";
+      after(async () => {
+        const title =
+          activity.media === "tv"
+            ? (await getSeriesCard(activity.tmdbId))?.name
+            : (await getFilmCard(activity.tmdbId))?.title;
+        const feed = activity.media === "tv" ? "/series/friends" : "/friends";
+        await sendPushes([
+          {
+            userId: activity.userId,
+            category: "social",
+            payload: {
+              title: `${actor} a réagi ${emoji}`,
+              body: title ? `À votre activité sur ${title}.` : "À votre activité.",
+              url: `${feed}#activite-${activityId}`,
+              tag: `reaction:${activityId}`,
+            },
+          },
+        ]);
       });
     }
   }

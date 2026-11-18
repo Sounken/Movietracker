@@ -3,10 +3,20 @@
 import { useState, useTransition } from "react";
 import { Check } from "lucide-react";
 import { WATCH_PROVIDERS } from "@/lib/tmdb-catalog";
-import { updateWatchProviders } from "@/app/actions/settings";
+import { updateWatchProviders, type PushPreferences } from "@/app/actions/settings";
+import PushSettings from "./PushSettings";
 import styles from "./settings.module.css";
 
-export default function SettingsClient({ watchProviders }: { watchProviders: number[] }) {
+export default function SettingsClient({
+  watchProviders,
+  pushPreferences,
+  pushConfigured,
+}: {
+  watchProviders: number[];
+  pushPreferences: PushPreferences;
+  /** Clés VAPID présentes côté serveur. */
+  pushConfigured: boolean;
+}) {
   const [selected, setSelected] = useState<number[]>(watchProviders);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
@@ -66,6 +76,8 @@ export default function SettingsClient({ watchProviders }: { watchProviders: num
           })}
         </div>
       </section>
+
+      {pushConfigured && <PushSettings initialPreferences={pushPreferences} />}
     </>
   );
 }
