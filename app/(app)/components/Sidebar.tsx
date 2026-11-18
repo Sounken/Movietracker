@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ComponentType } from "react";
+import { useEffect, useRef, useState, type ComponentType } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -86,6 +86,100 @@ const LogoutIcon = () => (
     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
   </svg>
 );
+
+const ChevronIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="m7 15 5-5 5 5" />
+  </svg>
+);
+
+/**
+ * Pied de la barre latérale : le compte, et au clic un menu (profil, réglages,
+ * déconnexion). Les icônes posées à côté du nom rognaient le niveau et ne
+ * disaient pas ce qu'elles faisaient.
+ */
+function AccountMenu({
+  profileHref,
+  avatarUrl,
+  userName,
+  initial,
+  level,
+}: {
+  profileHref: string;
+  avatarUrl: string | null;
+  userName: string | null;
+  initial: string;
+  level: LevelInfo;
+}) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const close = () => setOpen(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointer = (e: MouseEvent) => {
+      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("mousedown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div className={styles.account} ref={wrapRef}>
+      {open && (
+        <div className={styles.accountMenu} role="menu">
+          <Link href={profileHref} className={styles.accountItem} role="menuitem" onClick={close}>
+            <UserIcon />
+            <span>Mon profil</span>
+          </Link>
+          <Link href="/settings" className={styles.accountItem} role="menuitem" onClick={close}>
+            <SettingsIcon />
+            <span>Réglages</span>
+          </Link>
+          <div className={styles.accountSep} />
+          <form action={logout}>
+            <button type="submit" className={`${styles.accountItem} ${styles.accountLogout}`} role="menuitem">
+              <LogoutIcon />
+              <span>Se déconnecter</span>
+            </button>
+          </form>
+        </div>
+      )}
+      <button
+        type="button"
+        className={styles.footRow}
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+      >
+        <div className={styles.avatar}>
+          {avatarUrl ? (
+            <Image src={avatarUrl} alt="" className={styles.avatarImg} width={36} height={36} />
+          ) : (
+            initial
+          )}
+        </div>
+        <div className={styles.footInfo}>
+          <div className={styles.footName}>{userName ?? "Cinéphile"}</div>
+          <div className={styles.footSub}>
+            {level.title} • niv. {level.level}
+          </div>
+          <div className={styles.xpBarWrap} title={`${level.currentXP} / ${level.nextLevelXP} XP`}>
+            <div className={styles.xpBar} style={{ width: `${level.percent}%` }} />
+          </div>
+        </div>
+        <span className={`${styles.footChevron} ${open ? styles.footChevronOpen : ""}`}>
+          <ChevronIcon />
+        </span>
+      </button>
+    </div>
+  );
+}
 
 type Counts = { watchlist: number; liked: number };
 type NavItem = {
@@ -353,37 +447,13 @@ export default function Sidebar({
 
       <div className={styles.navFoot}>
         {isAuthenticated ? (
-          <>
-            <Link href={profileHref} className={styles.footRow}>
-              <div className={styles.avatar}>
-                {avatarUrl ? (
-                  <Image src={avatarUrl} alt={userName ?? "Profil"} className={styles.avatarImg} width={36} height={36} />
-                ) : (
-                  initial
-                )}
-              </div>
-              <div className={styles.footInfo}>
-                <div className={styles.footName}>{userName ?? "Cinéphile"}</div>
-                <div className={styles.footSub}>
-                  {activeLevel.title} • niv. {activeLevel.level}
-                </div>
-                <div className={styles.xpBarWrap} title={`${activeLevel.currentXP} / ${activeLevel.nextLevelXP} XP`}>
-                  <div className={styles.xpBar} style={{ width: `${activeLevel.percent}%` }} />
-                </div>
-              </div>
-            </Link>
-            {/* Empilés : côte à côte, ils rognaient le niveau sous le nom. */}
-            <div className={styles.footActions}>
-              <Link href="/settings" className={styles.logoutBtn} title="Réglages" aria-label="Réglages">
-                <SettingsIcon />
-              </Link>
-              <form action={logout}>
-                <button type="submit" className={styles.logoutBtn} title="Se déconnecter">
-                  <LogoutIcon />
-                </button>
-              </form>
-            </div>
-          </>
+          <AccountMenu
+            profileHref={profileHref}
+            avatarUrl={avatarUrl}
+            userName={userName}
+            initial={initial}
+            level={activeLevel}
+          />
         ) : (
           <Link href="/login" className={styles.loginBtn}>
             <LoginIcon />

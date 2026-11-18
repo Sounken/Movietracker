@@ -243,20 +243,122 @@
   gap: 8px;
 }
 
+/* Compte : toute la ligne ouvre le menu (profil, réglages, déconnexion). */
+.account {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
 .footRow {
   display: flex;
   align-items: center;
   gap: 10px;
+  width: 100%;
   min-width: 0;
-  text-decoration: none;
-  flex: 1;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
   border-radius: 8px;
   padding: 2px;
-  transition: opacity 0.15s;
 }
 
-.footRow:hover {
-  opacity: 0.75;
+.footRow:hover .footChevron,
+.footRow[aria-expanded="true"] .footChevron {
+  color: var(--ink);
+}
+
+.footInfo {
+  flex: 1;
+}
+
+.footChevron {
+  display: grid;
+  place-items: center;
+  color: var(--ink-mute);
+  flex: none;
+  transition: transform var(--dur-fast) var(--ease-out), color var(--dur-fast);
+}
+
+.footChevron svg {
+  width: 16px;
+  height: 16px;
+}
+
+.footChevronOpen {
+  transform: rotate(180deg);
+}
+
+/* S'ouvre vers le haut : le pied est collé au bas de l'écran. */
+.accountMenu {
+  position: absolute;
+  left: -15px;
+  right: -15px;
+  bottom: calc(100% + 22px);
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  z-index: 20;
+  animation: accountIn var(--dur-fast) var(--ease-out);
+}
+
+@keyframes accountIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.accountItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border-radius: 8px;
+  border: none;
+  background: none;
+  color: var(--ink-dim);
+  font: inherit;
+  font-size: 13px;
+  text-decoration: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+
+.accountItem:hover,
+.accountItem:focus-visible {
+  background: var(--hover);
+  color: var(--ink);
+}
+
+.accountItem svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+.accountSep {
+  height: 1px;
+  background: var(--line);
+  margin: 4px 6px;
+}
+
+.accountLogout:hover,
+.accountLogout:focus-visible {
+  color: var(--red-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .accountMenu {
+    animation: none;
+  }
 }
 
 .avatar {
@@ -284,6 +386,7 @@
 .footInfo {
   min-width: 0;
 }
+
 
 .footName {
   font-size: 13px;
@@ -335,36 +438,6 @@
 .loginBtn:hover {
   border-color: var(--accent);
   color: var(--accent);
-}
-
-.footActions {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex-shrink: 0;
-}
-
-.logoutBtn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--ink-mute);
-  display: grid;
-  place-items: center;
-  padding: 4px;
-  border-radius: 6px;
-  transition: color 0.18s, background 0.18s;
-  flex-shrink: 0;
-}
-
-.logoutBtn:hover {
-  color: var(--ink);
-  background: var(--hover);
-}
-
-.logoutBtn svg {
-  width: 16px;
-  height: 16px;
 }
 
 /* Entrées réservées à la barre du bas mobile (profil / connexion / menu) */
