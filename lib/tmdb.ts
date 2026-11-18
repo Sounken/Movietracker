@@ -258,41 +258,95 @@ export async function fetchNewOnStreaming(): Promise<TmdbMovie[]> {
  *     limitée) est volontairement écarté — il fait entrer les projections de
  *     festival et les exclusivités d'une salle, qui ne sont pas « cette
  *     semaine en salles » ;
- *   - fenêtre de 30 jours, la même que la pill « Streaming ».
+ *   - fenêtre calée sur les **semaines de sortie françaises** (voir plus bas).
  *
- * Mesuré sur ces réglages : 71 films au vivier, aucune ressortie.
+ * Le classement, lui, a été repris le 2026-11-18. Une fenêtre de 30 jours
+ * triée par popularité gardait en tête la même grosse sortie pendant un mois :
+ * « Hope », sorti le 28 octobre, restait premier trois semaines plus tard, sa
+ * popularité (250) écrasant tout ce qui était sorti depuis. Trois corrections :
+ *
+ *   - **la semaine compte** : les films sortent le mercredi en France. Le
+ *     vivier couvre la semaine en cours et les deux précédentes, et la
+ *     popularité est divisée par deux à chaque semaine d'ancienneté. Une sortie
+ *     du jour, encore peu notée, passe ainsi devant le succès de la semaine
+ *     d'avant, mais pas devant celui d'il y a trois semaines ;
+ *   - **les ressorties sont écartées** : avec `region=FR` et un type de sortie,
+ *     TMDB renvoie dans `release_date` la *première* date française de ce type.
+ *     « Obsession » (sorti en mai, ressorti pour Halloween) arrive avec sa date
+ *     de mai, et un filtre sur cette date suffit à l'écarter ;
+ *   - **les sorties communautaires sont écartées** : la popularité TMDB est
+ *     mondiale. « Ramayana » (hindi) ou « Scene » (tamoul) ont bien une date
+ *     de sortie nationale en France, mais sur une poignée d'écrans. Leur
+ *     popularité vient de leur marché d'origine, et « Ramayana » arrivait
+ *     troisième. Rien dans TMDB ne mesure la diffusion française ; la langue
+ *     originale est le seul signal fiable.
  */
-const THEATRICAL_WINDOW_DAYS = 30;
+const THEATRICAL_WEEKS = 3;
+const COMMUNITY_RELEASE_LANGUAGES = new Set([
+  "hi", "ta", "te", "ml", "kn", "pa", "bn", "mr", "gu", "ur", "tl",
+]);
+
+// Mercredi (UTC) de la semaine de sortie qui contient `date`.
+function releaseWeekStart(date: Date): Date {
+  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 4) % 7));
+  return d;
+}
+
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 export async function fetchNowPlaying(): Promise<TmdbMovie[]> {
   const key = process.env.TMDB_API_KEY;
   if (!key) return [];
-  const today = new Date().toISOString().split("T")[0];
-  const from = new Date(Date.now() - THEATRICAL_WINDOW_DAYS * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .split("T")[0];
+  const now = new Date();
+  const today = now.toISOString().split("T")[0];
+  const currentWeek = releaseWeekStart(now);
+  const fromDate = new Date(currentWeek.getTime() - (THEATRICAL_WEEKS - 1) * WEEK_MS);
+  const from = fromDate.toISOString().split("T")[0];
+  const url =
+    `${BASE}/discover/movie?api_key=${key}&language=fr-FR&region=FR` +
+    `&sort_by=popularity.desc` +
+    `&with_release_type=3` +
+    `&release_date.gte=${from}&release_date.lte=${today}`;
   try {
-    const res = await tmdbFetch(
-      `${BASE}/discover/movie?api_key=${key}&language=fr-FR&region=FR` +
-        `&sort_by=popularity.desc` +
-        `&with_release_type=3` +
-        `&release_date.gte=${from}&release_date.lte=${today}`,
-      { next: { revalidate: 3600 } },
+    // Deux pages : les exclusions ci-dessous retirent une partie de la
+    // première, et une sortie du jour encore peu populaire peut se trouver
+    // sur la seconde.
+    const pages = await Promise.all(
+      [1, 2].map(async (page) => {
+        const res = await tmdbFetch(`${url}&page=${page}`, { next: { revalidate: 3600 } });
+        if (!res.ok) return [];
+        const data = await res.json();
+        return (data.results ?? []) as Record<string, unknown>[];
+      }),
     );
-    if (!res.ok) return [];
-    const data = await res.json();
-    return ((data.results ?? []) as Record<string, unknown>[])
-      // Le carrousel affiche une image pleine largeur : un film sans backdrop
-      // y laisserait un trou noir.
-      .filter((m) => Boolean(m.backdrop_path))
+    return pages
+      .flat()
+      .filter(
+        (m) =>
+          // Le carrousel affiche une image pleine largeur : un film sans
+          // backdrop y laisserait un trou noir.
+          Boolean(m.backdrop_path) &&
+          typeof m.release_date === "string" &&
+          m.release_date >= from &&
+          !COMMUNITY_RELEASE_LANGUAGES.has(m.original_language as string),
+      )
+      .map((m) => {
+        const weeksOld = Math.round(
+          (currentWeek.getTime() - releaseWeekStart(new Date(m.release_date as string)).getTime()) /
+            WEEK_MS,
+        );
+        return { m, score: ((m.popularity as number) ?? 0) / 2 ** weeksOld };
+      })
+      .sort((a, b) => b.score - a.score)
       .slice(0, 7)
-      .map((m) => ({
+      .map(({ m }) => ({
         id: m.id as number,
         title: (m.title as string) ?? "",
         overview: (m.overview as string) ?? "",
         posterUrl: m.poster_path ? `${IMG}/w500${m.poster_path}` : "",
         backdropUrl: m.backdrop_path ? `${IMG}/${BACKDROP_SIZE}${m.backdrop_path}` : "",
-        year: typeof m.release_date === "string" ? m.release_date.slice(0, 4) : "",
+        year: (m.release_date as string).slice(0, 4),
         voteAverage: Math.round(((m.vote_average as number) ?? 0) * 10) / 10,
         genreIds: (m.genre_ids as number[]) ?? [],
       }));
