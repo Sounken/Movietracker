@@ -29,6 +29,13 @@ const JournalIcon = () => (
     <path d="M3 9h18M8 2v4M16 2v4M8 14h3M8 17h6" />
   </svg>
 );
+const CalendarIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="4" width="18" height="17" rx="2" />
+    <path d="M3 9h18M8 2v4M16 2v4" />
+    <circle cx="12" cy="15" r="2" />
+  </svg>
+);
 const HeartIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
     <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21.2l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z" />
@@ -94,6 +101,7 @@ const filmNav: NavItem[] = [
   { href: "/films/discover", label: "Découvrir", icon: FilmIcon, authOnly: false },
   { href: "/films/lists", label: "Mes listes", icon: ListIcon, authOnly: true },
   { href: "/films/journal", label: "Journal", icon: JournalIcon, authOnly: true },
+  { href: "/films/calendrier", label: "Calendrier", icon: CalendarIcon, authOnly: true },
   { href: "/films/watchlist", label: "À voir", icon: ClockIcon, countKey: "watchlist" as keyof Counts, authOnly: true },
   { href: "/films/favorites", label: "Favoris", icon: HeartIcon, countKey: "liked" as keyof Counts, authOnly: true },
 ];
@@ -102,6 +110,7 @@ const filmNav: NavItem[] = [
 const seriesNav: NavItem[] = [
   { href: "/series", label: "Accueil", icon: HomeIcon, authOnly: true },
   { href: "/series/discover", label: "Découvrir", icon: TvIcon, authOnly: false },
+  { href: "/series/calendrier", label: "Calendrier", icon: CalendarIcon, authOnly: true },
   { href: "/series/watchlist", label: "À voir", icon: ClockIcon, countKey: "watchlist", authOnly: true },
   { href: "/series/favorites", label: "Favoris", icon: HeartIcon, countKey: "liked", authOnly: true },
 ];

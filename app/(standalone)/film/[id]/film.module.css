@@ -735,3 +735,8 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* « Me prévenir », sous les actions de l'affiche, même largeur qu'elles. */
+.posterReminder {
+  margin-top: 10px;
+}

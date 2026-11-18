@@ -1,0 +1,43 @@
+.full,
+.compact {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink-dim);
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color var(--dur-fast), color var(--dur-fast), background var(--dur-fast);
+}
+.full {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+.compact {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  flex: none;
+}
+.full:hover:not(:disabled),
+.compact:hover:not(:disabled) {
+  color: var(--ink);
+  border-color: var(--ink-mute);
+}
+.on {
+  color: var(--accent);
+  border-color: rgba(var(--accent-rgb), 0.55);
+  background: rgba(var(--accent-rgb), 0.1);
+}
+.on:hover:not(:disabled) {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.full:disabled,
+.compact:disabled {
+  cursor: default;
+}

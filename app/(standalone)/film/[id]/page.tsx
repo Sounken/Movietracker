@@ -19,6 +19,9 @@ import FilmTitleLogo from "./components/FilmTitleLogo";
 import PosterActions from "./components/PosterActions";
 import RatingWidget from "./components/RatingWidget";
 import DiaryBlock from "./components/DiaryBlock";
+import ReminderToggle from "@/app/(app)/components/ReminderToggle";
+import { fetchFilmRelease, parisToday } from "@/lib/releases";
+import { formatWatchDate } from "@/lib/watch-date";
 import RemovedTitle from "../../components/RemovedTitle";
 import CastGrid from "./components/CastGrid";
 import SimilarFilms from "./components/SimilarFilms";
@@ -75,7 +78,7 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
   const id = parseInt(idStr);
   if (isNaN(id)) notFound();
 
-  const [session, film, credits, similar, keywords, logoUrl, providers, externalIds, extras, tmdbReviews] =
+  const [session, film, credits, similar, keywords, logoUrl, providers, externalIds, extras, tmdbReviews, release] =
     await Promise.all([
       getSession(),
       fetchFilmDetail(id),
@@ -87,6 +90,7 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
       fetchExternalIds("movie", id),
       fetchFilmExtras(id),
       fetchReviews("movie", id),
+      fetchFilmRelease(id),
     ]);
 
   // Inconnu de TMDB : supprimé ou fusionné si l'application le connaît
@@ -113,7 +117,7 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
   const sagaIds = new Set(sagaFilms.map((f) => f.id));
   const similarFilms = similar.filter((s) => !sagaIds.has(s.id));
 
-  const [userFilm, userLists, listsWithFilmRaw, friendFilms, myProviders, watches] = session
+  const [userFilm, userLists, listsWithFilmRaw, friendFilms, myProviders, watches, reminder] = session
     ? await Promise.all([
         prisma.userFilm.findUnique({
           where: { userId_tmdbId: { userId: session.userId, tmdbId: id } },
@@ -149,8 +153,15 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
           orderBy: [{ watchedAt: "desc" }, { createdAt: "desc" }],
           select: { id: true, watchedAt: true, note: true },
         }),
+        prisma.releaseReminder.findUnique({
+          where: { userId_tmdbId: { userId: session.userId, tmdbId: id } },
+          select: { id: true },
+        }),
       ])
-    : [null, [], [], [], [], []];
+    : [null, [], [], [], [], [], null];
+
+  // « Me prévenir » n'a de sens que si la sortie française est à venir.
+  const upcomingRelease = release && release.date > parisToday() ? release : null;
 
   const listsWithFilm = (listsWithFilmRaw as { listId: string }[]).map((r) => r.listId);
   const reviews = buildReviewCards(friendFilms, tmdbReviews);
@@ -195,6 +206,16 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
             listsWithFilm={listsWithFilm}
             isAuthenticated={!!session}
           />
+          {upcomingRelease && (
+            <div className={styles.posterReminder}>
+              <ReminderToggle
+                tmdbId={id}
+                initial={Boolean(reminder)}
+                isAuthenticated={!!session}
+                label={`Me prévenir · ${upcomingRelease.kind === "digital" ? "en numérique" : "au cinéma"} le ${formatWatchDate(`${upcomingRelease.date}T00:00:00Z`)}`}
+              />
+            </div>
+          )}
           {/* Juste sous les actions : « où le voir » est la question qui suit
               « je veux le voir », pas une annexe en bas de fiche. */}
           <WatchProvidersSection

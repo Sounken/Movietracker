@@ -43,6 +43,7 @@ model User {
   filmWatches    FilmWatch[]
   activities     Activity[]
   reactions      ActivityReaction[]
+  reminders      ReleaseReminder[]
 }
 
 /// Lien de réinitialisation du mot de passe, à usage unique.
@@ -71,11 +72,22 @@ model Notification {
   /// Destinataire.
   userId    String
   user      User      @relation("notificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
-  /// Auteur de l'action à l'origine de la notification.
-  actorId   String
-  actor     User      @relation("notificationActor", fields: [actorId], references: [id], onDelete: Cascade)
-  /// « follow » ou « reaction ».
+  /// Auteur de l'action à l'origine de la notification ; nul pour celles
+  /// qu'envoie l'application elle-même (sortie, épisode, disponibilité).
+  actorId    String?
+  actor      User?     @relation("notificationActor", fields: [actorId], references: [id], onDelete: Cascade)
+  /// « follow », « reaction », « release », « episode » ou « available ».
   type       String
+  /// Œuvre concernée par une notification de l'application, et son titre au
+  /// moment de l'envoi (le texte ne dépend pas d'un appel TMDB à l'affichage).
+  media      String?
+  tmdbId     Int?
+  title      String?
+  /// Précision affichée : « S02E05 », « au cinéma », « sur Netflix »…
+  detail     String?
+  /// Empêche d'envoyer deux fois la même notification de l'application quand
+  /// la tâche quotidienne repasse (« episode:1396:2:5:<userId> »).
+  dedupeKey  String?   @unique
   /// Réaction : l'activité concernée et l'emoji choisi. Une seule ligne par
   /// auteur (contrainte ci-dessous) : elle désigne sa dernière réaction.
   activityId String?
@@ -312,6 +324,21 @@ model ActivityReaction {
   createdAt  DateTime @default(now())
 
   @@unique([activityId, userId, emoji])
+}
+
+/// « Me prévenir » : l'utilisateur veut être notifié de la sortie française
+/// d'un film (en salles, ou en numérique s'il n'y passe pas).
+model ReleaseReminder {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tmdbId     Int
+  createdAt  DateTime  @default(now())
+  /// Renseigné quand la notification de sortie est partie.
+  notifiedAt DateTime?
+
+  @@unique([userId, tmdbId])
+  @@index([notifiedAt])
 }
 
 /// Mesure de performance perçue, envoyée par le navigateur du visiteur.

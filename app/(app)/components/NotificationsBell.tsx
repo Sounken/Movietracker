@@ -16,19 +16,56 @@ type Notification = {
   type: string;
   readAt: string | null;
   createdAt: string;
-  actor: { id: string; name: string | null; avatarUrl: string | null };
+  /** Nul pour les notifications de l'application (sortie, épisode…). */
+  actor: { id: string; name: string | null; avatarUrl: string | null } | null;
   /** Réaction : emoji et activité visée. */
   emoji: string | null;
   activity: { id: string; media: string; title: string } | null;
+  /** Notifications de l'application : œuvre concernée. */
+  media: string | null;
+  tmdbId: number | null;
+  title: string | null;
+  detail: string | null;
 };
 
-/** Une réaction mène à l'activité dans le fil ; un abonnement, au profil. */
+const SYSTEM_ICON: Record<string, string> = { release: "🎬", episode: "📺", available: "✨" };
+
+/**
+ * Une réaction mène à l'activité dans le fil ; un abonnement, au profil ; une
+ * notification de l'application, à la fiche de l'œuvre.
+ */
 function notificationHref(n: Notification): string {
   if (n.type === "reaction" && n.activity) {
     const feed = n.activity.media === "tv" ? "/series/friends" : "/friends";
     return `${feed}#activite-${n.activity.id}`;
   }
-  return `/user/${n.actor.id}`;
+  if (n.tmdbId) return n.media === "tv" ? `/series/${n.tmdbId}` : `/film/${n.tmdbId}`;
+  return n.actor ? `/user/${n.actor.id}` : "#";
+}
+
+function NotificationText({ n }: { n: Notification }) {
+  const title = <em>{n.title}</em>;
+  switch (n.type) {
+    case "release":
+      return <>{title} sort aujourd&apos;hui {n.detail}.</>;
+    case "episode":
+      return <>Nouvel épisode de {title} : {n.detail}.</>;
+    case "available":
+      return <>{title} est disponible {n.detail}.</>;
+    case "reaction":
+      return (
+        <>
+          <strong>{n.actor?.name ?? "Quelqu'un"}</strong> a réagi {n.emoji} à votre activité sur{" "}
+          <em>{n.activity?.title}</em>.
+        </>
+      );
+    default:
+      return (
+        <>
+          <strong>{n.actor?.name ?? "Quelqu'un"}</strong> s&apos;est abonné à vous.
+        </>
+      );
+  }
 }
 
 /** « il y a 3 h », « il y a 2 j » — plus lisible qu'une date pour du récent. */
@@ -167,7 +204,11 @@ export default function NotificationsBell({
               className={`${styles.item} ${n.readAt ? "" : styles.itemUnread}`}
               onClick={() => setOpen(false)}
             >
-              {n.actor.avatarUrl ? (
+              {!n.actor ? (
+                <div className={`${styles.avatar} ${styles.avatarEmpty}`} aria-hidden="true">
+                  {SYSTEM_ICON[n.type] ?? "🔔"}
+                </div>
+              ) : n.actor.avatarUrl ? (
                 <Image
                   src={n.actor.avatarUrl}
                   alt=""
@@ -181,14 +222,7 @@ export default function NotificationsBell({
                 </div>
               )}
               <div className={styles.text}>
-                <strong>{n.actor.name ?? "Quelqu'un"}</strong>{" "}
-                {n.type === "reaction" && n.activity ? (
-                  <>
-                    a réagi {n.emoji} à votre activité sur <em>{n.activity.title}</em>.
-                  </>
-                ) : (
-                  <>s&apos;est abonné à vous.</>
-                )}
+                <NotificationText n={n} />
                 <div className={styles.time}>{relativeTime(n.createdAt)}</div>
               </div>
             </Link>

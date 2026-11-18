@@ -5,8 +5,8 @@ import { discoverQuery, parseDiscoverParams } from "@/lib/discover-params";
 // Routes nécessitant une connexion. /films et /series (accueils) + discover/trends
 // restent publics ; seules les pages perso sont protégées.
 const privateRoutes = [
-  "/films/lists", "/films/journal", "/films/bilan", "/films/watchlist", "/films/favorites", "/films/profile",
-  "/series/lists", "/series/watchlist", "/series/favorites", "/series/profile",
+  "/films/lists", "/films/journal", "/films/bilan", "/films/calendrier", "/films/watchlist", "/films/favorites", "/films/profile",
+  "/series/lists", "/series/calendrier", "/series/watchlist", "/series/favorites", "/series/profile",
   "/friends", "/series/friends", "/settings",
 ];
 
