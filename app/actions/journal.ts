@@ -5,6 +5,7 @@ import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { fetchFilmDetail } from "@/lib/tmdb";
 import { parseWatchDate, syncLatestWatch, WATCH_NOTE_MAX_LENGTH } from "@/lib/journal";
+import { forgetWatch, recordWatch, track } from "@/lib/activity";
 
 function revalidateJournal(tmdbId: number) {
   revalidatePath("/films");
@@ -34,7 +35,7 @@ export async function logFilmWatch(tmdbId: number, date: string, note: string = 
   // La durée alimente les statistiques (heures vues) : on la récupère une fois.
   const runtime = existing?.runtime ?? (await fetchFilmDetail(tmdbId))?.runtime ?? null;
 
-  await prisma.$transaction([
+  const [, watch] = await prisma.$transaction([
     prisma.userFilm.upsert({
       where: { userId_tmdbId: { userId, tmdbId } },
       update: { watched: true, watchlist: false, ...(runtime ? { runtime } : {}) },
@@ -50,6 +51,9 @@ export async function logFilmWatch(tmdbId: number, date: string, note: string = 
     }),
   ]);
   await syncLatestWatch(userId, tmdbId);
+  // Revu s'il existe un autre visionnage, même plus récent (saisie a posteriori).
+  const others = await prisma.filmWatch.count({ where: { userId, tmdbId, id: { not: watch.id } } });
+  await track(recordWatch(userId, tmdbId, watch.id, others > 0));
   revalidateJournal(tmdbId);
 }
 
@@ -64,6 +68,7 @@ export async function deleteFilmWatch(id: string) {
   });
   if (!watch) return;
 
+  await track(forgetWatch(id));
   await prisma.filmWatch.delete({ where: { id } });
   await syncLatestWatch(session.userId, watch.tmdbId);
   revalidateJournal(watch.tmdbId);

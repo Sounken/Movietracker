@@ -42,18 +42,25 @@ export async function syncLatestWatch(userId: string, tmdbId: number) {
  * depuis la fiche passe par `logFilmWatch`, qui accepte deux visionnages le
  * même jour.
  */
-export async function addMissingWatches(userId: string, tmdbId: number, dates: Date[]) {
-  if (dates.length === 0) return;
+export async function addMissingWatches(
+  userId: string,
+  tmdbId: number,
+  dates: Date[],
+): Promise<{ id: string; watchedAt: Date }[]> {
+  if (dates.length === 0) return [];
   const existing = await prisma.filmWatch.findMany({
     where: { userId, tmdbId },
     select: { watchedAt: true },
   });
   const known = new Set(existing.map((w) => w.watchedAt.getTime()));
   const missing = [...new Set(dates.map((d) => d.getTime()))].filter((t) => !known.has(t));
-  if (missing.length > 0) {
-    await prisma.filmWatch.createMany({
-      data: missing.map((t) => ({ userId, tmdbId, watchedAt: new Date(t) })),
-    });
-  }
+  const created =
+    missing.length > 0
+      ? await prisma.filmWatch.createManyAndReturn({
+          data: missing.map((t) => ({ userId, tmdbId, watchedAt: new Date(t) })),
+          select: { id: true, watchedAt: true },
+        })
+      : [];
   await syncLatestWatch(userId, tmdbId);
+  return created;
 }

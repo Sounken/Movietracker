@@ -41,6 +41,8 @@ model User {
   puzzlePlays    PuzzlePlay[]
   passwordResets PasswordResetToken[]
   filmWatches    FilmWatch[]
+  activities     Activity[]
+  reactions      ActivityReaction[]
 }
 
 /// Lien de réinitialisation du mot de passe, à usage unique.
@@ -72,11 +74,16 @@ model Notification {
   /// Auteur de l'action à l'origine de la notification.
   actorId   String
   actor     User      @relation("notificationActor", fields: [actorId], references: [id], onDelete: Cascade)
-  /// « follow » pour l'instant.
-  type      String
+  /// « follow » ou « reaction ».
+  type       String
+  /// Réaction : l'activité concernée et l'emoji choisi. Une seule ligne par
+  /// auteur (contrainte ci-dessous) : elle désigne sa dernière réaction.
+  activityId String?
+  activity   Activity? @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  emoji      String?
   /// Nul tant que la notification n'a pas été vue.
-  readAt    DateTime?
-  createdAt DateTime  @default(now())
+  readAt     DateTime?
+  createdAt  DateTime  @default(now())
 
   /// Se désabonner puis se réabonner ne doit pas empiler les notifications :
   /// la ligne existante est réutilisée et redevient non lue.
@@ -258,9 +265,53 @@ model FilmWatch {
   /// Remarque facultative (« au cinéma », « avec Léa »…).
   note      String?
   createdAt DateTime @default(now())
+  activity  Activity?
 
   @@index([userId, watchedAt])
   @@index([userId, tmdbId])
+}
+
+/// Un événement du fil d'activité : une note, un visionnage, un revisionnage.
+///
+/// Noter un film puis le dater dans le journal le même jour produit une seule
+/// activité (« a vu X — ★ 8 »), pas deux : une action récente sur la même
+/// œuvre est complétée plutôt que doublée (cf. lib/activity.ts).
+model Activity {
+  id            String             @id @default(cuid())
+  userId        String
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// « movie » ou « tv ».
+  media         String
+  tmdbId        Int
+  /// « rated », « watched » ou « rewatched ».
+  kind          String
+  /// Note et avis au moment de l'activité (sur 10).
+  rating        Float?
+  review        String?
+  /// Visionnage du journal à l'origine de l'activité, le cas échéant.
+  filmWatchId   String?            @unique
+  filmWatch     FilmWatch?         @relation(fields: [filmWatchId], references: [id], onDelete: SetNull)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  reactions     ActivityReaction[]
+  notifications Notification[]
+
+  @@index([userId, media, createdAt])
+  @@index([userId, media, tmdbId])
+}
+
+/// Réaction emoji d'un utilisateur à une activité. Plusieurs emojis possibles
+/// par personne, chacun une fois.
+model ActivityReaction {
+  id         String   @id @default(cuid())
+  activityId String
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emoji      String
+  createdAt  DateTime @default(now())
+
+  @@unique([activityId, userId, emoji])
 }
 
 /// Mesure de performance perçue, envoyée par le navigateur du visiteur.

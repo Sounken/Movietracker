@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { tmdbTitleExists } from "@/lib/tmdb";
+import { forgetRating, recordRating, track } from "@/lib/activity";
 
 // Mêmes anciennes routes que pour les films : `/`, `/watchlist` et `/profile`
 // n'existent plus depuis la scission Films / Séries, elles ne revalidaient
@@ -52,6 +53,7 @@ export async function saveSeriesRating(tmdbId: number, rating: number, review: s
     update: { rating, review, watched: true, watchlist: false },
     create: { userId: session.userId, tmdbId, rating, review, watched: true, watchlist: false },
   });
+  await track(recordRating(session.userId, "tv", tmdbId, rating, review));
 
   revalidateSeriesPages(tmdbId);
 }
@@ -109,6 +111,7 @@ export async function deleteSeriesRating(tmdbId: number) {
       data: { rating: null, review: "" },
     });
   }
+  await track(forgetRating(session.userId, "tv", tmdbId));
 
   revalidateSeriesPages(tmdbId);
 }

@@ -1,9 +1,10 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import { getSeriesCards } from "@/lib/series";
 import { computeXP, getLevelInfo } from "@/lib/xp";
 import Topbar from "../../components/Topbar";
+import { getFeed } from "@/lib/activity";
+import ActivityFeed from "../../friends/ActivityFeed";
 import FriendsClient from "../../friends/FriendsClient";
 import { getGreeting } from "@/lib/greeting";
 
@@ -45,36 +46,7 @@ export default async function SeriesFriendsPage() {
 
   const followingIds = new Set(followingRaw.map((f) => f.followingId));
 
-  const recentActivity = await prisma.userSeries.findMany({
-    where: {
-      userId: { in: [...followingIds] },
-      OR: [{ watched: true }, { rating: { not: null } }, { liked: true }],
-    },
-    include: { user: { select: { id: true, name: true, email: true, avatarUrl: true } } },
-    orderBy: { updatedAt: "desc" },
-    take: 20,
-  });
-
-  const activityCards = await getSeriesCards(recentActivity.map((i) => i.tmdbId));
-  const activity = recentActivity.map((item) => {
-    const c = activityCards.get(item.tmdbId);
-    return {
-      id: item.id,
-      tmdbId: item.tmdbId,
-      title: c?.name ?? "Série inconnue",
-      posterUrl: c?.posterUrl ?? null,
-      year: c?.year ?? "",
-      watched: item.watched,
-      liked: item.liked,
-      rating: item.rating,
-      updatedAt: item.updatedAt.toISOString(),
-      user: {
-        id: item.user.id,
-        name: item.user.name ?? item.user.email.split("@")[0],
-        avatarUrl: item.user.avatarUrl,
-      },
-    };
-  });
+  const feed = await getFeed(session.userId, "tv");
 
   const following = followingRaw.map((f) => {
     const ratings = f.following.series.map((s) => s.rating).filter(Boolean) as number[];
@@ -109,8 +81,15 @@ export default async function SeriesFriendsPage() {
       <FriendsClient
         following={following}
         followers={followers}
-        activity={activity}
-        mediaBase="/series"
+        feed={
+          <ActivityFeed
+            initialItems={feed.items}
+            initialHasMore={feed.hasMore}
+            media="tv"
+            mediaBase="/series"
+            profileBase="/series/user"
+          />
+        }
         countNoun="série"
         compareBase="/series/compare"
         profileBase="/series/user"

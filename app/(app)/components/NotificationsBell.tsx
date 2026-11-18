@@ -17,7 +17,19 @@ type Notification = {
   readAt: string | null;
   createdAt: string;
   actor: { id: string; name: string | null; avatarUrl: string | null };
+  /** Réaction : emoji et activité visée. */
+  emoji: string | null;
+  activity: { id: string; media: string; title: string } | null;
 };
+
+/** Une réaction mène à l'activité dans le fil ; un abonnement, au profil. */
+function notificationHref(n: Notification): string {
+  if (n.type === "reaction" && n.activity) {
+    const feed = n.activity.media === "tv" ? "/series/friends" : "/friends";
+    return `${feed}#activite-${n.activity.id}`;
+  }
+  return `/user/${n.actor.id}`;
+}
 
 /** « il y a 3 h », « il y a 2 j » — plus lisible qu'une date pour du récent. */
 const RELATIVE = new Intl.RelativeTimeFormat("fr-FR", { numeric: "auto" });
@@ -151,7 +163,7 @@ export default function NotificationsBell({
           {items.map((n) => (
             <Link
               key={n.id}
-              href={`/user/${n.actor.id}`}
+              href={notificationHref(n)}
               className={`${styles.item} ${n.readAt ? "" : styles.itemUnread}`}
               onClick={() => setOpen(false)}
             >
@@ -169,7 +181,14 @@ export default function NotificationsBell({
                 </div>
               )}
               <div className={styles.text}>
-                <strong>{n.actor.name ?? "Quelqu'un"}</strong> s&apos;est abonné à vous.
+                <strong>{n.actor.name ?? "Quelqu'un"}</strong>{" "}
+                {n.type === "reaction" && n.activity ? (
+                  <>
+                    a réagi {n.emoji} à votre activité sur <em>{n.activity.title}</em>.
+                  </>
+                ) : (
+                  <>s&apos;est abonné à vous.</>
+                )}
                 <div className={styles.time}>{relativeTime(n.createdAt)}</div>
               </div>
             </Link>

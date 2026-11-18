@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/session";
+import { getFilmCards } from "@/lib/films";
+import { getSeriesCards } from "@/lib/series";
 
 /**
  * Notifications de l'utilisateur connecté.
@@ -29,13 +31,35 @@ export async function GET() {
         type: true,
         readAt: true,
         createdAt: true,
+        emoji: true,
         actor: { select: { id: true, name: true, avatarUrl: true } },
+        activity: { select: { id: true, media: true, tmdbId: true } },
       },
     }),
     prisma.notification.count({ where: { userId: session.userId, readAt: null } }),
   ]);
 
-  return NextResponse.json({ items, unread });
+  // Titre de l'œuvre visée par une réaction : la notification le cite.
+  const reacted = items.flatMap((n) => (n.activity ? [n.activity] : []));
+  const [films, series] = await Promise.all([
+    getFilmCards(reacted.filter((a) => a.media === "movie").map((a) => a.tmdbId)),
+    getSeriesCards(reacted.filter((a) => a.media === "tv").map((a) => a.tmdbId)),
+  ]);
+
+  return NextResponse.json({
+    unread,
+    items: items.map(({ activity, ...n }) => ({
+      ...n,
+      activity: activity && {
+        id: activity.id,
+        media: activity.media,
+        title:
+          activity.media === "tv"
+            ? (series.get(activity.tmdbId)?.name ?? "une série")
+            : (films.get(activity.tmdbId)?.title ?? "un film"),
+      },
+    })),
+  });
 }
 
 /** Marque tout comme lu — appelé à l'ouverture du panneau. */

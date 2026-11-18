@@ -375,6 +375,11 @@
 .btnUnfollow:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* Activity feed */
+.feedHint {
+  padding: 14px 20px 0;
+  font-size: 13px;
+  color: var(--ink-mute);
+}
 .feed { padding: 8px 0; }
 .feedItem {
   display: flex;

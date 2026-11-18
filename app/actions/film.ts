@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { fetchFilmDetail, tmdbTitleExists } from "@/lib/tmdb";
 import { revalidatePath } from "next/cache";
 import { addMissingWatches, parseWatchDate } from "@/lib/journal";
+import { forgetRating, recordRating, recordWatch, track } from "@/lib/activity";
 import { redirect } from "next/navigation";
 
 // Toutes les pages « monde Films » qui affichent la collection de l'utilisateur.
@@ -60,6 +61,7 @@ export async function saveRating(tmdbId: number, rating: number, review: string)
     update: { rating, review, watched: true, watchlist: false, ...(runtime ? { runtime } : {}) },
     create: { userId: session.userId, tmdbId, rating, review, watched: true, watchlist: false, runtime },
   });
+  await track(recordRating(session.userId, "movie", tmdbId, rating, review));
 
   revalidateFilmPages(tmdbId);
 }
@@ -100,9 +102,16 @@ export async function addFilm(data: {
     },
   });
 
+  if (data.rating != null) {
+    await track(recordRating(session.userId, "movie", data.tmdbId, data.rating, data.review));
+  }
+
   // Une date de visionnage saisie à l'ajout devient une ligne du journal.
   const watchedAt = data.watched ? parseWatchDate(data.watchedAt) : null;
-  if (watchedAt) await addMissingWatches(session.userId, data.tmdbId, [watchedAt]);
+  if (watchedAt) {
+    const [created] = await addMissingWatches(session.userId, data.tmdbId, [watchedAt]);
+    if (created) await track(recordWatch(session.userId, data.tmdbId, created.id, false));
+  }
 
   revalidateFilmPages(data.tmdbId);
   revalidatePath("/films/journal");
@@ -145,6 +154,7 @@ export async function deleteRating(tmdbId: number) {
       data: { rating: null, review: "" },
     });
   }
+  await track(forgetRating(session.userId, "movie", tmdbId));
 
   revalidateFilmPages(tmdbId);
 }

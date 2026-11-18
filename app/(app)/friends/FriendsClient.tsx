@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { followUser, unfollowUser } from "@/app/actions/friends";
-import { Check, Heart, GitCompare, Search as SearchGlyph, X as XGlyph } from "lucide-react";
+import { Check, GitCompare, Search as SearchGlyph, X as XGlyph } from "lucide-react";
 import styles from "./friends.module.css";
 import { Rating } from "@/lib/rating-scale";
 
@@ -17,23 +17,7 @@ type FollowerUser  = {
   id: string; name: string; avatarUrl: string | null; followsBack: boolean;
   level: number; levelTitle: string;
 };
-type ActivityItem  = {
-  id: string; tmdbId: number; title: string; posterUrl: string | null; year: string;
-  watched: boolean; liked: boolean; rating: number | null;
-  updatedAt: string;
-  user: { id: string; name: string; avatarUrl: string | null };
-};
 type SearchResult  = { id: string; name: string; avatarUrl: string | null; filmCount: number; isFollowing: boolean };
-
-function timeAgo(iso: string) {
-  const diff = Date.now() - new Date(iso).getTime();
-  const m = Math.floor(diff / 60000);
-  if (m < 60) return `Il y a ${m}min`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `Il y a ${h}h`;
-  const d = Math.floor(h / 24);
-  return `Il y a ${d}j`;
-}
 
 function Avatar({
   url,
@@ -136,17 +120,15 @@ function ListSearch({
 export default function FriendsClient({
   following: initialFollowing,
   followers,
-  activity,
-  mediaBase = "/film",
+  feed,
   countNoun = "film",
   compareBase = "/compare",
   profileBase = "/user",
 }: {
   following: FollowingUser[];
   followers: FollowerUser[];
-  activity: ActivityItem[];
-  /** « /film » (défaut) ou « /series » — base des liens d'activité */
-  mediaBase?: string;
+  /** Fil d'activité, rendu par la page (cf. ActivityFeed). */
+  feed: React.ReactNode;
   /** « film » (défaut) ou « série » — nom pour les compteurs */
   countNoun?: string;
   /** « /compare » (défaut) ou « /series/compare » — base du lien de comparaison */
@@ -391,50 +373,11 @@ export default function FriendsClient({
           <div className={styles.section}>
             <div className={styles.sectionTitle}>
               Activité récente
-              <span className={styles.sectionCount}>{activity.length}</span>
             </div>
-            {initialFollowing.length === 0 ? (
-              <div className={styles.empty}>Suis des amis pour voir leur activité ici.</div>
-            ) : activity.length === 0 ? (
-              <div className={styles.empty}>Aucune activité récente.</div>
-            ) : (
-              <div className={styles.feed}>
-                {activity.map((item) => (
-                  <div key={item.id} className={styles.feedItem}>
-                    <Avatar url={item.user.avatarUrl} name={item.user.name} size={34} />
-                    <div className={styles.feedContent}>
-                      <div className={styles.feedText}>
-                        <Link href={`${profileBase}/${item.user.id}`} className={styles.feedName}>
-                          {item.user.name}
-                        </Link>
-                        {item.liked && !item.rating && " a aimé "}
-                        {item.watched && !item.rating && !item.liked && " a regardé "}
-                        {item.rating != null && " a noté "}
-                        <Link href={`${mediaBase}/${item.tmdbId}`} className={styles.feedFilm}>
-                          {item.title}
-                        </Link>
-                        {item.rating != null && (
-                          <span className={styles.feedRating}> ★ <Rating value={item.rating} /></span>
-                        )}
-                        {item.liked && <span className={styles.feedLiked}> <Heart size={11} fill="currentColor" /></span>}
-                      </div>
-                      <div className={styles.feedTime}>{timeAgo(item.updatedAt)}</div>
-                    </div>
-                    {item.posterUrl && (
-                      <div className={styles.feedPoster}>
-                        <Image
-                          src={item.posterUrl}
-                          alt={item.title}
-                          fill
-                          sizes="30px"
-                          style={{ objectFit: "cover" }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+            {initialFollowing.length === 0 && (
+              <div className={styles.feedHint}>Suis des amis pour voir leur activité ici.</div>
             )}
+            {feed}
           </div>
         </div>
       </div>
