@@ -58,3 +58,35 @@ export const WATCH_PROVIDERS: Array<{ id: number; name: string }> = [
   { id: 119, name: "Prime Video" },
   { id: 35, name: "Rakuten TV" },
 ];
+
+/**
+ * Déclinaisons d'une même plateforme chez TMDB : offre avec publicité, offre
+ * premium, ou chaîne revendue par Amazon / Apple. Un abonné Netflix regarde
+ * aussi ce qui est listé sous « Netflix Standard with Ads ».
+ *
+ * Relevé le 2026-11-18 sur /watch/providers/{movie,tv} (watch_region=FR).
+ * Canal+ Séries est inclus dans l'abonnement Canal+.
+ */
+const PROVIDER_VARIANTS: Record<number, number[]> = {
+  8: [1796],
+  119: [2100],
+  381: [345],
+  531: [2303, 582, 1853],
+  1899: [1825],
+  11: [201],
+  223: [296],
+  283: [1968],
+  350: [2243],
+};
+
+const CANONICAL_PROVIDER = new Map<number, number>(
+  Object.entries(PROVIDER_VARIANTS).flatMap(([main, variants]) =>
+    [Number(main), ...variants].map((id) => [id, Number(main)] as const),
+  ),
+);
+
+/** Identifiant de la plateforme de `WATCH_PROVIDERS` dont `id` est une déclinaison. */
+export function canonicalProvider(id: number): number {
+  return CANONICAL_PROVIDER.get(id) ?? id;
+}
+

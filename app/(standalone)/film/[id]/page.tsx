@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getSession } from "@/lib/session";
+import { getUserWatchProviders } from "@/lib/user-settings";
 import { BASE_OPEN_GRAPH } from "@/lib/site";
 import { prisma } from "@/lib/db";
 import { saveRating, deleteRating } from "@/app/actions/film";
@@ -111,7 +112,7 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
   const sagaIds = new Set(sagaFilms.map((f) => f.id));
   const similarFilms = similar.filter((s) => !sagaIds.has(s.id));
 
-  const [userFilm, userLists, listsWithFilmRaw, friendFilms] = session
+  const [userFilm, userLists, listsWithFilmRaw, friendFilms, myProviders] = session
     ? await Promise.all([
         prisma.userFilm.findUnique({
           where: { userId_tmdbId: { userId: session.userId, tmdbId: id } },
@@ -141,8 +142,9 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
           },
           orderBy: { updatedAt: "desc" },
         }),
+        getUserWatchProviders(session.userId),
       ])
-    : [null, [], [], []];
+    : [null, [], [], [], []];
 
   const listsWithFilm = (listsWithFilmRaw as { listId: string }[]).map((r) => r.listId);
   const reviews = buildReviewCards(friendFilms, tmdbReviews);
@@ -191,6 +193,7 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
               « je veux le voir », pas une annexe en bas de fiche. */}
           <WatchProvidersSection
             providers={providers}
+            mine={myProviders}
             sectionClassName={styles.posterProviders}
             titleClassName={styles.sectionTitle}
             compact

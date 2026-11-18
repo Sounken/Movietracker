@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronDown, X, Check } from "lucide-react";
 import { TV_GENRES, WATCH_PROVIDERS } from "@/lib/tmdb";
@@ -84,6 +85,7 @@ export default function SeriesDiscoverFilters({
   minRating,
   providers,
   showForYou,
+  myProviders,
 }: {
   category: string;
   genre: string;
@@ -94,6 +96,8 @@ export default function SeriesDiscoverFilters({
   /** Sélection de plateformes telle qu'elle apparaît dans l'URL (« 8,119 »). */
   providers: string;
   showForYou: boolean;
+  /** Plateformes enregistrées dans les réglages ; `null` hors connexion. */
+  myProviders: number[] | null;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -125,12 +129,18 @@ export default function SeriesDiscoverFilters({
     setParams({ providers: serializeProviders(next) });
   };
 
+  const sameSelection = (ids: number[]) =>
+    ids.length === selectedProviders.length && ids.every((id) => selectedProviders.includes(id));
+  const mineSelected = Boolean(myProviders?.length) && sameSelection(myProviders ?? []);
+
   const providerLabel =
     selectedProviders.length === 0
       ? "Plateforme"
-      : selectedProviders.length === 1
-        ? (WATCH_PROVIDERS.find((p) => p.id === selectedProviders[0])?.name ?? "Plateforme")
-        : `${selectedProviders.length} plateformes`;
+      : mineSelected
+        ? "Mes plateformes"
+        : selectedProviders.length === 1
+          ? (WATCH_PROVIDERS.find((p) => p.id === selectedProviders[0])?.name ?? "Plateforme")
+          : `${selectedProviders.length} plateformes`;
 
   const hasFilters = Boolean(genre || minYear || maxYear || minRating || anime || providers);
   const filterable = category !== "for_you";
@@ -245,6 +255,19 @@ export default function SeriesDiscoverFilters({
                 >
                   Toutes les plateformes
                 </button>
+                {myProviders !== null &&
+                  (myProviders.length > 0 ? (
+                    <button
+                      className={`${styles.dropdownItem} ${mineSelected ? styles.dropdownItemOn : ""}`}
+                      onClick={() => setParams({ providers: serializeProviders(myProviders) })}
+                    >
+                      Mes plateformes
+                    </button>
+                  ) : (
+                    <Link href="/settings" className={styles.dropdownItem}>
+                      Choisir mes plateformes…
+                    </Link>
+                  ))}
                 {WATCH_PROVIDERS.map((p) => {
                   const on = selectedProviders.includes(p.id);
                   return (

@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getSession } from "@/lib/session";
+import { getUserWatchProviders } from "@/lib/user-settings";
 import { BASE_OPEN_GRAPH } from "@/lib/site";
 import { prisma } from "@/lib/db";
 import { fetchSeriesBundle, fetchReviews, formatRuntime } from "@/lib/tmdb";
@@ -128,7 +129,7 @@ export default async function SeriesPage({ params }: { params: Promise<{ id: str
     logoUrl,
   } = bundle;
 
-  const [userSeries, watchedEpisodes, seasonRatings] = session
+  const [userSeries, watchedEpisodes, seasonRatings, myProviders] = session
     ? await Promise.all([
         prisma.userSeries.findUnique({
           where: { userId_tmdbId: { userId: session.userId, tmdbId: id } },
@@ -141,8 +142,9 @@ export default async function SeriesPage({ params }: { params: Promise<{ id: str
           where: { userId: session.userId, seriesId: id, rating: { not: null } },
           select: { seasonNumber: true, rating: true },
         }),
+        getUserWatchProviders(session.userId),
       ])
-    : [null, [], []];
+    : [null, [], [], []];
 
   // Avis des personnes suivies, avec une note et/ou un texte (un avis vide est
   // stocké comme ""), comme sur la fiche film.
@@ -222,6 +224,7 @@ export default async function SeriesPage({ params }: { params: Promise<{ id: str
           {/* Juste sous les actions, comme sur la fiche film. */}
           <WatchProvidersSection
             providers={providers}
+            mine={myProviders}
             sectionClassName={filmStyles.posterProviders}
             titleClassName={filmStyles.sectionTitle}
             compact

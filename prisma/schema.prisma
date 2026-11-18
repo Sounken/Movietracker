@@ -18,6 +18,10 @@ model User {
   /// Échelle d'affichage des notes : 10 (défaut) ou 100. Les notes restent
   /// stockées sur 10 dans UserFilm/UserSeries, seul l'affichage change.
   ratingScale    Int                  @default(10)
+  /// Plateformes auxquelles l'utilisateur est abonné (identifiants TMDB de
+  /// `WATCH_PROVIDERS`). Sert au raccourci « Mes plateformes » de Découvrir
+  /// et à signaler, sur les fiches, ce qui est inclus dans ses abonnements.
+  watchProviders Int[]                @default([])
   /// Incrémenté à chaque réinitialisation du mot de passe. Chaque session
   /// emporte la valeur du moment : une session plus ancienne n'est plus
   /// reconnue, ce qui déconnecte tous les appareils d'un coup.

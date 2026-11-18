@@ -7,7 +7,7 @@ import { discoverQuery, parseDiscoverParams } from "@/lib/discover-params";
 const privateRoutes = [
   "/films/lists", "/films/watchlist", "/films/favorites", "/films/profile",
   "/series/lists", "/series/watchlist", "/series/favorites", "/series/profile",
-  "/friends", "/series/friends",
+  "/friends", "/series/friends", "/settings",
 ];
 
 function isPrivateRoute(path: string): boolean {

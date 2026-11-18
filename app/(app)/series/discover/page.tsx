@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
+import { getUserWatchProviders } from "@/lib/user-settings";
 import { fetchDiscoverSeries, fetchOnTheAirSeries, fetchSeriesLogo } from "@/lib/tmdb";
 import { fetchForYouSeries } from "@/lib/recommendations";
 import { parseProviders } from "@/lib/watch-providers";
@@ -51,7 +52,7 @@ export default async function SeriesDiscoverPage({
   // « Découvrir » côté films : les connectés l'ont déjà sur leur accueil.
   const showHero = !session;
 
-  const [series, onAir, libraryStatus] = await Promise.all([
+  const [series, onAir, libraryStatus, myProviders] = await Promise.all([
     category === "for_you" && session
       ? fetchForYouSeries(session.userId)
       : fetchDiscoverSeries(category, {
@@ -64,6 +65,7 @@ export default async function SeriesDiscoverPage({
         }),
     showHero ? fetchOnTheAirSeries() : Promise.resolve([]),
     getSeriesLibraryStatus(session?.userId ?? null),
+    getUserWatchProviders(session?.userId),
   ]);
 
   const heroLogos = Object.fromEntries(
@@ -108,6 +110,7 @@ export default async function SeriesDiscoverPage({
           minRating={minRating}
           providers={providers}
           showForYou={Boolean(session)}
+          myProviders={session ? myProviders : null}
         />
       </Suspense>
 

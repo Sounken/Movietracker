@@ -226,6 +226,11 @@
   color: var(--accent);
 }
 
+/* « Choisir mes plateformes… » mène aux réglages : un lien habillé en entrée. */
+a.dropdownItem {
+  text-decoration: none;
+}
+
 /* Entrée à cocher (multi-sélection des plateformes) */
 .checkItem {
   display: flex;

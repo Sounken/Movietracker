@@ -62,6 +62,12 @@ const TvIcon = () => (
     <path d="m17 2-5 5-5-5" />
   </svg>
 );
+const SettingsIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="3" />
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
+  </svg>
+);
 const LogoutIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
@@ -312,6 +318,12 @@ export default function Sidebar({
               </Link>
             ))}
             {isAuthenticated && (
+              <Link href="/settings" className={styles.sheetItem} onClick={() => setMenuOpen(false)}>
+                <SettingsIcon />
+                <span>Réglages</span>
+              </Link>
+            )}
+            {isAuthenticated && (
               <form action={logout}>
                 <button type="submit" className={`${styles.sheetItem} ${styles.sheetItemLogout}`}>
                   <LogoutIcon />
@@ -344,11 +356,17 @@ export default function Sidebar({
                 </div>
               </div>
             </Link>
-            <form action={logout}>
-              <button type="submit" className={styles.logoutBtn} title="Se déconnecter">
-                <LogoutIcon />
-              </button>
-            </form>
+            {/* Empilés : côte à côte, ils rognaient le niveau sous le nom. */}
+            <div className={styles.footActions}>
+              <Link href="/settings" className={styles.logoutBtn} title="Réglages" aria-label="Réglages">
+                <SettingsIcon />
+              </Link>
+              <form action={logout}>
+                <button type="submit" className={styles.logoutBtn} title="Se déconnecter">
+                  <LogoutIcon />
+                </button>
+              </form>
+            </div>
           </>
         ) : (
           <Link href="/login" className={styles.loginBtn}>

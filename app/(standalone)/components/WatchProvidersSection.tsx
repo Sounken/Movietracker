@@ -1,5 +1,6 @@
 import Image from "next/image";
 import type { WatchProviders } from "@/lib/tmdb";
+import { canonicalProvider } from "@/lib/tmdb-catalog";
 import styles from "./WatchProvidersSection.module.css";
 
 // L'achat définitif est écarté : presque personne n'achète un film en
@@ -19,11 +20,14 @@ const GROUPS = [
  */
 export default function WatchProvidersSection({
   providers,
+  mine = [],
   sectionClassName,
   titleClassName,
   compact = false,
 }: {
   providers: WatchProviders;
+  /** Plateformes de l'utilisateur (réglages) : mises en avant, en tête. */
+  mine?: number[];
   /** Classes de la fiche hôte, pour que le bloc s'y fonde. */
   sectionClassName: string;
   titleClassName: string;
@@ -33,15 +37,21 @@ export default function WatchProvidersSection({
    */
   compact?: boolean;
 }) {
-  const groups = GROUPS.map((g) => ({ ...g, items: providers[g.key] })).filter(
-    (g) => g.items.length > 0,
-  );
+  const isMine = (id: number) => mine.includes(canonicalProvider(id));
+  const groups = GROUPS.map((g) => ({
+    ...g,
+    // Tri stable : les plateformes de l'utilisateur passent devant, l'ordre de
+    // TMDB est conservé pour le reste.
+    items: [...providers[g.key]].sort((a, b) => Number(isMine(b.id)) - Number(isMine(a.id))),
+  })).filter((g) => g.items.length > 0);
+  const included = providers.flatrate.some((p) => isMine(p.id));
 
   if (groups.length === 0) return null;
 
   return (
     <div className={`${sectionClassName} ${compact ? styles.compact : ""}`}>
       <div className={titleClassName}>Où regarder</div>
+      {included && <div className={styles.included}>Inclus dans vos abonnements</div>}
 
       {groups.map((group) => (
         <div key={group.key} className={styles.group}>
@@ -53,8 +63,8 @@ export default function WatchProvidersSection({
                 href={providers.link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={styles.provider}
-                title={p.name}
+                className={`${styles.provider} ${isMine(p.id) ? styles.mine : ""}`}
+                title={isMine(p.id) ? `${p.name} — inclus dans vos abonnements` : p.name}
               >
                 {p.logoUrl ? (
                   <Image src={p.logoUrl} alt={p.name} width={44} height={44} className={styles.logo} />

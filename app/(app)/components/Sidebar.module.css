@@ -337,6 +337,13 @@
   color: var(--accent);
 }
 
+.footActions {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
 .logoutBtn {
   background: none;
   border: none;

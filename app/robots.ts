@@ -26,7 +26,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: ["/series/discover", "/series/trends", "/series/moviedle"],
-      disallow: ["/film/", "/series/", "/actor/", "/company/", "/compare/", "/user/", "/api/", "/vitals"],
+      disallow: ["/film/", "/series/", "/actor/", "/company/", "/compare/", "/user/", "/api/", "/vitals", "/settings"],
     },
     sitemap: `${SITE_URL}/sitemap.xml`,
   };

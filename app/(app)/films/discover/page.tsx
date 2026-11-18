@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
+import { getUserWatchProviders } from "@/lib/user-settings";
 import { fetchDiscover, fetchNowPlaying, fetchFilmLogo } from "@/lib/tmdb";
 import { fetchForYouFilms } from "@/lib/recommendations";
 import { parseProviders } from "@/lib/watch-providers";
@@ -52,7 +53,7 @@ export default async function DiscoverPage({
   // les connectés l'ont déjà sur leur accueil. On évite donc aussi les appels TMDB.
   const showHero = !session;
 
-  const [films, nowPlaying, libraryStatus] = await Promise.all([
+  const [films, nowPlaying, libraryStatus, myProviders] = await Promise.all([
     category === "for_you" && session
       ? fetchForYouFilms(session.userId)
       : fetchDiscover(category, {
@@ -64,6 +65,7 @@ export default async function DiscoverPage({
         }),
     showHero ? fetchNowPlaying() : Promise.resolve([]),
     getFilmLibraryStatus(session?.userId ?? null),
+    getUserWatchProviders(session?.userId),
   ]);
 
   // Logos officiels des films du carrousel (repli sur le titre texte si absent)
@@ -111,6 +113,7 @@ export default async function DiscoverPage({
           minRating={minRating}
           providers={providers}
           showForYou={Boolean(session)}
+          myProviders={session ? myProviders : null}
         />
       </Suspense>
 
