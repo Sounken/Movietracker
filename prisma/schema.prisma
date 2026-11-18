@@ -363,6 +363,18 @@ model PushSubscription {
   @@index([userId])
 }
 
+/// Plateformes d'abonnement (identifiants de WATCH_PROVIDERS) sur lesquelles
+/// un film était disponible en France au dernier passage quotidien.
+///
+/// Sert à repérer une **arrivée** : sans point de comparaison, le premier
+/// passage aurait signalé comme nouveaux tous les films de « À voir » déjà
+/// disponibles depuis des années.
+model FilmProviderSnapshot {
+  tmdbId    Int      @id
+  providers Int[]
+  checkedAt DateTime @updatedAt
+}
+
 /// Mesure de performance perçue, envoyée par le navigateur du visiteur.
 ///
 /// GlitchTip couvre les erreurs et les temps de réponse serveur, mais s'arrête

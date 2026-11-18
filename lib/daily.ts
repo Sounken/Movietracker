@@ -1,7 +1,8 @@
 import "server-only";
 import { prisma } from "@/lib/db";
 import { getFilmCards } from "@/lib/films";
-import { fetchSeriesDetail } from "@/lib/tmdb";
+import { fetchSeriesDetail, fetchWatchProviders } from "@/lib/tmdb";
+import { WATCH_PROVIDERS, canonicalProvider } from "@/lib/tmdb-catalog";
 import { fetchFilmRelease, parisToday, shiftDay } from "@/lib/releases";
 import { episodeLabel } from "@/lib/calendar";
 import { sendSystemNotifications, type SystemNotification } from "@/lib/notify";
@@ -94,4 +95,72 @@ export async function runEpisodeAlerts(today = parisToday()) {
   }
   const sent = await sendSystemNotifications(rows);
   return { series: bySeries.size, sent: sent.length, sentRows: sent };
+}
+
+const PROVIDER_NAME = new Map(WATCH_PROVIDERS.map((p) => [p.id, p.name]));
+
+/** « sur Netflix », « sur Netflix et Prime Video ». */
+function onProviders(ids: number[]): string {
+  const names = ids.map((id) => PROVIDER_NAME.get(id) ?? "une plateforme");
+  return `sur ${names.length > 1 ? `${names.slice(0, -1).join(", ")} et ${names.at(-1)}` : names[0]}`;
+}
+
+/**
+ * Disponibilité : un film de « À voir » arrive en abonnement sur une des
+ * plateformes de l'utilisateur.
+ *
+ * Seules comptent les **arrivées** depuis le passage précédent
+ * (FilmProviderSnapshot). Un film vu pour la première fois est seulement
+ * photographié : ce qui était déjà disponible ne déclenche rien.
+ */
+export async function runAvailabilityAlerts() {
+  const watchers = await prisma.userFilm.findMany({
+    where: { watchlist: true, user: { watchProviders: { isEmpty: false } } },
+    select: { userId: true, tmdbId: true, user: { select: { watchProviders: true } } },
+  });
+  const filmIds = [...new Set(watchers.map((w) => w.tmdbId))];
+  const snapshots = new Map(
+    (await prisma.filmProviderSnapshot.findMany({ where: { tmdbId: { in: filmIds } } })).map((s) => [
+      s.tmdbId,
+      s.providers,
+    ]),
+  );
+
+  const arrivals = new Map<number, number[]>();
+  for (const tmdbId of filmIds) {
+    const { flatrate } = await fetchWatchProviders("movie", tmdbId);
+    const current = [...new Set(flatrate.map((p) => canonicalProvider(p.id)))].filter((id) =>
+      PROVIDER_NAME.has(id),
+    );
+    const previous = snapshots.get(tmdbId);
+    if (previous) {
+      const added = current.filter((id) => !previous.includes(id));
+      if (added.length > 0) arrivals.set(tmdbId, added);
+    }
+    await prisma.filmProviderSnapshot.upsert({
+      where: { tmdbId },
+      create: { tmdbId, providers: current },
+      update: { providers: current },
+    });
+  }
+  if (arrivals.size === 0) return { films: filmIds.length, sent: 0 };
+
+  const cards = await getFilmCards([...arrivals.keys()]);
+  const rows: SystemNotification[] = watchers.flatMap((w) => {
+    const mine = (arrivals.get(w.tmdbId) ?? []).filter((id) => w.user.watchProviders.includes(id)).sort();
+    if (mine.length === 0) return [];
+    return [
+      {
+        userId: w.userId,
+        type: "available" as const,
+        media: "movie" as const,
+        tmdbId: w.tmdbId,
+        title: cards.get(w.tmdbId)?.title ?? "Un film de votre liste",
+        detail: onProviders(mine),
+        dedupeKey: `available:movie:${w.tmdbId}:${mine.join("-")}:${w.userId}`,
+      },
+    ];
+  });
+  const sent = await sendSystemNotifications(rows);
+  return { films: filmIds.length, sent: sent.length, sentRows: sent };
 }

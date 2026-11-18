@@ -1,10 +1,11 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
-import { runEpisodeAlerts, runReleaseReminders } from "@/lib/daily";
+import { runAvailabilityAlerts, runEpisodeAlerts, runReleaseReminders } from "@/lib/daily";
 
 /**
- * Passage quotidien : rappels de sortie, nouveaux épisodes.
+ * Passage quotidien : rappels de sortie, nouveaux épisodes, arrivées en
+ * streaming des films de « À voir ».
  *
  * Appelé chaque matin par une tâche planifiée Coolify :
  *   curl -fsS -X POST -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/daily
@@ -37,6 +38,7 @@ export async function POST(req: NextRequest) {
 
   const releases = await step("releases", () => runReleaseReminders());
   const episodes = await step("episodes", () => runEpisodeAlerts());
+  const available = await step("available", () => runAvailabilityAlerts());
 
   // Le détail des lignes envoyées reste côté serveur : la réponse ne sert
   // qu'au journal de la tâche planifiée.
@@ -48,5 +50,9 @@ export async function POST(req: NextRequest) {
     }
     return r;
   };
-  return NextResponse.json({ releases: summary(releases), episodes: summary(episodes) });
+  return NextResponse.json({
+    releases: summary(releases),
+    episodes: summary(episodes),
+    available: summary(available),
+  });
 }
