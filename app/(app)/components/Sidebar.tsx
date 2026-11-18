@@ -36,6 +36,13 @@ const CalendarIcon = () => (
     <circle cx="12" cy="15" r="2" />
   </svg>
 );
+const PopcornIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M5 9h14l-1.6 11.2a1 1 0 0 1-1 .8H7.6a1 1 0 0 1-1-.8Z" />
+    <path d="M9.5 9 10 21M14.5 9 14 21" />
+    <path d="M6 9a3 3 0 0 1 3.4-4.4 3 3 0 0 1 5.2 0A3 3 0 0 1 18 9" />
+  </svg>
+);
 const HeartIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
     <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21.2l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z" />
@@ -211,6 +218,7 @@ const seriesNav: NavItem[] = [
 
 const filmSocial: NavItem[] = [
   { href: "/friends", label: "Amis", icon: UsersIcon, authOnly: true },
+  { href: "/films/ce-soir", label: "Ce soir", icon: PopcornIcon, authOnly: true },
   { href: "/films/trends", label: "Tendances", icon: TrendIcon, authOnly: false },
   { href: "/moviedle", label: "Moviedle", icon: PuzzleIcon, authOnly: false },
 ];

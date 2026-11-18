@@ -1,0 +1,350 @@
+.head {
+  margin-bottom: 22px;
+}
+.sectionSub {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+.sectionTitle {
+  font-family: var(--font-serif, 'Georgia', serif);
+  font-size: 34px;
+  margin: 0;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+.lead {
+  margin: 8px 0 0;
+  color: var(--ink-dim);
+  font-size: 13px;
+  max-width: 620px;
+  line-height: 1.6;
+}
+.note {
+  color: var(--ink-mute);
+  font-size: 13px;
+  max-width: 640px;
+  line-height: 1.6;
+  margin: 0 0 20px;
+}
+.empty {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 28px;
+  color: var(--ink-dim);
+  max-width: 640px;
+}
+
+/* Groupe et filtres */
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.friends,
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.friend {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 13px 5px 5px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink-dim);
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color var(--dur-fast), color var(--dur-fast), background var(--dur-fast);
+}
+.friend:hover:not(:disabled) {
+  color: var(--ink);
+  border-color: var(--ink-mute);
+}
+.friend:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.friendOn {
+  color: var(--ink);
+  border-color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.1);
+}
+.friendAvatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--line);
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  color: var(--ink);
+}
+.filter {
+  padding: 6px 13px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink-dim);
+  font-size: 12px;
+  font-family: var(--font-geist-mono), monospace;
+  cursor: pointer;
+}
+.filter:hover:not(:disabled) {
+  color: var(--ink);
+}
+.filter:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.filterOn {
+  color: var(--accent);
+  border-color: rgba(var(--accent-rgb), 0.5);
+}
+
+/* Résultats */
+.resultsHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.count {
+  font-size: 12px;
+  color: var(--ink-mute);
+  font-family: var(--font-geist-mono), monospace;
+}
+.grid {
+  list-style: none;
+  margin: 0 0 32px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 22px 16px;
+}
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.posterLink {
+  position: relative;
+  display: block;
+}
+.poster {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border-radius: 10px;
+  background: var(--line);
+  transition: transform var(--dur-base) var(--ease-out);
+}
+.posterLink:hover .poster {
+  transform: translateY(-3px);
+}
+.wantBadge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(var(--bg-rgb), 0.85);
+  color: var(--ink);
+  font-size: 12px;
+  font-family: var(--font-geist-mono), monospace;
+}
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+.title {
+  font-size: 14px;
+  color: var(--ink);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.title:hover {
+  color: var(--accent);
+}
+.meta {
+  font-size: 12px;
+  color: var(--ink-mute);
+}
+.avatars {
+  display: flex;
+}
+.avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--bg);
+  margin-left: -6px;
+  object-fit: cover;
+  background: var(--line);
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  color: var(--ink);
+}
+.avatar:first-child {
+  margin-left: 0;
+}
+.providers {
+  font-size: 12px;
+  color: var(--accent);
+}
+.seen {
+  font-size: 11.5px;
+  color: var(--ink-mute);
+}
+
+/* Tirage au sort */
+.drawBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+}
+.drawBtn:hover {
+  filter: brightness(1.1);
+}
+.drawBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: grid;
+  place-items: center;
+  z-index: 100;
+  padding: 16px;
+  animation: drawFade var(--dur-fast) var(--ease-out);
+}
+@keyframes drawFade {
+  from {
+    opacity: 0;
+  }
+}
+.drawCard {
+  position: relative;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 28px 28px 24px;
+  width: min(340px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+  animation: drawPop var(--dur-base) var(--spring);
+}
+@keyframes drawPop {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+}
+.drawClose {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  border: none;
+  background: none;
+  color: var(--ink-mute);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+}
+.drawClose:hover {
+  color: var(--ink);
+  background: var(--hover);
+}
+.drawLabel {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  font-family: var(--font-geist-mono), monospace;
+}
+.drawPoster {
+  border-radius: 12px;
+  width: 200px;
+  height: auto;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+}
+.drawTitle {
+  font-family: var(--font-serif, 'Georgia', serif);
+  font-size: 22px;
+  color: var(--ink);
+}
+.drawYear {
+  color: var(--ink-mute);
+  font-size: 16px;
+}
+.drawActions {
+  display: flex;
+  gap: 8px;
+}
+.drawPrimary,
+.drawSecondary {
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  text-decoration: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+.drawPrimary {
+  background: var(--accent);
+  color: #fff;
+  border: 1px solid var(--accent);
+}
+.drawSecondary {
+  background: transparent;
+  color: var(--ink-dim);
+  border: 1px solid var(--line);
+}
+.drawSecondary:hover {
+  color: var(--ink);
+}
+@media (prefers-reduced-motion: reduce) {
+  .drawBackdrop,
+  .drawCard {
+    animation: none;
+  }
+}
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .sectionTitle {
+    font-size: 28px;
+  }
+}
