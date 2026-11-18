@@ -18,6 +18,7 @@ import FilmTopbar from "./components/FilmTopbar";
 import FilmTitleLogo from "./components/FilmTitleLogo";
 import PosterActions from "./components/PosterActions";
 import RatingWidget from "./components/RatingWidget";
+import DiaryBlock from "./components/DiaryBlock";
 import RemovedTitle from "../../components/RemovedTitle";
 import CastGrid from "./components/CastGrid";
 import SimilarFilms from "./components/SimilarFilms";
@@ -112,7 +113,7 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
   const sagaIds = new Set(sagaFilms.map((f) => f.id));
   const similarFilms = similar.filter((s) => !sagaIds.has(s.id));
 
-  const [userFilm, userLists, listsWithFilmRaw, friendFilms, myProviders] = session
+  const [userFilm, userLists, listsWithFilmRaw, friendFilms, myProviders, watches] = session
     ? await Promise.all([
         prisma.userFilm.findUnique({
           where: { userId_tmdbId: { userId: session.userId, tmdbId: id } },
@@ -143,8 +144,13 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
           orderBy: { updatedAt: "desc" },
         }),
         getUserWatchProviders(session.userId),
+        prisma.filmWatch.findMany({
+          where: { userId: session.userId, tmdbId: id },
+          orderBy: [{ watchedAt: "desc" }, { createdAt: "desc" }],
+          select: { id: true, watchedAt: true, note: true },
+        }),
       ])
-    : [null, [], [], [], []];
+    : [null, [], [], [], [], []];
 
   const listsWithFilm = (listsWithFilmRaw as { listId: string }[]).map((r) => r.listId);
   const reviews = buildReviewCards(friendFilms, tmdbReviews);
@@ -264,6 +270,18 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
             saveAction={saveRating}
             deleteAction={deleteRating}
           />
+
+          {session && (
+            <DiaryBlock
+              tmdbId={id}
+              watched={userFilm?.watched ?? false}
+              watches={watches.map((w) => ({
+                id: w.id,
+                watchedAt: w.watchedAt.toISOString(),
+                note: w.note,
+              }))}
+            />
+          )}
 
           {film.overview && (
             <div className={styles.section}>

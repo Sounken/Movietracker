@@ -40,6 +40,7 @@ model User {
   actedOn        Notification[]       @relation("notificationActor")
   puzzlePlays    PuzzlePlay[]
   passwordResets PasswordResetToken[]
+  filmWatches    FilmWatch[]
 }
 
 /// Lien de réinitialisation du mot de passe, à usage unique.
@@ -239,6 +240,27 @@ model UserFilm {
   @@index([userId, watchlist])
   @@index([tmdbId])
   @@index([updatedAt])
+}
+
+/// Un visionnage daté d'un film : une ligne du journal.
+///
+/// Un film vu trois fois a trois lignes. La note reste unique et vit dans
+/// UserFilm ; `UserFilm.watchedAt` suit le visionnage le plus récent. Un film
+/// marqué vu sans date (noté depuis sa fiche, par exemple) n'a pas de ligne :
+/// il est dans la collection, pas dans le journal.
+model FilmWatch {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tmdbId    Int
+  /// Jour du visionnage, à minuit UTC (saisi comme une date, sans heure).
+  watchedAt DateTime
+  /// Remarque facultative (« au cinéma », « avec Léa »…).
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, watchedAt])
+  @@index([userId, tmdbId])
 }
 
 /// Mesure de performance perçue, envoyée par le navigateur du visiteur.

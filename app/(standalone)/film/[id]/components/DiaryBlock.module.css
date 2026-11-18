@@ -1,0 +1,183 @@
+/* Accolé au widget de note, qui garde sa marge basse de 40px : le journal en
+   est la suite (« je l'ai noté » → « je l'ai vu quand »). */
+.wrap {
+  margin: -28px 0 40px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 14px 24px;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+  flex-wrap: wrap;
+}
+
+.label {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.title:hover {
+  color: var(--accent);
+}
+
+.summary {
+  font-size: 13px;
+  color: var(--ink-dim);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 13px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+  color: var(--ink-dim);
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: border-color var(--dur-fast), color var(--dur-fast), filter var(--dur-fast);
+}
+
+.btn:hover:not(:disabled) {
+  color: var(--ink);
+  border-color: var(--ink-mute);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.btnAccent {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.btnAccent:hover:not(:disabled) {
+  color: #fff;
+  border-color: var(--accent);
+  filter: brightness(1.1);
+}
+
+.form {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.input {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--ink);
+  padding: 7px 11px;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.noteInput {
+  flex: 1;
+  min-width: 200px;
+}
+
+.error {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--red-soft);
+}
+
+.list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 10px 0 0;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.entry {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  min-height: 26px;
+}
+
+.entryDate {
+  color: var(--ink);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 12px;
+  min-width: 96px;
+}
+
+.rewatch {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid rgba(var(--accent-rgb), 0.4);
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+
+.entryNote {
+  color: var(--ink-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.remove {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--ink-mute);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  padding: 4px;
+  border-radius: 6px;
+  flex: none;
+}
+
+.remove:hover:not(:disabled) {
+  color: var(--ink);
+  background: var(--hover);
+}
+
+@media (max-width: 640px) {
+  .wrap {
+    padding: 14px 16px;
+  }
+}

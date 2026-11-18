@@ -4,6 +4,7 @@ import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { fetchFilmDetail, tmdbTitleExists } from "@/lib/tmdb";
 import { revalidatePath } from "next/cache";
+import { addMissingWatches, parseWatchDate } from "@/lib/journal";
 import { redirect } from "next/navigation";
 
 // Toutes les pages « monde Films » qui affichent la collection de l'utilisateur.
@@ -99,7 +100,12 @@ export async function addFilm(data: {
     },
   });
 
+  // Une date de visionnage saisie à l'ajout devient une ligne du journal.
+  const watchedAt = data.watched ? parseWatchDate(data.watchedAt) : null;
+  if (watchedAt) await addMissingWatches(session.userId, data.tmdbId, [watchedAt]);
+
   revalidateFilmPages(data.tmdbId);
+  revalidatePath("/films/journal");
 }
 
 export async function toggleWatchlist(tmdbId: number) {

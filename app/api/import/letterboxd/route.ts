@@ -3,6 +3,7 @@ import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import JSZip from "jszip";
 import { tmdbFetch } from "@/lib/tmdb-throttle";
+import { addMissingWatches, parseWatchDate } from "@/lib/journal";
 
 const TMDB_KEY = process.env.TMDB_API_KEY;
 
@@ -86,6 +87,8 @@ type FilmData = {
   review: string | null;
   watchlist: boolean;
   liked: boolean;
+  /** Visionnages datés du journal Letterboxd (diary.csv), revisionnages compris. */
+  diary: string[];
 };
 
 export async function POST(req: NextRequest) {
@@ -106,12 +109,13 @@ export async function POST(req: NextRequest) {
     return parseCSV(await entry.async("string"));
   }
 
-  const [watched, ratings, reviews, watchlist, likedFilms] = await Promise.all([
+  const [watched, ratings, reviews, watchlist, likedFilms, diary] = await Promise.all([
     readCSV("watched.csv"),
     readCSV("ratings.csv"),
     readCSV("reviews.csv"),
     readCSV("watchlist.csv"),
     readCSV("likes/films.csv"),
+    readCSV("diary.csv"),
   ]);
 
   // ——— Merge all sources by Name+Year
@@ -123,7 +127,7 @@ export async function POST(req: NextRequest) {
   function getOrCreate(name: string, year: string): FilmData {
     const k = key(name, year);
     if (!filmMap.has(k)) {
-      filmMap.set(k, { name, year, watched: false, watchedAt: null, rating: null, review: null, watchlist: false, liked: false });
+      filmMap.set(k, { name, year, watched: false, watchedAt: null, rating: null, review: null, watchlist: false, liked: false, diary: [] });
     }
     return filmMap.get(k)!;
   }
@@ -147,6 +151,13 @@ export async function POST(req: NextRequest) {
     if (row.Rating && !f.rating) f.rating = parseFloat(row.Rating) * 2;
     if (row.Review) f.review = row.Review;
     if (row["Watched Date"]) f.watchedAt = row["Watched Date"];
+  }
+  // Une ligne par visionnage : c'est la seule source qui garde les revisionnages.
+  for (const row of diary) {
+    if (!row.Name) continue;
+    const f = getOrCreate(row.Name, row.Year);
+    f.watched = true;
+    if (row["Watched Date"]) f.diary.push(row["Watched Date"]);
   }
   for (const row of watchlist) {
     if (!row.Name) continue;
@@ -195,6 +206,11 @@ export async function POST(req: NextRequest) {
             ...(runtime != null && { runtime }),
           },
         });
+        // Journal : les visionnages de diary.csv, à défaut la date connue.
+        const watchDates = (film.diary.length > 0 ? film.diary : film.watchedAt ? [film.watchedAt] : [])
+          .map(parseWatchDate)
+          .filter((d): d is Date => d !== null);
+        await addMissingWatches(session.userId, tmdbId, watchDates);
         imported++;
       })
     );
