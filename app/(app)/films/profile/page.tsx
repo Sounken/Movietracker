@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { notFound, redirect } from "next/navigation";
-import { Clapperboard, Star, Clock, Heart, ClipboardList, ArrowUp } from "lucide-react";
+import Link from "next/link";
+import { Clapperboard, Star, Clock, Heart, ClipboardList, ArrowUp, Sparkles } from "lucide-react";
 import type { UserFilm } from "@/app/generated/prisma/client";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
@@ -172,7 +173,15 @@ export default async function ProfilePage() {
         levelInfo={levelInfo}
         joinedYear={joinedYear}
         ratingScale={toRatingScale(user.ratingScale)}
-        extraActions={<ImportButton />}
+        extraActions={
+          <>
+            <Link href="/films/bilan" className={`${styles.btnImport} ${styles.btnBilan}`} title="Bilan de l'année">
+              <Sparkles size={15} />
+              <span className={styles.btnImportLabel}>Bilan {new Date().getFullYear()}</span>
+            </Link>
+            <ImportButton />
+          </>
+        }
       />
 
       {/* Stats grid — streamé */}

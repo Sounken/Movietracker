@@ -311,6 +311,16 @@
   display: inline;
 }
 
+/* Même gabarit que l'import, survol à la couleur de l'application (le vert
+   de l'import est celui de Letterboxd). */
+.btnBilan {
+  text-decoration: none;
+}
+.btnBilan:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 /* ——— Choix de l'échelle de notation (modale profil) ——— */
 .scaleChoice {
   display: grid;

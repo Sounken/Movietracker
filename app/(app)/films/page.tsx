@@ -8,6 +8,7 @@ import { fetchNowPlaying, fetchNewOnStreaming, fetchFilmLogo, type TmdbFilmCard 
 import { getFilmCards } from "@/lib/films";
 import Topbar from "../components/Topbar";
 import HeroCarousel from "../components/HeroCarousel";
+import BilanBanner, { bilanBannerYear } from "../components/BilanBanner";
 import CollectionClient from "../components/CollectionClient";
 import AddFilmButton from "../components/AddFilmButton";
 import styles from "./dashboard.module.css";
@@ -268,10 +269,13 @@ export default async function DashboardPage({
   const source: HeroSource =
     HERO_SOURCES.some((s) => s.id === raw) ? (raw as HeroSource) : "cinema";
   const active = HERO_SOURCES.find((s) => s.id === source)!;
+  const bilanYear = bilanBannerYear();
 
   return (
     <div className={styles.page}>
       <Topbar greeting={greeting} userName={session?.name ?? null} />
+
+      {bilanYear !== null && <BilanBanner year={bilanYear} />}
 
       <section>
         <div className={styles.sectionHead}>
