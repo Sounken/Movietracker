@@ -15,6 +15,10 @@ Lire **`docs/DESIGN.md`** : charte graphique « Nocturne », règles de design t
 
 Ajouter dans `docs/DESIGN.md` tout nouveau retour de design qui vaut au-delà d'une page.
 
+## Suivi des tâches
+
+`docs/TODO.md` ne contient que ce qui reste à faire. Une tâche terminée en sort et passe dans `docs/HISTORIQUE.md`, avec sa date.
+
 ## Garde-fous
 
 - Ne jamais commit ni push sans demande explicite : pousser `main`, c'est mettre en production (Coolify), et Damien fait une longue review avant.

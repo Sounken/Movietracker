@@ -19,7 +19,7 @@
   padding: 32px;
   width: 100%;
   max-width: 480px;
-  max-height: 90vh;
+  max-height: calc(90vh / var(--ui-zoom));
   overflow-y: auto;
   position: relative;
   box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);

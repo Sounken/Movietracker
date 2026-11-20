@@ -6,11 +6,11 @@ import Image from "next/image";
 import { genreLabels, type TmdbMovie } from "@/lib/tmdb";
 import { Rating } from "@/lib/rating-scale";
 import { useCarousel, useWatchlist, type HomeKind } from "./hooks";
-import styles from "./nocturne.module.css";
+import styles from "./home.module.css";
 
 const DURATION = 8000;
 
-export function NocturneHero({
+export function HomeHero({
   kind = "film",
   kicker = "Sortie de la semaine",
   movies,

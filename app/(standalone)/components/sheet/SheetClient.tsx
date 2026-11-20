@@ -15,11 +15,11 @@ import { addFilmToList, removeFilmFromList } from "@/app/actions/lists";
 import { logFilmWatch } from "@/app/actions/journal";
 import { saveRatingDetail } from "@/app/actions/rating-detail";
 import type { AssistantState } from "@/lib/rating-assistant";
-import RatingAssistant from "../components/RatingAssistant";
-import styles from "./film-nocturne.module.css";
+import RatingAssistant from "./RatingAssistant";
+import styles from "./sheet.module.css";
 
 /** La carte « Notes » du contenu ouvre l'assistant de la colonne. */
-const OPEN_NOTES = "nocturne:open-notes";
+const OPEN_NOTES = "sheet:open-notes";
 
 function localToday() {
   const d = new Date();

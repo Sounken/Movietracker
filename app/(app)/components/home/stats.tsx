@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Rating } from "@/lib/rating-scale";
-import { formatHours, type CollectionStats } from "../home-data";
+import { formatHours, type CollectionStats } from "@/app/(app)/films/home-data";
 
 export type StatItem = {
   label: string;

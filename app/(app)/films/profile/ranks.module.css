@@ -19,7 +19,7 @@
 .modal {
   width: 100%;
   max-width: 480px;
-  max-height: 86vh;
+  max-height: calc(86vh / var(--ui-zoom));
   display: flex;
   flex-direction: column;
   border-radius: 16px;
@@ -225,7 +225,7 @@
 
   .modal {
     max-width: none;
-    max-height: 92vh;
+    max-height: calc(92vh / var(--ui-zoom));
     border-radius: 16px 16px 0 0;
   }
 }

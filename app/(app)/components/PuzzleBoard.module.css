@@ -97,7 +97,7 @@
   list-style: none;
   /* Huit suggestions dépassent la hauteur d'un téléphone : la liste défile,
      et l'option surlignée au clavier y est ramenée à chaque déplacement. */
-  max-height: min(360px, 60vh);
+  max-height: min(360px, calc(60vh / var(--ui-zoom)));
   overflow-y: auto;
   padding: 6px;
   border-radius: 20px;

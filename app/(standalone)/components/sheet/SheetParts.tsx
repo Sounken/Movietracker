@@ -3,8 +3,8 @@ import Image from "next/image";
 import { Sparkles } from "lucide-react";
 import { Rating } from "@/lib/rating-scale";
 import { CRITERIA, GROUPS, LEVELS, PRESETS, computeAssistant, type AssistantState, type CriterionGroup } from "@/lib/rating-assistant";
-import { NotesButton } from "./FilmNocturneClient";
-import styles from "./film-nocturne.module.css";
+import { NotesButton } from "./SheetClient";
+import styles from "./sheet.module.css";
 
 /** Briques serveur des fiches Nocturne, partagées entre films et séries. */
 

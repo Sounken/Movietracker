@@ -504,7 +504,7 @@
   border: 1px solid var(--line);
   border-radius: 20px;
   width: min(520px, 92vw);
-  max-height: 80vh;
+  max-height: calc(80vh / var(--ui-zoom));
   display: flex;
   flex-direction: column;
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);

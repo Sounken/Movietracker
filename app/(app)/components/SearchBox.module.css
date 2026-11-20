@@ -91,7 +91,7 @@
   /* Au-dessus de la topbar sticky des fiches (z-index 50). */
   z-index: 120;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
-  max-height: 60vh;
+  max-height: calc(60vh / var(--ui-zoom));
   overflow-y: auto;
   /* Le menu surgissait d'un bloc, sans lien visuel avec le champ. */
   animation: dropIn var(--dur-fast) var(--ease-out);

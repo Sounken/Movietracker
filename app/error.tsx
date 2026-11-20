@@ -37,7 +37,7 @@ export default function Error({
   return (
     <main
       style={{
-        minHeight: "60vh",
+        minHeight: "calc(60vh / var(--ui-zoom))",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",

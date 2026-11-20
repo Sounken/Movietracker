@@ -8,8 +8,8 @@ import { fetchSeriesBundle, fetchReviews, formatRuntime } from "@/lib/tmdb";
 import { buildReviewCards } from "@/lib/reviews";
 import type { AssistantState } from "@/lib/rating-assistant";
 import RemovedTitle from "../../components/RemovedTitle";
-import { CrewLinks } from "../../film/[id]/nocturne/parts";
-import SeriesNocturne from "./SeriesNocturne";
+import { CrewLinks } from "../../components/sheet/SheetParts";
+import SeriesSheet from "./SeriesSheet";
 
 const STATUS_LABELS: Record<string, string> = {
   "Returning Series": "En cours",
@@ -210,7 +210,7 @@ export default async function SeriesPage({ params }: { params: Promise<{ id: str
   ].filter(Boolean) as { k: string; v: React.ReactNode }[];
 
   return (
-    <SeriesNocturne
+    <SeriesSheet
       series={series}
       isAuthenticated={!!session}
       logoUrl={logoUrl}

@@ -125,7 +125,15 @@ box-shadow: var(--glass-shadow);
   - Aperçu en deux colonnes : synopsis, thèmes puis **bande-annonce** à gauche, fiche technique à droite. Le journal n'est plus sur la fiche : « Vu » renvoie au Journal une fois le film vu.
 - **Collection** (accueils, profil, À voir, Favoris) : grille complète à défilement infini (`CollectionClient`), jamais un rail.
 
-### 2.8 Mouvement
+### 2.8 Grands écrans
+
+L'interface est réglée sur la largeur d'un MacBook, environ **1710px** : hero aux deux tiers de la hauteur, 7 à 8 affiches par rangée.
+- Au-delà de 1900px, `globals.css` agrandit toute l'interface par paliers (`zoom` piloté par `--ui-zoom`) pour retrouver cette largeur utile.
+- Les paliers sont bornés aussi en hauteur, pour qu'un écran ultra-large reste raisonnable.
+- **Toute hauteur en `vh` s'écrit `calc(Nvh / var(--ui-zoom))`** : le zoom agrandit aussi les `vh`.
+- Ne pas ajouter de règles « grand écran » qui élargissent la mise en page : c'est le zoom qui s'en charge.
+
+### 2.9 Mouvement
 
 Une courbe et des durées communes, dans `globals.css` : `--ease-out`, `--dur-fast` / `--dur-base`. Les animations propres à Nocturne :
 - Ken Burns de 20–24s sur les backdrops ;
@@ -195,7 +203,11 @@ Un graphique de répartition ne s'appuie que sur des données assez nombreuses.
 - La moyenne TMDB y reste comme simple repère.
 - TMDB ne publie pas la répartition de ses votes.
 
-### 3.11 Couleurs fonctionnelles
+### 3.11 Même rendu sur tous les écrans
+
+Un grand écran (2K, 4K) doit montrer les mêmes proportions que le Mac de Damien, pas plus de contenu en plus petit. C'est le rôle du zoom par paliers (2.8). Vérifier chaque page à 1710×1000 et 2560×1440.
+
+### 3.12 Couleurs fonctionnelles
 
 - Vert : positif.
 - Rouge : négatif.
@@ -231,13 +243,14 @@ Ne pas décorer avec ces couleurs.
 |---|---|
 | `app/globals.css` | Tokens : couleurs, rayons, liquid glass, mouvement |
 | `app/(app)/app.module.css` | Cadre : marge de 36px, règle `data-hero` |
-| `app/(app)/components/AppTopbar.tsx` (+ `.module.css`) | En-tête global, menu compte, recherche |
-| `app/(app)/films/home/` | Accueil Nocturne (hero, file « Aussi cette semaine », stats) — réutilisé par l'accueil Séries |
-| `app/(app)/films/home-data.ts` | Données de l'accueil (hero, collection, stats) |
-| `app/(standalone)/film/[id]/nocturne/` | Fiche film ; `parts.tsx` (cartes « Les notes », « Notes », rails) partagé avec la fiche série |
-| `app/(standalone)/series/[id]/SeriesNocturne.tsx` | Fiche série |
+| `app/(app)/components/AppTopbar.tsx` (+ `.module.css`, `AccountMenu`, `SearchToggle`) | En-tête global |
+| `app/(app)/components/home/` | Briques des accueils : `HomeHero` (hero + « Aussi cette semaine »), `stats`, `hooks`, `home.module.css` — utilisées par les accueils Films et Séries |
+| `app/(app)/films/FilmsHome.tsx`, `films/home-data.ts` | Accueil Films (rendu et données) |
+| `app/(standalone)/components/sheet/` | Briques des fiches : `SheetClient` (actions, note, onglets, critiques), `SheetParts` (cartes « Les notes » et « Notes », rails), `RatingAssistant`, `sheet.module.css` |
+| `app/(standalone)/film/[id]/FilmSheet.tsx`, `series/[id]/SeriesSheet.tsx` | Fiches film et série |
 | `app/actions/rating-detail.ts` + modèle `RatingDetail` | Sauvegarde des notes détaillées de « M'aider à noter » |
 | `app/(app)/components/FilmGrid.*`, `films/discover/discover.module.css` | Cartes d'affiches |
+| `docs/TODO.md`, `docs/HISTORIQUE.md` | Ce qui reste à faire / ce qui a été fait (une tâche terminée passe de l'un à l'autre) |
 
 ---
 

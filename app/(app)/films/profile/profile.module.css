@@ -3,7 +3,7 @@
      12 px, sous l'en-tête global (`data-hero`). */
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  min-height: calc(100vh / var(--ui-zoom));
   padding: 12px 12px 120px;
 }
 
@@ -749,7 +749,7 @@
   border: 1px solid var(--line);
   border-radius: 20px;
   width: min(560px, 92vw);
-  max-height: 80vh;
+  max-height: calc(80vh / var(--ui-zoom));
   display: flex;
   flex-direction: column;
   box-shadow: 0 30px 80px rgba(0,0,0,0.6);
@@ -891,7 +891,7 @@
   border-radius: 16px;
   width: 100%;
   max-width: 500px;
-  max-height: 90vh;
+  max-height: calc(90vh / var(--ui-zoom));
   overflow-y: auto;
   padding-bottom: 28px;
   position: relative;

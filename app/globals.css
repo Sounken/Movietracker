@@ -55,6 +55,33 @@
   --track: rgba(255, 255, 255, 0.08);
 }
 
+/* ——— Grands écrans : même rendu que sur un portable ———
+   L'interface est réglée sur un écran d'environ 1710px de large (MacBook) :
+   hero aux deux tiers de la hauteur, 7 affiches par rangée. Sur un écran plus
+   grand (2K 27", 4K…), tout est agrandi proportionnellement pour retrouver
+   cette largeur utile — sinon le hero rapetisse, la grille passe à 12
+   colonnes et les textes paraissent minuscules.
+   Paliers en largeur ET en hauteur (zoom ≈ largeur / 1710, borné par la
+   hauteur) : un écran ultra-large mais peu haut ne grossit pas au point de
+   ne plus montrer que le hero. Rien ne change sous 1900px.
+   `--ui-zoom` sert aussi à compenser les hauteurs en `vh`, que le zoom
+   agrandit avec le reste : écrire `calc(100vh / var(--ui-zoom))`. */
+:root {
+  --ui-zoom: 1;
+}
+
+@media (min-width: 1900px) and (min-height: 1000px) { :root { --ui-zoom: 1.11; } }
+@media (min-width: 2100px) and (min-height: 1150px) { :root { --ui-zoom: 1.23; } }
+@media (min-width: 2300px) and (min-height: 1270px) { :root { --ui-zoom: 1.35; } }
+@media (min-width: 2500px) and (min-height: 1380px) { :root { --ui-zoom: 1.46; } }
+@media (min-width: 2800px) and (min-height: 1560px) { :root { --ui-zoom: 1.64; } }
+@media (min-width: 3200px) and (min-height: 1780px) { :root { --ui-zoom: 1.87; } }
+@media (min-width: 3600px) and (min-height: 2000px) { :root { --ui-zoom: 2.1; } }
+
+html {
+  zoom: var(--ui-zoom);
+}
+
 *,
 *::before,
 *::after {

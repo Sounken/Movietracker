@@ -6,8 +6,8 @@ import { getSession } from "@/lib/session";
 import { searchTmdbTitles } from "@/lib/tmdb";
 import { removeDeletedFilm } from "@/app/actions/film";
 import { removeDeletedSeries } from "@/app/actions/series";
-import { BackButton } from "../film/[id]/nocturne/FilmNocturneClient";
-import nocturne from "../film/[id]/nocturne/film-nocturne.module.css";
+import { BackButton } from "./sheet/SheetClient";
+import sheet from "./sheet/sheet.module.css";
 import RemoveDeletedButton from "./RemoveDeletedButton";
 import styles from "./RemovedTitle.module.css";
 
@@ -40,7 +40,7 @@ export default async function RemovedTitle({ kind, tmdbId }: { kind: "movie" | "
   return (
     <>
       <div className={styles.backRow}>
-        <BackButton className={nocturne.back} fallbackHref={isFilm ? "/films" : "/series"} />
+        <BackButton className={sheet.back} fallbackHref={isFilm ? "/films" : "/series"} />
       </div>
       <div className={styles.page}>
         <div className={styles.card}>

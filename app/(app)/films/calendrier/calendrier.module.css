@@ -1,20 +1,255 @@
-.head {
-  margin-bottom: 36px;
+/* Calendrier, direction Nocturne (cf. docs/DESIGN.md) : le prochain
+   rendez-vous en hero, l'agenda des deux mois à venir, puis des rails
+   d'affiches datées. Le hero suit les mesures de l'accueil : retrait de 12px,
+   rayon 28, contenu à 24px du bord. */
+
+/* Avec un hero, la page gère ses marges (`data-hero`) */
+.page[data-hero] {
+  padding: 12px 12px 120px;
 }
+
+.below {
+  padding: 36px 24px 0;
+}
+
+/* ——— Hero : prochain rendez-vous ——— */
+.hero {
+  position: relative;
+  height: 600px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: radial-gradient(90% 110% at 70% 25%, rgba(var(--gold-rgb), 0.18) 0%, var(--bg-2) 65%);
+}
+
+.kb {
+  position: absolute;
+  inset: 0;
+  animation: kenburns 22s ease-in-out infinite alternate;
+}
+
+@keyframes kenburns {
+  from { transform: scale(1); }
+  to { transform: scale(1.07) translate(-1%, -1%); }
+}
+
+.veil {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(var(--bg-rgb), 0.92) 0%, rgba(var(--bg-rgb), 0.5) 40%, rgba(var(--bg-rgb), 0) 65%),
+    linear-gradient(0deg, var(--bg) 0%, rgba(var(--bg-rgb), 0) 45%),
+    linear-gradient(180deg, rgba(var(--bg-rgb), 0.55) 0%, rgba(var(--bg-rgb), 0) 22%);
+}
+
+.heroText {
+  position: absolute;
+  left: 24px;
+  bottom: 48px;
+  width: min(600px, 52%);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: textIn 0.6s var(--ease-out) 0.1s backwards;
+}
+
+@keyframes textIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+.kicker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--accent-soft);
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.2);
+}
+
+/* Compte à rebours : le chiffre qu'on vient chercher */
+.countdown {
+  font-family: var(--font-serif), serif;
+  font-size: 30px;
+  line-height: 1;
+  color: var(--gold);
+}
+
+.heroTitle {
+  font-family: var(--font-serif), serif;
+  font-weight: 400;
+  font-size: 64px;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.heroMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: 14.5px;
+  color: var(--ink-dim);
+}
+
+.heroDate::first-letter {
+  text-transform: uppercase;
+}
+
+.synopsis {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink-dim);
+  max-width: 520px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.btn {
+  height: 48px;
+  padding: 0 24px;
+  border-radius: 999px;
+  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+
+.btnP {
+  background: var(--ink);
+  color: var(--bg);
+}
+
+.btnP:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* Rappel « Me prévenir » : le composant garde son style, posé sur du verre */
+.reminder {
+  display: inline-flex;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--glass-sheen), var(--glass-fill);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-shadow);
+}
+
+/* File « Ensuite », en verre sombre comme « Aussi cette semaine » */
+.queue {
+  position: absolute;
+  right: 24px;
+  bottom: 40px;
+  width: 300px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.queueHead {
+  font-size: 13px;
+  color: var(--ink);
+  margin-bottom: 2px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8), 0 0 12px rgba(0, 0, 0, 0.5);
+}
+
+.queueItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border-radius: 16px;
+  background: var(--glass-sheen), rgba(var(--bg-rgb), 0.55);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-shadow);
+  transition: border-color var(--dur-fast);
+}
+
+.queueItem:hover {
+  border-color: rgba(var(--gold-rgb), 0.45);
+}
+
+.queuePoster {
+  position: relative;
+  width: 36px;
+  height: 54px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--panel);
+  flex: none;
+}
+
+.queueText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.queueTitle {
+  font-size: 13.5px;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.queueMeta {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11.5px;
+  color: var(--gold);
+}
+
+/* ——— En-tête de section ——— */
+.head {
+  margin-bottom: 28px;
+}
+
 .sectionSub {
+  font-family: var(--font-geist-mono), monospace;
   font-size: 12px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--gold);
   margin-bottom: 6px;
 }
+
 .sectionTitle {
-  font-family: var(--font-serif, 'Georgia', serif);
+  font-family: var(--font-serif), serif;
   font-size: 34px;
   margin: 0;
   font-weight: 400;
   letter-spacing: -0.02em;
 }
+
 .lead {
   margin: 10px 0 0;
   color: var(--ink-dim);
@@ -22,6 +257,7 @@
   max-width: 620px;
   line-height: 1.6;
 }
+
 .empty {
   background: var(--panel);
   border: 1px solid var(--line);
@@ -31,157 +267,300 @@
   max-width: 640px;
   line-height: 1.6;
 }
-.none {
-  color: var(--ink-mute);
-  font-size: 13px;
+
+/* ——— Agenda ——— */
+.agenda {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
 }
 
-.section {
-  /* Chaque groupe (à venir, récent) dans une carte Nocturne */
-  margin-bottom: 20px;
-  max-width: 880px;
-  padding: 22px 24px 10px;
+.monthCard {
+  padding: 22px 22px 18px;
   border-radius: 24px;
   background: var(--panel);
   border: 1px solid var(--line);
 }
-.groupTitle {
-  font-size: 12px;
-  font-family: var(--font-geist-mono), monospace;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--gold);
+
+.monthTitle {
+  font-family: var(--font-serif), serif;
   font-weight: 400;
-  margin: 0 0 8px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.groupTitle::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: var(--line);
+  font-size: 26px;
+  letter-spacing: -0.01em;
+  text-transform: capitalize;
+  margin-bottom: 14px;
 }
 
-.day {
+.weekdays,
+.cells {
   display: grid;
-  grid-template-columns: 180px 1fr;
-  gap: 16px;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--line);
-}
-.day:last-child {
-  border-bottom: none;
-}
-.dayLabel {
-  font-size: 17px;
-  color: var(--ink);
-  padding-top: 10px;
-}
-.dayLabel::first-letter {
-  text-transform: uppercase;
-}
-.dayToday {
-  color: var(--accent-soft);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
 }
 
-.list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+.weekdays {
+  margin-bottom: 6px;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-mute);
+  text-align: center;
+}
+
+.cell {
+  position: relative;
+  min-height: 84px;
+  padding: 8px;
+  border-radius: 14px;
+  background: rgba(244, 236, 226, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cellOff {
+  min-height: 84px;
+}
+
+.cellPast {
+  opacity: 0.4;
+}
+
+.cellBusy {
+  background: rgba(var(--gold-rgb), 0.07);
+}
+
+.cellToday {
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+
+.cellNum {
+  font-family: var(--font-serif), serif;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--ink-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.cellToday .cellNum,
+.cellBusy .cellNum {
+  color: var(--ink);
+}
+
+.cellPosters {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.cellPoster {
+  position: relative;
+  width: 32px;
+  aspect-ratio: 2 / 3;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--line);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.cellPoster:hover {
+  transform: translateY(-2px) scale(1.06);
+}
+
+.cellMore {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  color: var(--gold);
+}
+
+/* ——— Rails datés ——— */
+.railBlock {
+  margin-top: 40px;
+}
+
+.blockTitle {
+  font-family: var(--font-serif), serif;
+  font-weight: 400;
+  font-size: 26px;
+  letter-spacing: -0.01em;
+  margin-bottom: 16px;
+}
+
+.rail {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 6px 36px 6px 0;
+  margin-right: -36px;
+}
+
+.rail::-webkit-scrollbar {
+  display: none;
+}
+
+.railCard {
+  width: 150px;
+  flex: none;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
-.row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.rowLink {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex: 1;
-  min-width: 0;
-  padding: 8px 10px;
+
+.railPoster {
+  position: relative;
+  aspect-ratio: 2 / 3;
   border-radius: 16px;
-  text-decoration: none;
-  color: inherit;
-  transition: background var(--dur-fast);
+  overflow: hidden;
+  background: var(--panel);
+  margin-bottom: 6px;
+  transition: transform var(--dur-base) var(--ease-out);
 }
-.rowLink:hover {
-  background: var(--hover);
+
+.railCard:hover .railPoster {
+  transform: scale(1.04);
 }
-.poster {
-  width: 46px;
-  height: 69px;
-  border-radius: 10px;
-  object-fit: cover;
-  background: var(--line);
-  flex: none;
-}
-.info {
+
+/* Date en verre, comme sur les affiches du Journal */
+.dateChip {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  min-width: 44px;
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  min-width: 0;
+  align-items: center;
+  padding: 6px 8px 5px;
+  border-radius: 14px;
+  background: var(--glass-sheen), rgba(var(--bg-rgb), 0.55);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-shadow);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-dim);
+  line-height: 1.2;
 }
-.title {
-  font-size: 15.5px;
+
+.dateChip b {
+  font-family: var(--font-serif), serif;
+  font-weight: 400;
+  font-size: 22px;
+  letter-spacing: 0;
   color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.railTitle {
+  font-size: 14px;
+  color: var(--ink);
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
-.meta {
+
+.railMeta {
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: 6px;
   min-width: 0;
 }
+
 .badge {
-  font-size: 12px;
-  height: 24px;
-  padding: 0 10px;
+  font-size: 11.5px;
+  height: 22px;
+  padding: 0 9px;
   display: inline-flex;
   align-items: center;
   border-radius: 999px;
   border: 1px solid rgba(244, 236, 226, 0.15);
   color: var(--ink-dim);
   flex: none;
+  white-space: nowrap;
 }
+
 .cinema {
-  color: var(--accent);
+  color: var(--accent-soft);
   border-color: rgba(var(--accent-rgb), 0.45);
 }
+
 .digital {
   color: var(--gold);
   border-color: rgba(var(--gold-rgb), 0.45);
 }
+
 .detail {
-  font-size: 12px;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11.5px;
   color: var(--ink-dim);
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-@media (max-width: 640px) {
-  .day {
+@media (max-width: 1100px) {
+  .agenda {
     grid-template-columns: 1fr;
-    gap: 4px;
   }
-  .dayLabel {
-    padding-top: 0;
+
+  .queue {
+    display: none;
   }
+
+  .heroText {
+    width: auto;
+    right: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .page[data-hero] {
+    padding: 8px 8px 120px;
+  }
+
+  .below {
+    padding: 28px 8px 0;
+  }
+
+  .hero {
+    height: 520px;
+    border-radius: 22px;
+  }
+
+  .heroText {
+    left: 16px;
+    right: 16px;
+    bottom: 28px;
+    gap: 10px;
+  }
+
+  /* Le style en ligne adapte la taille à la longueur du titre sur grand
+     écran ; sur téléphone, une seule taille et trois lignes possibles. */
+  .heroTitle {
+    font-size: 32px !important;
+    -webkit-line-clamp: 3;
+  }
+
+  .synopsis {
+    display: none;
+  }
+
+  .cell,
+  .cellOff {
+    min-height: 60px;
+    padding: 5px;
+  }
+
+  .cellPoster {
+    width: 22px;
+  }
+
   .sectionTitle {
     font-size: 28px;
-  }
-  .section {
-    padding: 16px 14px 6px;
-    border-radius: 20px;
   }
 }

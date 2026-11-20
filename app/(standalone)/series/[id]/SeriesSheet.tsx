@@ -10,10 +10,10 @@ import WatchProvidersSection from "../../components/WatchProvidersSection";
 import TrailerSection from "../../components/TrailerSection";
 import AwardsAsync from "../../components/AwardsAsync";
 import ExternalLinks from "../../components/ExternalLinks";
-import { DetailCard, PosterRail, RatingsCard } from "../../film/[id]/nocturne/parts";
-import { BackButton, HeroActions, MyRating, ReviewsBlock, SectionTabs } from "../../film/[id]/nocturne/FilmNocturneClient";
+import { DetailCard, PosterRail, RatingsCard } from "../../components/sheet/SheetParts";
+import { BackButton, HeroActions, MyRating, ReviewsBlock, SectionTabs } from "../../components/sheet/SheetClient";
 import SeasonTracker from "./SeasonTracker";
-import styles from "../../film/[id]/nocturne/film-nocturne.module.css";
+import styles from "../../components/sheet/sheet.module.css";
 
 type Props = {
   series: TmdbSeriesDetail;
@@ -53,7 +53,7 @@ const SECTIONS = [
  * l'en-tête, colonne de l'affiche collante, onglets), avec le suivi par
  * saison à la place du journal.
  */
-export default async function SeriesNocturne(p: Props) {
+export default async function SeriesSheet(p: Props) {
   const { series } = p;
 
   const community = await prisma.userSeries.findMany({

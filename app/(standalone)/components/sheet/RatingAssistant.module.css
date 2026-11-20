@@ -21,7 +21,7 @@
 .modal {
   width: 100%;
   max-width: 900px;
-  max-height: min(88vh, 860px);
+  max-height: min(calc(88vh / var(--ui-zoom)), 860px);
   display: flex;
   flex-direction: column;
   background: var(--bg-2);
@@ -542,7 +542,7 @@
   }
 
   .modal {
-    max-height: 94vh;
+    max-height: calc(94vh / var(--ui-zoom));
   }
 
   .head,

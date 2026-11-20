@@ -10,7 +10,7 @@ import type { AssistantState } from "@/lib/rating-assistant";
 import { fetchFilmRelease, parisToday } from "@/lib/releases";
 import { formatWatchDate } from "@/lib/watch-date";
 import RemovedTitle from "../../components/RemovedTitle";
-import FilmNocturne from "./nocturne/FilmNocturne";
+import FilmSheet from "./FilmSheet";
 
 const LANG_NAMES: Record<string, string> = {
   en: "Anglais", fr: "Français", es: "Espagnol", de: "Allemand", it: "Italien",
@@ -152,7 +152,7 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
   const langLabel = LANG_NAMES[film.originalLanguage] ?? film.originalLanguage?.toUpperCase();
 
   return (
-    <FilmNocturne
+    <FilmSheet
       userId={session?.userId ?? null}
       film={film}
       logoUrl={logoUrl}

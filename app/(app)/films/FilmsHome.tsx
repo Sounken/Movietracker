@@ -1,11 +1,11 @@
 import { Suspense } from "react";
-import BilanBanner, { bilanBannerYear } from "../../components/BilanBanner";
-import CollectionClient from "../../components/CollectionClient";
-import AddFilmButton from "../../components/AddFilmButton";
-import { getCollectionData, getHeroData, heroEmptyMessage, type HeroSource } from "../home-data";
-import { statItems } from "./stats";
-import { NocturneHero } from "./NocturneClient";
-import styles from "./nocturne.module.css";
+import BilanBanner, { bilanBannerYear } from "../components/BilanBanner";
+import CollectionClient from "../components/CollectionClient";
+import AddFilmButton from "../components/AddFilmButton";
+import { getCollectionData, getHeroData, heroEmptyMessage, type HeroSource } from "./home-data";
+import { statItems } from "../components/home/stats";
+import { HomeHero } from "../components/home/HomeHero";
+import styles from "../components/home/home.module.css";
 
 /**
  * Accueil Films, direction Nocturne — « la salle s'éteint, l'image prend toute
@@ -32,7 +32,7 @@ async function HeroSection({ userId, source }: { userId: string; source: HeroSou
   }
 
   return (
-    <NocturneHero
+    <HomeHero
       movies={data.movies}
       logos={data.logos}
       watchlistIds={data.watchlistIds}
@@ -65,7 +65,7 @@ async function CollectionSection({ userId }: { userId: string }) {
   );
 }
 
-export default function Nocturne({ userId, source }: { userId: string; source: HeroSource }) {
+export default function FilmsHome({ userId, source }: { userId: string; source: HeroSource }) {
   const bilanYear = bilanBannerYear();
   return (
     <div className={styles.page} data-hero>

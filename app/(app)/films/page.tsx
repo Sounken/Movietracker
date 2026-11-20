@@ -1,7 +1,7 @@
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { HERO_SOURCES, type HeroSource } from "./home-data";
-import Nocturne from "./home/Nocturne";
+import FilmsHome from "./FilmsHome";
 
 export default async function DashboardPage({
   searchParams,
@@ -18,5 +18,5 @@ export default async function DashboardPage({
   const source: HeroSource =
     HERO_SOURCES.some((s) => s.id === raw) ? (raw as HeroSource) : "cinema";
 
-  return <Nocturne userId={session.userId} source={source} />;
+  return <FilmsHome userId={session.userId} source={source} />;
 }

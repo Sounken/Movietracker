@@ -1,6 +1,6 @@
 .container {
   /* Direction Nocturne : la salle s'éteint, une lueur dorée en fond */
-  min-height: 100vh;
+  min-height: calc(100vh / var(--ui-zoom));
   display: flex;
   align-items: center;
   justify-content: center;

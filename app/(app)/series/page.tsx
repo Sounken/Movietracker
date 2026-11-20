@@ -8,9 +8,9 @@ import SeriesGrid, { type SeriesGridItem } from "../components/SeriesGrid";
 import { Rating } from "@/lib/rating-scale";
 import SeriesCollectionClient from "../components/SeriesCollectionClient";
 import AddSeriesButton from "../components/AddSeriesButton";
-import { NocturneHero } from "../films/home/NocturneClient";
-import { delta, type StatItem } from "../films/home/stats";
-import styles from "../films/home/nocturne.module.css";
+import { HomeHero } from "../components/home/HomeHero";
+import { delta, type StatItem } from "../components/home/stats";
+import styles from "../components/home/home.module.css";
 
 // ——— Helpers de statistiques (mêmes conventions que l'accueil films) ———
 
@@ -73,7 +73,7 @@ async function HeroSection({ userId }: { userId: string | null }) {
   ) as Record<number, string>;
 
   return (
-    <NocturneHero
+    <HomeHero
       kind="series"
       kicker="Série du moment"
       queueLabel="Aussi à l'affiche"

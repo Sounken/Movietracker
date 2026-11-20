@@ -6,15 +6,15 @@ import { formatMoney, formatRuntime, type TmdbCastMember, type TmdbFilmCard, typ
 import type { ReviewCard } from "@/lib/reviews";
 import type { AssistantState } from "@/lib/rating-assistant";
 import ReminderToggle from "@/app/(app)/components/ReminderToggle";
-import WatchProvidersSection from "../../../components/WatchProvidersSection";
-import TrailerSection from "../../../components/TrailerSection";
-import AwardsAsync from "../../../components/AwardsAsync";
-import ExternalLinks from "../../../components/ExternalLinks";
-import { CrewLinks, DetailCard, PosterRail, RatingsCard, type Crew } from "./parts";
-import { BackButton, HeroActions, MyRating, ReviewsBlock, SectionTabs } from "./FilmNocturneClient";
-import styles from "./film-nocturne.module.css";
+import WatchProvidersSection from "../../components/WatchProvidersSection";
+import TrailerSection from "../../components/TrailerSection";
+import AwardsAsync from "../../components/AwardsAsync";
+import ExternalLinks from "../../components/ExternalLinks";
+import { CrewLinks, DetailCard, PosterRail, RatingsCard, type Crew } from "../../components/sheet/SheetParts";
+import { BackButton, HeroActions, MyRating, ReviewsBlock, SectionTabs } from "../../components/sheet/SheetClient";
+import styles from "../../components/sheet/sheet.module.css";
 
-export type FilmNocturneProps = {
+export type FilmSheetProps = {
   /** null pour un visiteur non connecté (lien partagé). */
   userId: string | null;
   film: TmdbFilmDetail;
@@ -56,7 +56,7 @@ const SECTIONS = [
  * l'utilisateur fait (noter, cocher vu, écrire, proposer) dans la colonne de
  * l'affiche, collante. La note reste aux étoiles, comme sur la fiche actuelle.
  */
-export default async function FilmNocturne(p: FilmNocturneProps) {
+export default async function FilmSheet(p: FilmSheetProps) {
   const { film } = p;
 
   const isAuthenticated = p.userId !== null;
