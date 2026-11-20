@@ -6,7 +6,7 @@ import Image from "next/image";
 import type { TmdbDiscoverFilm } from "@/lib/tmdb";
 import { useRestorableList, appendUnique } from "@/app/(app)/components/use-restorable-list";
 import styles from "./discover.module.css";
-import LibraryBadge, { useLibraryLookup } from "./LibraryBadge";
+import LibraryBadge, { useLibraryLookup, useLibraryRating } from "./LibraryBadge";
 import type { LibraryStatus } from "@/lib/library-status";
 import { Rating } from "@/lib/rating-scale";
 
@@ -45,6 +45,7 @@ export default function DiscoverGrid({
   libraryStatus?: LibraryStatus;
 }) {
   const statusOf = useLibraryLookup(libraryStatus);
+  const ratingOf = useLibraryRating(libraryStatus);
   // La clé inclut les filtres : changer de genre ou de plateforme doit repartir
   // d'une liste vierge, pas reprendre celle d'un autre réglage.
   const {
@@ -117,11 +118,13 @@ export default function DiscoverGrid({
 
   return (
     <div className={`${styles.grid} stagger`}>
-      {films.map((film) => (
+      {films.map((film, i) => (
         <Link key={film.id} href={`/film/${film.id}`} className={styles.filmCard} onClick={save}>
           <div className={styles.poster}>
             {film.posterUrl && (
               <Image
+                /* Premières affiches au-dessus de la ligne de flottaison : chargées tout de suite (LCP) */
+                loading={i < 6 ? "eager" : undefined}
                 src={film.posterUrl}
                 alt=""
                 fill
@@ -136,7 +139,15 @@ export default function DiscoverGrid({
           </div>
           <div className={styles.info}>
             <div className={styles.title}>{film.title}</div>
-            {film.year && <div className={styles.year}>{film.year}</div>}
+            {(film.year || ratingOf(film.id) !== null) && (
+              <div className={`${styles.year} ${styles.metaRow}`}>
+                {film.year && <span>{film.year}</span>}
+                {film.year && ratingOf(film.id) !== null && <span>•</span>}
+                {ratingOf(film.id) !== null && (
+                  <span className={styles.myRating}>★ <Rating value={ratingOf(film.id)} outOf /></span>
+                )}
+              </div>
+            )}
           </div>
         </Link>
       ))}

@@ -1,11 +1,8 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { getSession } from "@/lib/session";
 import { getSeriesTrends, parsePeriod, type Period } from "@/lib/trends";
-import Topbar from "../../components/Topbar";
 import TrendsClient from "../../films/trends/TrendsClient";
 import styles from "../../films/trends/trends.module.css";
-import { getGreeting } from "@/lib/greeting";
 
 export const metadata: Metadata = {
   title: "Tendances séries : les plus suivies et les mieux notées",
@@ -44,14 +41,11 @@ export default async function SeriesTrendsPage({
 }: {
   searchParams: Promise<{ period?: string }>;
 }) {
-  const [session, { period: periodParam }] = await Promise.all([getSession(), searchParams]);
+  const { period: periodParam } = await searchParams;
   const period = parsePeriod(periodParam);
-
-  const greeting = getGreeting();
 
   return (
     <div>
-      <Topbar greeting={greeting} userName={session?.name ?? null} />
       <Suspense
         fallback={
           <div className={styles.page}>

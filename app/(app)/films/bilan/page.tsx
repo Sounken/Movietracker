@@ -6,8 +6,6 @@ import { getSession } from "@/lib/session";
 import { bilanYears, computeBilan, formatDuration } from "@/lib/bilan";
 import { formatWatchDate } from "@/lib/watch-date";
 import { Rating } from "@/lib/rating-scale";
-import Topbar from "../../components/Topbar";
-import { getGreeting } from "@/lib/greeting";
 import BilanShare from "./BilanShare";
 import styles from "./bilan.module.css";
 
@@ -37,7 +35,6 @@ export default async function BilanPage({
 
   return (
     <div>
-      <Topbar greeting={getGreeting()} userName={session.name} />
 
       <header className={styles.hero}>
         <div>
@@ -115,7 +112,7 @@ export default async function BilanPage({
                     <Link href={`/film/${f.tmdbId}`} className={styles.topItem}>
                       <span className={styles.topRank}>{i + 1}</span>
                       {f.posterUrl ? (
-                        <Image src={f.posterUrl} alt="" width={160} height={240} className={styles.topPoster} />
+                        <Image src={f.posterUrl} alt="" width={160} height={240} className={styles.topPoster} loading="eager" />
                       ) : (
                         <span className={styles.topPoster} />
                       )}

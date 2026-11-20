@@ -162,7 +162,7 @@ export default async function ProfilePage() {
   const joinedYear = new Date(user.createdAt).getFullYear();
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} data-hero>
       {/* Banner + Header + XP — client component handles edit */}
       <ProfileHeaderClient
         name={user.name ?? ""}

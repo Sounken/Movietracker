@@ -111,6 +111,8 @@ export async function deleteSeriesRating(tmdbId: number) {
       data: { rating: null, review: "" },
     });
   }
+  // Sans note, plus de détail à ré-afficher
+  await prisma.ratingDetail.deleteMany({ where: { userId: session.userId, media: "tv", tmdbId } });
   await track(forgetRating(session.userId, "tv", tmdbId));
 
   revalidateSeriesPages(tmdbId);

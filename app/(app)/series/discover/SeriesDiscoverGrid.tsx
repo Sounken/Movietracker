@@ -7,7 +7,7 @@ import { Plus, Loader2 } from "lucide-react";
 import type { TmdbDiscoverSeries } from "@/lib/tmdb";
 import { useRestorableList, appendUnique } from "@/app/(app)/components/use-restorable-list";
 import styles from "../../films/discover/discover.module.css";
-import LibraryBadge, { useLibraryLookup } from "../../films/discover/LibraryBadge";
+import LibraryBadge, { useLibraryLookup, useLibraryRating } from "../../films/discover/LibraryBadge";
 import type { LibraryStatus } from "@/lib/library-status";
 import { Rating } from "@/lib/rating-scale";
 
@@ -36,6 +36,7 @@ export default function SeriesDiscoverGrid({
   libraryStatus?: LibraryStatus;
 }) {
   const statusOf = useLibraryLookup(libraryStatus);
+  const ratingOf = useLibraryRating(libraryStatus);
   // Même clé composite que pour les films, avec le filtre anime en plus.
   const {
     items: series,
@@ -105,11 +106,13 @@ export default function SeriesDiscoverGrid({
 
   return (
     <div className={`${styles.grid} stagger`}>
-      {series.map((s) => (
+      {series.map((s, i) => (
         <Link key={s.id} href={`/series/${s.id}`} className={styles.filmCard} onClick={save}>
           <div className={styles.poster}>
             {s.posterUrl && (
               <Image
+                /* Premières affiches au-dessus de la ligne de flottaison : chargées tout de suite (LCP) */
+                loading={i < 6 ? "eager" : undefined}
                 src={s.posterUrl}
                 alt=""
                 fill
@@ -122,7 +125,15 @@ export default function SeriesDiscoverGrid({
           </div>
           <div className={styles.info}>
             <div className={styles.title}>{s.name}</div>
-            {s.year && <div className={styles.year}>{s.year}</div>}
+            {(s.year || ratingOf(s.id) !== null) && (
+              <div className={`${styles.year} ${styles.metaRow}`}>
+                {s.year && <span>{s.year}</span>}
+                {s.year && ratingOf(s.id) !== null && <span>•</span>}
+                {ratingOf(s.id) !== null && (
+                  <span className={styles.myRating}>★ <Rating value={ratingOf(s.id)} outOf /></span>
+                )}
+              </div>
+            )}
           </div>
         </Link>
       ))}

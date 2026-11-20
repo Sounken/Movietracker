@@ -34,11 +34,13 @@ export default function SeriesGrid({
   return (
     // Même apparition en cascade que la grille de films (cf. globals.css)
     <div className={`${styles.grid} stagger`}>
-      {items.map((s) => (
+      {items.map((s, i) => (
         <Link key={s.id} href={`/series/${s.id}`} className={styles.filmCard}>
           <div className={styles.poster}>
             {s.posterUrl && (
               <Image
+                /* Premières affiches au-dessus de la ligne de flottaison : chargées tout de suite (LCP) */
+                loading={i < 6 ? "eager" : undefined}
                 src={s.posterUrl}
                 alt=""
                 fill

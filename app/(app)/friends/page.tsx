@@ -2,11 +2,9 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { computeXP, getLevelInfo } from "@/lib/xp";
-import Topbar from "../components/Topbar";
 import { getFeed } from "@/lib/activity";
 import ActivityFeed from "./ActivityFeed";
 import FriendsClient from "./FriendsClient";
-import { getGreeting } from "@/lib/greeting";
 
 // Les champs dont computeXP a besoin : la note seule ne suffit pas, un avis
 // vaut plus qu'une note et un « j'aime » compte aussi.
@@ -16,7 +14,6 @@ export default async function FriendsPage() {
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const greeting = getGreeting();
 
   // Who the current user follows
   const followingRaw = await prisma.userFollow.findMany({
@@ -83,7 +80,6 @@ export default async function FriendsPage() {
 
   return (
     <div>
-      <Topbar greeting={greeting} userName={session.name} />
       <FriendsClient
         following={following}
         followers={followers}

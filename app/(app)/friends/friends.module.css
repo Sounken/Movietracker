@@ -2,7 +2,8 @@
    la page était la plus petite de l'application, avec des noms et des
    compteurs à 10px que l'on déchiffrait au lieu de les lire. */
 .page {
-  padding: 36px 48px 80px;
+  /* Les marges viennent du cadre (.main) */
+  padding: 0 0 40px;
 }
 
 /* Header */
@@ -15,12 +16,11 @@
   flex-wrap: wrap;
 }
 .headerSub {
-  font-size: 11px;
-  letter-spacing: 0.18em;
+  font-size: 12px;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--ink-mute);
-  margin-bottom: 4px;
-  font-weight: 500;
+  color: var(--gold);
+  margin-bottom: 6px;
 }
 .headerTitle {
   font-family: var(--font-serif, serif);
@@ -37,13 +37,14 @@
   gap: 10px;
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 10px 16px;
-  width: min(340px, 100%);
+  border-radius: 999px;
+  height: 44px;
+  padding: 0 18px;
+  width: min(360px, 100%);
   transition: border-color 0.2s;
 }
 .searchWrap:focus-within {
-  border-color: var(--accent);
+  border-color: var(--gold);
 }
 .searchWrap svg {
   width: 15px;
@@ -87,7 +88,7 @@
 .section {
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: 24px;
   overflow: hidden;
 }
 
@@ -101,22 +102,20 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 16px 20px;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  padding: 18px 22px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--ink-mute);
+  color: var(--gold);
   border-bottom: 1px solid var(--line);
 }
 .sectionCount {
-  background: var(--bg);
-  border: 1px solid var(--line);
+  background: rgba(var(--gold-rgb), 0.12);
   border-radius: 999px;
   font-family: var(--font-geist-mono, monospace);
   font-size: 11px;
-  padding: 1px 7px;
-  color: var(--ink-dim);
+  padding: 2px 8px;
+  color: var(--gold);
 }
 
 .empty {
@@ -220,10 +219,10 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 20px;
+  padding: 10px 22px;
   transition: background 0.15s;
 }
-.userCard:hover { background: rgba(var(--accent-rgb), 0.04); }
+.userCard:hover { background: var(--hover); }
 
 .avatar {
   border-radius: 50%;
@@ -240,20 +239,20 @@
   position: absolute;
   right: -3px;
   bottom: -3px;
-  min-width: 17px;
-  height: 17px;
+  min-width: 18px;
+  height: 18px;
   padding: 0 4px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  background: var(--accent);
-  color: #fff;
+  background: var(--gold);
+  color: var(--bg);
   font-size: 11px;
   font-weight: 700;
   font-family: var(--font-geist-mono), monospace;
-  /* Anneau de la couleur du fond : détache la pastille de la photo */
-  box-shadow: 0 0 0 2px var(--bg);
+  /* Anneau de la couleur de la carte : détache la pastille de la photo */
+  box-shadow: 0 0 0 2px var(--panel);
   line-height: 1;
 }
 
@@ -268,30 +267,30 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 6px 11px;
+  height: 32px;
+  padding: 0 12px;
   border-radius: 999px;
-  background: var(--panel);
-  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.06);
+  border: 0;
   color: var(--ink-dim);
   font-size: 13px;
   text-decoration: none;
   white-space: nowrap;
-  transition: color 0.15s, border-color 0.15s;
+  transition: color 0.15s, background 0.15s;
 }
 
 .btnCompare:hover {
-  color: var(--accent);
-  border-color: var(--accent);
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .avatarFallback {
   border-radius: 50%;
-  background: linear-gradient(135deg, #3a2a22, #1a1210);
+  background: var(--line);
   display: grid;
   place-items: center;
   font-family: var(--font-serif, serif);
-  color: var(--gold);
-  border: 1px solid var(--line);
+  color: var(--ink);
   flex-shrink: 0;
 }
 
@@ -309,11 +308,10 @@
 }
 
 .userLink:hover .userName {
-  color: var(--accent);
+  color: var(--gold);
 }
 .userName {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 15px;
   color: var(--ink);
   white-space: nowrap;
   overflow: hidden;
@@ -328,40 +326,41 @@
 .mutualBadge {
   display: inline-flex;
   align-items: center;
-  font-size: 11px;
-  color: var(--accent);
-  background: rgba(var(--accent-rgb), 0.1);
-  border: 1px solid rgba(var(--accent-rgb), 0.2);
+  font-size: 11.5px;
+  color: var(--gold);
+  background: rgba(var(--gold-rgb), 0.1);
   border-radius: 999px;
-  padding: 2px 8px;
-  margin-top: 3px;
+  height: 22px;
+  padding: 0 9px;
+  margin-top: 4px;
 }
 
 /* Buttons */
 .btnFollow {
-  padding: 6px 14px;
+  height: 34px;
+  padding: 0 16px;
   border-radius: 999px;
-  font-size: 13px;
-  background: var(--accent);
-  color: #fff;
+  font-size: 13.5px;
+  background: var(--ink);
+  color: var(--bg);
   border: 0;
   cursor: pointer;
   font-family: inherit;
-  font-weight: 500;
   white-space: nowrap;
-  transition: filter 0.15s;
+  transition: background 0.15s, color 0.15s;
   flex-shrink: 0;
 }
-.btnFollow:hover { filter: brightness(1.1); }
+.btnFollow:hover { background: var(--accent); color: #fff; }
 .btnFollow:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .btnUnfollow {
-  padding: 6px 14px;
+  height: 34px;
+  padding: 0 14px;
   border-radius: 999px;
   font-size: 13px;
   background: transparent;
-  color: var(--ink-mute);
-  border: 1px solid var(--line);
+  color: var(--ink-dim);
+  border: 1px solid rgba(244, 236, 226, 0.15);
   cursor: pointer;
   font-family: inherit;
   white-space: nowrap;
@@ -371,7 +370,7 @@
   align-items: center;
   gap: 4px;
 }
-.btnUnfollow:hover { border-color: var(--red); color: var(--red); }
+.btnUnfollow:hover { border-color: var(--red-soft); color: var(--red-soft); }
 .btnUnfollow:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* Activity feed */
@@ -388,7 +387,7 @@
   padding: 12px 20px;
   transition: background 0.15s;
 }
-.feedItem:hover { background: rgba(var(--accent-rgb), 0.04); }
+.feedItem:hover { background: var(--hover); }
 .feedContent { flex: 1; min-width: 0; }
 .feedText {
   font-size: 14px;
@@ -396,7 +395,7 @@
   line-height: 1.5;
 }
 .feedName { color: var(--ink); font-weight: 500; text-decoration: none; }
-.feedName:hover { color: var(--accent); }
+.feedName:hover { color: var(--gold); }
 .feedFilm {
   color: var(--accent-soft);
   font-weight: 500;
@@ -428,7 +427,7 @@
 }
 
 @media (max-width: 900px) {
-  .page { padding: 20px 16px 80px; }
+  .page { padding: 0 0 40px; }
   .cols { grid-template-columns: 1fr; }
   .header { flex-direction: column; align-items: flex-start; }
   .searchWrap { width: 100%; }

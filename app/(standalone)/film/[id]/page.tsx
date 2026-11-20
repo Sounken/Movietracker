@@ -1,32 +1,16 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { getUserWatchProviders } from "@/lib/user-settings";
 import { BASE_OPEN_GRAPH } from "@/lib/site";
 import { prisma } from "@/lib/db";
-import { saveRating, deleteRating } from "@/app/actions/film";
-import { fetchFilmDetail, fetchFilmCredits, fetchSimilarFilms, fetchFilmKeywords, fetchFilmLogo, fetchFilmCollection, fetchWatchProviders, fetchExternalIds, fetchFilmExtras, fetchReviews, formatMoney, formatRuntime } from "@/lib/tmdb";
+import { fetchFilmDetail, fetchFilmCredits, fetchSimilarFilms, fetchFilmKeywords, fetchFilmLogo, fetchFilmCollection, fetchWatchProviders, fetchExternalIds, fetchFilmExtras, fetchReviews } from "@/lib/tmdb";
 import { buildReviewCards } from "@/lib/reviews";
-import WatchProvidersSection from "../../components/WatchProvidersSection";
-import ReviewsSection from "../../components/ReviewsSection";
-import AwardsAsync from "../../components/AwardsAsync";
-import TrailerSection from "../../components/TrailerSection";
-import ExternalLinks from "../../components/ExternalLinks";
-import FilmTopbar from "./components/FilmTopbar";
-import FilmTitleLogo from "./components/FilmTitleLogo";
-import PosterActions from "./components/PosterActions";
-import RatingWidget from "./components/RatingWidget";
-import DiaryBlock from "./components/DiaryBlock";
-import ReminderToggle from "@/app/(app)/components/ReminderToggle";
+import type { AssistantState } from "@/lib/rating-assistant";
 import { fetchFilmRelease, parisToday } from "@/lib/releases";
 import { formatWatchDate } from "@/lib/watch-date";
 import RemovedTitle from "../../components/RemovedTitle";
-import CastGrid from "./components/CastGrid";
-import SimilarFilms from "./components/SimilarFilms";
-import styles from "./film.module.css";
-import { Rating } from "@/lib/rating-scale";
+import FilmNocturne from "./nocturne/FilmNocturne";
 
 const LANG_NAMES: Record<string, string> = {
   en: "Anglais", fr: "Français", es: "Espagnol", de: "Allemand", it: "Italien",
@@ -117,7 +101,7 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
   const sagaIds = new Set(sagaFilms.map((f) => f.id));
   const similarFilms = similar.filter((s) => !sagaIds.has(s.id));
 
-  const [userFilm, userLists, listsWithFilmRaw, friendFilms, myProviders, watches, reminder] = session
+  const [userFilm, userLists, listsWithFilmRaw, friendFilms, myProviders, reminder, detail] = session
     ? await Promise.all([
         prisma.userFilm.findUnique({
           where: { userId_tmdbId: { userId: session.userId, tmdbId: id } },
@@ -148,17 +132,16 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
           orderBy: { updatedAt: "desc" },
         }),
         getUserWatchProviders(session.userId),
-        prisma.filmWatch.findMany({
-          where: { userId: session.userId, tmdbId: id },
-          orderBy: [{ watchedAt: "desc" }, { createdAt: "desc" }],
-          select: { id: true, watchedAt: true, note: true },
-        }),
         prisma.releaseReminder.findUnique({
           where: { userId_tmdbId: { userId: session.userId, tmdbId: id } },
           select: { id: true },
         }),
+        prisma.ratingDetail.findUnique({
+          where: { userId_media_tmdbId: { userId: session.userId, media: "movie", tmdbId: id } },
+          select: { state: true, score: true },
+        }),
       ])
-    : [null, [], [], [], [], [], null];
+    : [null, [], [], [], [], null, null];
 
   // « Me prévenir » n'a de sens que si la sortie française est à venir.
   const upcomingRelease = release && release.date > parisToday() ? release : null;
@@ -166,316 +149,40 @@ export default async function FilmPage({ params }: { params: Promise<{ id: strin
   const listsWithFilm = (listsWithFilmRaw as { listId: string }[]).map((r) => r.listId);
   const reviews = buildReviewCards(friendFilms, tmdbReviews);
 
-  const roi =
-    film.budget > 0
-      ? Math.round(((film.revenue - film.budget) / film.budget) * 100)
-      : null;
-
-  const showOriginalTitle = film.originalTitle && film.originalTitle !== film.title;
   const langLabel = LANG_NAMES[film.originalLanguage] ?? film.originalLanguage?.toUpperCase();
 
   return (
-    <>
-      {film.backdropUrl && (
-        <div className={styles.backdrop} style={{ backgroundImage: `url("${film.backdropUrl}")` }} />
-      )}
-      <div className={styles.backdropOverlay} />
-
-      <FilmTopbar />
-
-      <div className={styles.hero}>
-        {/* Colonne gauche : poster + actions */}
-        <div className={styles.posterCol}>
-          <div className={styles.poster}>
-            {film.posterUrl && (
-              <Image
-                src={film.posterUrl}
-                alt={film.title}
-                fill
-                priority
-                sizes="280px"
-                style={{ objectFit: "cover" }}
-              />
-            )}
-          </div>
-          <PosterActions
-            tmdbId={id}
-            initialWatchlist={userFilm?.watchlist ?? false}
-            initialLiked={userFilm?.liked ?? false}
-            userLists={userLists}
-            listsWithFilm={listsWithFilm}
-            isAuthenticated={!!session}
-          />
-          {upcomingRelease && (
-            <div className={styles.posterReminder}>
-              <ReminderToggle
-                tmdbId={id}
-                initial={Boolean(reminder)}
-                isAuthenticated={!!session}
-                label={`Me prévenir · ${upcomingRelease.kind === "digital" ? "en numérique" : "au cinéma"} le ${formatWatchDate(`${upcomingRelease.date}T00:00:00Z`)}`}
-              />
-            </div>
-          )}
-          {/* Juste sous les actions : « où le voir » est la question qui suit
-              « je veux le voir », pas une annexe en bas de fiche. */}
-          <WatchProvidersSection
-            providers={providers}
-            mine={myProviders}
-            sectionClassName={styles.posterProviders}
-            titleClassName={styles.sectionTitle}
-            compact
-          />
-        </div>
-
-        {/* Colonne droite : métadonnées */}
-        <div className={styles.metaCol}>
-          {(film.genres.length > 0 || extras.certification) && (
-            <div className={styles.genres}>
-              {extras.certification && (
-                <span className={styles.certification} title="Classification d'âge">
-                  {extras.certification}
-                </span>
-              )}
-              {film.genres.map((g) => (
-                <span key={g} className={styles.genreTag}>{g}</span>
-              ))}
-            </div>
-          )}
-
-          <FilmTitleLogo
-            logoUrl={logoUrl}
-            title={film.title}
-            titleClassName={styles.movieTitle}
-            logoClassName={styles.movieTitleLogo}
-          />
-
-          {showOriginalTitle && (
-            <div style={{ fontSize: 14, color: "var(--ink-mute)", marginTop: -20, marginBottom: 24, fontStyle: "italic" }}>
-              {film.originalTitle}
-            </div>
-          )}
-
-          <div className={styles.scores}>
-            <div className={`${styles.scoreCard} ${styles.scoreAccent}`}>
-              <div className={`${styles.scoreVal} ${styles.scoreGold}`}>★ <Rating value={film.voteAverage} /></div>
-              <div className={styles.scoreLab}>Note TMDB</div>
-            </div>
-            <div className={styles.scoreCard}>
-              <div className={styles.scoreVal}>{film.voteCount.toLocaleString("fr")}</div>
-              <div className={styles.scoreLab}>Votes</div>
-            </div>
-            <div className={styles.scoreCard}>
-              <div className={styles.scoreVal}>{film.popularity}</div>
-              <div className={styles.scoreLab}>Popularité</div>
-            </div>
-            {film.runtime && (
-              <div className={styles.scoreCard}>
-                <div className={styles.scoreVal}>{formatRuntime(film.runtime)}</div>
-                <div className={styles.scoreLab}>Durée</div>
-              </div>
-            )}
-            {film.year && (
-              <div className={styles.scoreCard}>
-                <div className={styles.scoreVal}>{film.year}</div>
-                <div className={styles.scoreLab}>Sortie</div>
-              </div>
-            )}
-          </div>
-
-          <RatingWidget
-            tmdbId={id}
-            initialRating={userFilm?.rating ?? 0}
-            initialReview={userFilm?.review ?? ""}
-            title={film.title}
-            isAuthenticated={!!session}
-            saveAction={saveRating}
-            deleteAction={deleteRating}
-          />
-
-          {session && (
-            <DiaryBlock
-              tmdbId={id}
-              watched={userFilm?.watched ?? false}
-              watches={watches.map((w) => ({
-                id: w.id,
-                watchedAt: w.watchedAt.toISOString(),
-                note: w.note,
-              }))}
-            />
-          )}
-
-          {film.overview && (
-            <div className={styles.section}>
-              <div className={styles.sectionTitle}>Synopsis</div>
-              <p className={styles.synopsis}>{film.overview}</p>
-            </div>
-          )}
-
-          {/* Les avis passent avant la bande-annonce : ceux des amis sont le
-              contenu propre au réseau de l'utilisateur, le seul qu'il ne
-              trouvera pas ailleurs. La bande-annonce reste consultable plus
-              bas sans rien perdre. */}
-          <ReviewsSection reviews={reviews} />
-
-          {extras.video && (
-            <TrailerSection
-              video={extras.video}
-              title={film.title}
-              sectionClassName={styles.section}
-              titleClassName={styles.sectionTitle}
-            />
-          )}
-
-          <div className={styles.section}>
-            <div className={styles.sectionTitle}>Fiche technique</div>
-            <div className={styles.facts}>
-              {credits.directors.length > 0 && (
-                <div className={styles.fact}>
-                  <div className={styles.factLab}>Réalisation</div>
-                  <div className={styles.factVal}>
-                    {credits.directors.map((d, i) => (
-                      <span key={d.id}>
-                        {i > 0 && ", "}
-                        <Link href={`/actor/${d.id}`} className={styles.crewLink}>{d.name}</Link>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {credits.writers.length > 0 && (
-                <div className={styles.fact}>
-                  <div className={styles.factLab}>Scénario</div>
-                  <div className={styles.factVal}>
-                    {credits.writers.map((w, i) => (
-                      <span key={w.id}>
-                        {i > 0 && ", "}
-                        <Link href={`/actor/${w.id}`} className={styles.crewLink}>{w.name}</Link>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {film.releaseDate && (
-                <div className={styles.fact}>
-                  <div className={styles.factLab}>Date de sortie</div>
-                  <div className={styles.factVal}>
-                    {new Date(film.releaseDate).toLocaleDateString("fr-FR")}
-                  </div>
-                </div>
-              )}
-              {film.runtime && (
-                <div className={styles.fact}>
-                  <div className={styles.factLab}>Durée</div>
-                  <div className={styles.factVal}>{formatRuntime(film.runtime)}</div>
-                </div>
-              )}
-              {langLabel && (
-                <div className={styles.fact}>
-                  <div className={styles.factLab}>Langue originale</div>
-                  <div className={styles.factVal}>{langLabel}</div>
-                </div>
-              )}
-              {film.productionCountries.length > 0 && (
-                <div className={styles.fact}>
-                  <div className={styles.factLab}>Pays d&apos;origine</div>
-                  <div className={styles.factVal}>{film.productionCountries.slice(0, 3).join(", ")}</div>
-                </div>
-              )}
-              {film.genres.length > 0 && (
-                <div className={styles.fact}>
-                  <div className={styles.factLab}>Genres</div>
-                  <div className={styles.factVal}>{film.genres.join(", ")}</div>
-                </div>
-              )}
-              {film.budget > 0 && (
-                <div className={styles.fact}>
-                  <div className={styles.factLab}>Budget</div>
-                  <div className={styles.factVal}>{formatMoney(film.budget)}</div>
-                </div>
-              )}
-              {film.revenue > 0 && (
-                <div className={styles.fact}>
-                  <div className={styles.factLab}>Recettes</div>
-                  <div className={`${styles.factVal} ${film.revenue > film.budget ? styles.factPos : styles.factNeg}`}>
-                    {formatMoney(film.revenue)}
-                  </div>
-                </div>
-              )}
-              {roi !== null && (
-                <div className={styles.fact}>
-                  <div className={styles.factLab}>ROI</div>
-                  <div className={`${styles.factVal} ${roi > 0 ? styles.factPos : styles.factNeg}`}>
-                    {roi > 0 ? "+" : ""}{roi}%
-                  </div>
-                </div>
-              )}
-              {extras.certification && (
-                <div className={styles.fact}>
-                  <div className={styles.factLab}>Classification</div>
-                  <div className={styles.factVal}>{extras.certification}</div>
-                </div>
-              )}
-            </div>
-
-            <ExternalLinks ids={externalIds} />
-          </div>
-
-          {credits.cast.length > 0 && <CastGrid cast={credits.cast} />}
-
-          {film.productionCompanies.length > 0 && (
-            <div className={styles.section}>
-              <div className={styles.sectionTitle}>Sociétés de production</div>
-              <div className={styles.companies}>
-                {film.productionCompanies.map((c) => (
-                  <Link key={c.id} href={`/company/${c.id}`} className={styles.companyTag}>
-                    {c.logoUrl && (
-                      <Image
-                        src={c.logoUrl}
-                        alt=""
-                        width={20}
-                        height={20}
-                        className={styles.companyLogo}
-                      />
-                    )}
-                    {c.name}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <AwardsAsync
-            wikidataId={externalIds.wikidataId}
-            sectionClassName={styles.section}
-            titleClassName={styles.sectionTitle}
-          />
-
-          {keywords.length > 0 && (
-            <div className={styles.section}>
-              <div className={styles.sectionTitle}>Thèmes</div>
-              <div className={styles.awardTags}>
-                {/* TMDB en renvoie parfois plus de 50 : on s'arrête à 18, au-delà
-                    c'est un nuage de tags illisible. */}
-                {keywords.slice(0, 18).map((k) => (
-                  <span key={k} className={styles.awardTag}>{k}</span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {sagaFilms.length > 0 && (
-            <SimilarFilms
-              films={sagaFilms}
-              title={film.collectionName || "La saga"}
-              subtitle={`${sagaFilms.length + 1} films • dans l'ordre de sortie`}
-            />
-          )}
-
-          {similarFilms.length > 0 && (
-            <SimilarFilms films={similarFilms} title="Films similaires" />
-          )}
-        </div>
-      </div>
-    </>
+    <FilmNocturne
+      userId={session?.userId ?? null}
+      film={film}
+      logoUrl={logoUrl}
+      certification={extras.certification ?? null}
+      video={extras.video ?? null}
+      directors={credits.directors}
+      writers={credits.writers}
+      cast={credits.cast}
+      keywords={keywords}
+      langLabel={langLabel}
+      providers={providers}
+      myProviders={myProviders}
+      externalIds={externalIds}
+      reviews={reviews}
+      friendRatings={friendFilms}
+      similarFilms={similarFilms}
+      sagaFilms={sagaFilms}
+      sagaName={film.collectionName ?? null}
+      userFilm={userFilm}
+      userLists={userLists}
+      listsWithFilm={listsWithFilm}
+      reminder={
+        upcomingRelease
+          ? {
+              on: Boolean(reminder),
+              label: `Me prévenir • ${upcomingRelease.kind === "digital" ? "en numérique" : "au cinéma"} le ${formatWatchDate(`${upcomingRelease.date}T00:00:00Z`)}`,
+            }
+          : null
+      }
+      ratingDetail={detail ? { state: detail.state as AssistantState, score: detail.score } : null}
+    />
   );
 }

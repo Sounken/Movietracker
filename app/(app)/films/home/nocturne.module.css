@@ -1,0 +1,504 @@
+/* Maquette 03 · Nocturne, transposée dans la palette de l'application :
+   fond --bg, surface --panel, texte --ink, accent --accent (orange) pour ce
+   qui est « vivant », --gold pour les notes — la touche champagne de la
+   maquette existe déjà chez nous. Instrument Serif → New Kansas,
+   DM Sans → Blauer Nue, DM Mono → Geist Mono. */
+
+.page {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  padding-bottom: 120px;
+}
+
+.spacer {
+  flex: 1;
+}
+
+/* ——— Hero ——— */
+.hero {
+  position: relative;
+  height: 640px;
+  border-radius: 28px;
+  overflow: hidden;
+  background: var(--bg-2);
+  flex: none;
+}
+
+.heroSkeleton {
+  background: radial-gradient(90% 110% at 70% 32%, rgba(var(--gold-rgb), 0.18) 0%, var(--bg-2) 60%);
+}
+
+.heroEmpty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* Fondu enchaîné 800 ms entre deux films */
+.layerIn {
+  animation: fade 0.8s var(--ease-out) backwards;
+}
+
+@keyframes fade {
+  from { opacity: 0; }
+}
+
+/* Ken Burns très lent sur le backdrop */
+.kb {
+  position: absolute;
+  inset: 0;
+  animation: kenburns 20s ease-in-out infinite alternate;
+}
+
+@keyframes kenburns {
+  from { transform: scale(1); }
+  to { transform: scale(1.08) translate(-1.5%, -1%); }
+}
+
+.veil {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(var(--bg-rgb), 0.92) 0%, rgba(var(--bg-rgb), 0.5) 38%, rgba(var(--bg-rgb), 0) 62%),
+    linear-gradient(0deg, var(--bg) 0%, rgba(var(--bg-rgb), 0) 40%),
+    linear-gradient(180deg, rgba(var(--bg-rgb), 0.55) 0%, rgba(var(--bg-rgb), 0) 22%);
+}
+
+/* ——— Texte du film ——— */
+.heroText {
+  /* 24px du bord de l'image : même verticale que la marque de l'en-tête */
+  position: absolute;
+  left: 24px;
+  bottom: 56px;
+  width: 560px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  animation: textIn 0.6s var(--ease-out) 0.15s backwards;
+}
+
+@keyframes textIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+.kicker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--accent-soft);
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.2);
+}
+
+.title {
+  font-family: var(--font-serif), serif;
+  font-weight: 400;
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.logo {
+  display: block;
+  width: auto;
+  max-width: 520px;
+  height: auto;
+  max-height: 150px;
+  object-fit: contain;
+  object-position: left bottom;
+  filter: drop-shadow(0 2px 16px rgba(0, 0, 0, 0.55));
+}
+
+.meta {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  font-size: 14.5px;
+  color: var(--ink-dim);
+}
+
+.score {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 12.5px;
+  color: var(--gold);
+  border: 1px solid rgba(var(--gold-rgb), 0.35);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+.synopsis {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--ink-dim);
+  max-width: 480px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.btn {
+  height: 48px;
+  padding: 0 24px;
+  border-radius: 999px;
+  border: 0;
+  font: inherit;
+  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--dur-fast), transform var(--dur-fast) var(--ease-out);
+}
+
+.btnP {
+  background: var(--ink);
+  color: var(--bg);
+}
+
+.btnP:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+.btnS {
+  background: var(--glass-sheen), var(--glass-fill);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-shadow);
+  color: var(--ink);
+}
+
+.btnS:hover {
+  background: var(--glass-sheen), rgba(255, 255, 255, 0.14);
+}
+
+/* ——— « Aussi cette semaine », en verre sombre ——— */
+.queue {
+  position: absolute;
+  right: 24px;
+  bottom: 40px;
+  width: 300px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.queueHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+  font-size: 13px;
+  color: var(--ink);
+  /* Ombre fine : le titre reste lisible sur un backdrop clair */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8), 0 0 12px rgba(0, 0, 0, 0.5);
+}
+
+.queueSwitch {
+  color: var(--ink-dim);
+  padding: 6px 0;
+  text-shadow: none;
+}
+
+.queueSwitch:hover {
+  color: var(--gold);
+}
+
+.queueItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border-radius: 16px;
+  /* Liquid glass, teinté de sombre pour garder les titres lisibles */
+  background: var(--glass-sheen), rgba(var(--bg-rgb), 0.55);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-shadow);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur-fast), border-color var(--dur-fast);
+}
+
+.queueItem:hover {
+  background: rgba(var(--bg-rgb), 0.7);
+  border-color: rgba(var(--gold-rgb), 0.35);
+}
+
+.queueThumb {
+  position: relative;
+  width: 72px;
+  height: 42px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--panel);
+  flex: none;
+}
+
+.queueTitle {
+  font-size: 13.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ——— Segments de progression ——— */
+.segs {
+  position: absolute;
+  left: 24px;
+  bottom: 24px;
+  z-index: 5;
+  display: flex;
+  gap: 6px;
+}
+
+.seg {
+  position: relative;
+  width: 16px;
+  height: 3px;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: rgba(244, 236, 226, 0.25);
+  overflow: hidden;
+  cursor: pointer;
+  transition: width var(--dur-base) var(--ease-out);
+}
+
+/* Zone cliquable plus haute que le trait */
+.seg::before {
+  content: "";
+  position: absolute;
+  inset: -8px 0;
+}
+
+.segOn {
+  width: 32px;
+}
+
+.segFill {
+  position: absolute;
+  inset: 0;
+  background: var(--ink);
+  transform-origin: left;
+  animation: segFill linear forwards;
+}
+
+@keyframes segFill {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+/* ——— Ma collection ——— */
+.below {
+  /* 12 (page) + 24 = 36px du bord : alignée sur l'en-tête */
+  padding: 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.collHead {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.h2 {
+  font-family: var(--font-serif), serif;
+  font-weight: 400;
+  font-size: 30px;
+  letter-spacing: -0.01em;
+}
+
+.statPill {
+  display: flex;
+  /* Centrage vertical : chiffre serif, libellé mono en capitales et variation
+     n'ont pas la même ligne de base ; alignés sur elle, ils flottaient à des
+     hauteurs différentes dans la pastille. */
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+
+/* Chiffres en New Kansas, comme les anciennes cartes de stats de l'accueil */
+.statVal {
+  font-family: var(--font-serif), serif;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--ink);
+}
+
+/* Libellé dans le style des anciennes cartes de stats : mono, capitales */
+.statLab {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  color: var(--ink-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.tone_up,
+.tone_down,
+.tone_flat {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11.5px;
+}
+
+.tone_up { color: #7ab06a; }
+.tone_down { color: var(--red-soft); }
+.tone_flat { color: var(--ink-mute); }
+
+.emptyMsg {
+  position: relative;
+  z-index: 5;
+  color: var(--ink-dim);
+  font-size: 14px;
+}
+
+.skeleton {
+  height: 420px;
+  border-radius: 28px;
+}
+
+/* ——— Écrans moyens ——— */
+@media (max-width: 1280px) {
+  .queue {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: 8px;
+    gap: 24px;
+  }
+
+  .hero {
+    height: 560px;
+    border-radius: 22px;
+  }
+
+  .veil {
+    background:
+      linear-gradient(0deg, var(--bg) 0%, rgba(var(--bg-rgb), 0.6) 45%, rgba(var(--bg-rgb), 0) 75%),
+      linear-gradient(180deg, rgba(var(--bg-rgb), 0.55) 0%, rgba(var(--bg-rgb), 0) 22%);
+  }
+
+  .heroText {
+    left: 20px;
+    right: 20px;
+    width: auto;
+    bottom: 48px;
+    gap: 12px;
+  }
+
+  .title {
+    font-size: 44px !important;
+  }
+
+  .logo {
+    max-width: 260px;
+    max-height: 80px;
+  }
+
+  .synopsis {
+    display: none;
+  }
+
+  .btn {
+    height: 42px;
+    padding: 0 18px;
+    font-size: 14px;
+  }
+
+  .segs {
+    left: 20px;
+  }
+
+  .below {
+    padding: 0 8px;
+  }
+
+  .collHead .spacer {
+    display: none;
+  }
+
+  .collHead .h2 {
+    width: 100%;
+  }
+
+  .collHead {
+    gap: 8px;
+  }
+
+  .statPill {
+    flex: 1 1 calc(50% - 4px);
+    height: 38px;
+    padding: 0 14px;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  /* La variation ne tient pas à deux pastilles par ligne */
+  .statPill > span:last-child {
+    display: none;
+  }
+
+  .statVal {
+    font-size: 16px;
+  }
+
+}
+
+/* Section intermédiaire (« Reprendre » sur l'accueil Séries) */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 16px;
+}

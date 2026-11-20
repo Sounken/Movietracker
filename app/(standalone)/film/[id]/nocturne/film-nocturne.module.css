@@ -1,0 +1,1395 @@
+/* Fiche film 03 · Nocturne, dans la palette de l'application (cf.
+   nocturne.module.css de l'accueil) : --bg, --panel, --ink, --accent pour ce
+   qui est vivant, --gold pour les notes. La maquette ne garde qu'une
+   exception de couleur : les 5 niveaux pastel de la Grille Express. */
+
+.page {
+  position: relative;
+  padding: 12px 12px 140px;
+}
+
+.mono {
+  font-family: var(--font-geist-mono), monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--ink-mute);
+}
+
+.gold {
+  color: var(--gold);
+}
+
+/* ——— Hero ——— */
+.hero {
+  position: relative;
+  height: 600px;
+  border-radius: 28px;
+  overflow: hidden;
+  background: var(--bg-2);
+}
+
+.kb {
+  position: absolute;
+  inset: 0;
+  animation: kenburns 24s ease-in-out infinite alternate;
+}
+
+@keyframes kenburns {
+  from { transform: scale(1); }
+  to { transform: scale(1.07) translate(-1%, -1%); }
+}
+
+.veil {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(var(--bg-rgb), 0.92) 0%, rgba(var(--bg-rgb), 0.55) 40%, rgba(var(--bg-rgb), 0) 68%),
+    linear-gradient(0deg, var(--bg) 0%, rgba(var(--bg-rgb), 0) 45%),
+    linear-gradient(180deg, rgba(var(--bg-rgb), 0.55) 0%, rgba(var(--bg-rgb), 0) 22%);
+}
+
+/* Le texte laisse la place à l'affiche : il démarre après sa colonne, et
+   commence à la même hauteur qu'elle (112px du haut du hero, sous
+   l'en-tête) — le bouton Retour et le haut de l'affiche sont alignés. */
+.heroText {
+  position: absolute;
+  left: calc(24px + 320px + 48px);
+  top: 112px;
+  right: 420px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: textIn 0.6s var(--ease-out) 0.1s backwards;
+}
+
+@keyframes textIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+.back {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px 0 10px;
+  border-radius: 999px;
+  background: var(--glass-sheen), var(--glass-fill);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-shadow);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+
+.back:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.kicker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--accent-soft);
+}
+
+.cert {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  color: var(--ink);
+  border: 1px solid rgba(244, 236, 226, 0.35);
+  border-radius: 6px;
+  padding: 1px 6px;
+}
+
+.title {
+  font-family: var(--font-serif), serif;
+  font-weight: 400;
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.logo {
+  /* Ratio inconnu : l'image est déclarée en 0×0 côté Next, sa taille vient
+     d'ici (auto, borné en largeur et en hauteur). */
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: min(560px, 100%);
+  max-height: 160px;
+  object-fit: contain;
+  object-position: left bottom;
+  filter: drop-shadow(0 2px 16px rgba(0, 0, 0, 0.55));
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 14.5px;
+  color: var(--ink-dim);
+}
+
+.score {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 13px;
+  color: var(--gold);
+  border: 1px solid rgba(var(--gold-rgb), 0.35);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+.scoreSub {
+  font-size: 10.5px;
+  color: var(--ink-mute);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.btn {
+  height: 48px;
+  padding: 0 22px;
+  border-radius: 999px;
+  border: 0;
+  font: inherit;
+  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+
+.btnP {
+  background: var(--ink);
+  color: var(--bg);
+}
+
+.btnP:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+.btnS {
+  background: var(--glass-sheen), var(--glass-fill);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-shadow);
+  color: var(--ink);
+}
+
+.btnS:hover {
+  background: var(--glass-sheen), rgba(255, 255, 255, 0.14);
+}
+
+/* Fait (dans À voir, vu) : plein, comme le prévoit la maquette */
+.btnOn {
+  background: rgba(var(--gold-rgb), 0.18);
+  color: var(--gold);
+  box-shadow: inset 0 0 0 1px rgba(var(--gold-rgb), 0.45);
+}
+
+.ic {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--glass-sheen), var(--glass-fill);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-shadow);
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+
+.ic:hover {
+  background: var(--glass-sheen), rgba(255, 255, 255, 0.14);
+}
+
+.icOn {
+  color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.16);
+}
+
+.listWrap {
+  position: relative;
+}
+
+.listMenu {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 8px);
+  z-index: 20;
+  min-width: 220px;
+  padding: 6px;
+  border-radius: 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+}
+
+.listItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--ink-dim);
+  font: inherit;
+  font-size: 13.5px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.listItem:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+
+.listName {
+  flex: 1;
+}
+
+/* ——— « Où regarder », en verre ——— */
+.whereCol {
+  position: absolute;
+  right: 24px;
+  bottom: 40px;
+  width: 340px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.glass {
+  padding: 18px 20px;
+  border-radius: 20px;
+  /* Liquid glass teinté de sombre : logos et libellés restent lisibles */
+  background: var(--glass-sheen), rgba(var(--bg-rgb), 0.55);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-shadow);
+}
+
+.where {
+  margin: 0;
+}
+
+.glassTitle {
+  font-size: 13px;
+  color: var(--ink);
+  margin-bottom: 10px;
+}
+
+/* ——— Corps ——— */
+.body {
+  position: relative;
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 48px;
+  /* 12 (page) + 24 = 36px du bord : alignée sur l'en-tête */
+  padding: 0 24px;
+  align-items: start;
+}
+
+/* Halo bleuté sous le hero, comme la maquette */
+.body::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 900px;
+  background: radial-gradient(60% 50% at 70% 0%, rgba(var(--gold-rgb), 0.07) 0%, rgba(var(--bg-rgb), 0) 70%);
+  pointer-events: none;
+}
+
+/* Colonne collante. Son affiche remonte dans le hero jusqu'à 112px de son
+   haut (600 − 488), à la hauteur du bouton Retour. Collée à 96px : sous
+   l'en-tête (80px visibles une fois la page défilée) avec 16px d'air. */
+.side {
+  position: sticky;
+  top: 96px;
+  margin-top: -488px;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.poster {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  border-radius: 20px;
+  overflow: hidden;
+  background: var(--panel);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(244, 236, 226, 0.08);
+  animation: posterIn 0.6s var(--ease-out) backwards;
+}
+
+@keyframes posterIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+}
+
+.cardHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.cardTitle {
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.cardLink {
+  font-size: 13px;
+  color: var(--ink-dim);
+}
+
+.cardLink:hover {
+  color: var(--gold);
+}
+
+/* ——— Ma note ——— */
+.rating {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.saved {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12.5px;
+  color: var(--accent);
+  animation: pop var(--dur-fast) var(--spring);
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.88);
+  }
+}
+
+.bigNote {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-height: 64px;
+}
+
+/* La note « se pose » avec un léger ressort */
+.bigVal {
+  font-family: var(--font-serif), serif;
+  font-size: 64px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  animation: pop 0.3s var(--spring);
+}
+
+.bigHint {
+  font-size: 14px;
+  color: var(--ink-dim);
+}
+
+/* Les dix étoiles doivent tenir dans la carte (280 px utiles) */
+.starsSlot {
+  display: flex;
+  justify-content: space-between;
+}
+
+.starsSlot svg {
+  width: 23px;
+  height: 23px;
+}
+
+.starsSlot button {
+  padding-inline: 2px;
+}
+
+.twoBtns {
+  display: flex;
+  gap: 8px;
+}
+
+.lineBtn {
+  flex: 1;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid rgba(244, 236, 226, 0.15);
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color var(--dur-fast);
+}
+
+.lineBtn:hover:not(:disabled) {
+  border-color: rgba(244, 236, 226, 0.4);
+}
+
+.lineBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.reviewBox {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 110px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.55;
+  resize: vertical;
+  outline: none;
+}
+
+.textarea:focus {
+  border-color: var(--gold);
+}
+
+.reviewActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.linkBtn {
+  border: 0;
+  background: none;
+  padding: 4px 0;
+  color: var(--ink-dim);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.linkBtn:hover {
+  color: var(--ink);
+}
+
+.smallBtn {
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 0;
+  background: var(--ink);
+  color: var(--bg);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.smallBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ——— Tes amis ——— */
+.friends {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.friendsText {
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--ink-dim);
+}
+
+.softBtn {
+  height: 40px;
+  border-radius: 999px;
+  background: rgba(244, 236, 226, 0.08);
+  color: var(--ink);
+  font-size: 13.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--dur-fast);
+}
+
+.softBtn:hover {
+  background: rgba(244, 236, 226, 0.14);
+}
+
+/* ——— Colonne de contenu ——— */
+.main {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  min-width: 0;
+  padding-top: 36px;
+}
+
+/* Les ancres s'arrêtent sous l'en-tête et les onglets collants */
+.anchor {
+  scroll-margin-top: 160px;
+}
+
+.tabs {
+  position: sticky;
+  top: 96px;
+  z-index: 8;
+  align-self: flex-start;
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(var(--panel-rgb), 0.85);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--line);
+}
+
+.tab {
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 0;
+  background: none;
+  color: var(--ink-dim);
+  font: inherit;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  transition: background var(--dur-base) var(--ease-out), color var(--dur-fast);
+}
+
+.tab:hover {
+  color: var(--ink);
+}
+
+.tabOn,
+.tabOn:hover {
+  background: var(--ink);
+  color: var(--bg);
+}
+
+.tabSm {
+  height: 34px;
+  font-size: 13px;
+  padding: 0 14px;
+}
+
+.miniTabs {
+  display: flex;
+  gap: 4px;
+}
+
+.eyebrow {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.h2 {
+  font-family: var(--font-serif), serif;
+  font-weight: 400;
+  font-size: 26px;
+  letter-spacing: -0.01em;
+  margin-bottom: 18px;
+}
+
+.h3 {
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--ink);
+}
+
+.block {
+  display: flex;
+  flex-direction: column;
+}
+
+.blockHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.blockHead .h2 {
+  margin: 0;
+}
+
+/* Aperçu */
+.overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 40px;
+}
+
+.synopsisCol {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Taille de l'ancienne fiche : un texte de lecture, pas un chapô */
+.synopsis {
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--ink-dim);
+  max-width: 680px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.chip {
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(244, 236, 226, 0.15);
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+}
+
+.facts {
+  align-self: start;
+  padding: 22px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fact {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.factK {
+  font-size: 13.5px;
+  color: var(--ink-mute);
+  flex: none;
+}
+
+.factV {
+  font-size: 14px;
+  text-align: right;
+}
+
+.crewLink:hover {
+  color: var(--gold);
+}
+
+/* Casting : portraits ronds */
+.castRail {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-right: -36px;
+  padding-right: 36px;
+}
+
+.castRail::-webkit-scrollbar {
+  display: none;
+}
+
+.castCard {
+  width: 120px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.castPhoto {
+  position: relative;
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  margin-bottom: 6px;
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+.castCard:hover .castPhoto {
+  transform: scale(1.04);
+}
+
+.castInitial {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-serif), serif;
+  font-size: 36px;
+  color: var(--ink-mute);
+}
+
+.castName {
+  font-size: 14px;
+}
+
+.castRole {
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: var(--ink-dim);
+}
+
+/* Notes + Grille Express */
+.notesRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+  gap: 20px;
+}
+
+.notes {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.noteTiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.noteTile {
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(244, 236, 226, 0.04);
+}
+
+/* New Kansas, comme les cartes de score de l'ancienne fiche */
+.noteVal {
+  font-family: var(--font-serif), serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 28px;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+/* Le ★ de la police serif est massif : ramené à la taille d'un symbole */
+.noteStar {
+  font-size: 0.6em;
+  color: var(--gold);
+  vertical-align: 0.2em;
+}
+
+.noteLab {
+  margin-top: 4px;
+  font-size: 12.5px;
+  color: var(--ink-dim);
+}
+
+.distWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.distLab {
+  font-size: 12.5px;
+  color: var(--ink-mute);
+}
+
+.dist {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 72px;
+}
+
+.distAxis {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  color: var(--ink-mute);
+}
+
+.grille {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: linear-gradient(135deg, rgba(var(--gold-rgb), 0.07) 0%, var(--panel) 60%);
+}
+
+.grilleHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.grilleHead .h3 {
+  margin-top: 6px;
+}
+
+.grilleCols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.grilleCol {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.grilleColHead {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13.5px;
+}
+
+.crit {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13.5px;
+  color: var(--ink-dim);
+}
+
+.levels {
+  display: flex;
+  gap: 4px;
+}
+
+.levels i {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid;
+}
+
+.grilleFoot {
+  font-size: 12.5px;
+  color: var(--ink-mute);
+}
+
+/* Critiques */
+.reviews {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.review {
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.reviewHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.reviewAv {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.reviewAv img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.reviewWho {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+}
+
+.reviewNote {
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(var(--gold-rgb), 0.12);
+  color: var(--gold);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+
+.reviewText {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink-dim);
+  white-space: pre-line;
+}
+
+.clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.empty {
+  font-size: 14px;
+  color: var(--ink-dim);
+}
+
+/* Distinctions + similaires */
+.awardsRow:empty {
+  display: none;
+}
+
+.awards {
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.railBlock + .railBlock {
+  margin-top: 36px;
+}
+
+.railBlock .h3 {
+  margin-bottom: 14px;
+}
+
+.rail {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-right: -36px;
+  padding: 6px 36px 6px 0;
+}
+
+.rail::-webkit-scrollbar {
+  display: none;
+}
+
+.railCard {
+  width: 150px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.railPoster {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--panel);
+  margin-bottom: 8px;
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+.railCard:hover .railPoster {
+  transform: scale(1.04);
+}
+
+.railNote {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 12px;
+  color: var(--gold);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
+}
+
+.railTitle {
+  font-size: 13.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.railYear {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11.5px;
+  color: var(--ink-mute);
+}
+
+/* Bande-annonce sous le synopsis, face à la fiche technique */
+.trailer {
+  margin-top: 18px;
+}
+
+/* Séries : progression et accroche */
+.progressTrack {
+  height: 4px;
+  border-radius: 4px;
+  background: var(--track);
+  overflow: hidden;
+}
+
+.progressFill {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--gold);
+}
+
+.tagline {
+  font-family: var(--font-serif), serif;
+  font-size: 22px;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+.sideWhere {
+  display: none;
+}
+
+.whereCard {
+  margin: 0;
+  padding: 18px 20px;
+}
+
+/* ——— Écrans moyens ——— */
+@media (max-width: 1280px) {
+  .heroText {
+    right: 32px;
+  }
+
+  .whereCol {
+    display: none;
+  }
+
+  .sideWhere {
+    display: block;
+  }
+
+  .overview,
+  .notesRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* « M'aider à noter » : style de l'ancien widget de note — discret, il
+   propose sans s'imposer, mais se trouve au moment de l'hésitation. */
+.assistBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--accent-rgb), 0.32);
+  background: rgba(var(--accent-rgb), 0.1);
+  color: var(--accent);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  flex: none;
+  transition: background 0.18s, border-color 0.18s;
+}
+
+.assistBtn:hover {
+  background: rgba(var(--accent-rgb), 0.16);
+  border-color: rgba(var(--accent-rgb), 0.5);
+}
+
+/* Recettes et ROI : vert si le film est rentable, rouge sinon */
+.factPos {
+  color: #7ab06a;
+}
+
+.factNeg {
+  color: #e06c5a;
+}
+
+/* ——— Répartition des notes : membres + critiques TMDB ——— */
+.distHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.distLegend {
+  display: flex;
+  gap: 12px;
+  font-size: 11.5px;
+  color: var(--ink-dim);
+}
+
+.distLegend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.distLegend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+.distLegend i.dotAvg {
+  width: 2px;
+  height: 10px;
+  background: var(--accent);
+}
+
+.distCol {
+  position: relative;
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column-reverse;
+  border-radius: 6px 6px 2px 2px;
+  overflow: hidden;
+  background: rgba(244, 236, 226, 0.04);
+}
+
+.distOurs {
+  display: block;
+  background: var(--gold);
+}
+
+.distAvg {
+  position: absolute;
+  top: -4px;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 2px;
+  background: var(--accent);
+  pointer-events: none;
+}
+
+/* ——— Carte « Notes » (détail de M'aider à noter) ——— */
+.detailScore {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: none;
+}
+
+.detailVal {
+  font-family: var(--font-serif), serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 40px;
+  line-height: 1;
+  color: var(--gold);
+}
+
+.lineBtnSm {
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(244, 236, 226, 0.15);
+  background: none;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.lineBtnSm:hover {
+  border-color: rgba(244, 236, 226, 0.4);
+}
+
+.adjusts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.bonus,
+.malus {
+  font-size: 12px;
+  height: 26px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+}
+
+.bonus {
+  color: #9ccf8a;
+  background: rgba(122, 176, 106, 0.12);
+}
+
+.malus {
+  color: var(--red-soft);
+  background: rgba(var(--red-rgb), 0.12);
+}
+
+/* ——— Mobile : hero en 16:9, affiche à côté du titre ——— */
+@media (max-width: 768px) {
+  .page {
+    padding: 8px 8px 140px;
+  }
+
+  .hero {
+    height: auto;
+    min-height: 520px;
+    border-radius: 22px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+
+  .veil {
+    background:
+      linear-gradient(0deg, var(--bg) 0%, rgba(var(--bg-rgb), 0.7) 50%, rgba(var(--bg-rgb), 0) 80%),
+      linear-gradient(180deg, rgba(var(--bg-rgb), 0.55) 0%, rgba(var(--bg-rgb), 0) 22%);
+  }
+
+  .heroText {
+    position: relative;
+    inset: auto;
+    padding: 96px 18px 22px;
+    gap: 12px;
+  }
+
+  .title {
+    font-size: 40px !important;
+  }
+
+  .logo {
+    max-width: 240px;
+    max-height: 90px;
+  }
+
+  .btn {
+    height: 42px;
+    padding: 0 16px;
+    font-size: 14px;
+  }
+
+  .ic {
+    width: 42px;
+    height: 42px;
+  }
+
+  .body {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding: 0 8px;
+  }
+
+  .side {
+    position: static;
+    margin-top: 20px;
+  }
+
+  .poster {
+    display: none;
+  }
+
+  .main {
+    padding-top: 0;
+  }
+
+  .tabs {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  .reviews,
+  .grilleCols,
+  .noteTiles {
+    grid-template-columns: 1fr;
+  }
+
+  .castRail,
+  .rail {
+    margin-right: -16px;
+    padding-right: 16px;
+  }
+}

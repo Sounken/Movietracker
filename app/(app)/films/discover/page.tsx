@@ -8,12 +8,10 @@ import { fetchForYouFilms } from "@/lib/recommendations";
 import { parseProviders } from "@/lib/watch-providers";
 import { discoverQuery, parseDiscoverParams } from "@/lib/discover-params";
 import { getFilmLibraryStatus } from "@/lib/library-status";
-import Topbar from "../../components/Topbar";
 import HeroCarousel from "../../components/HeroCarousel";
 import DiscoverFilters from "./DiscoverFilters";
 import DiscoverGrid from "./DiscoverGrid";
 import styles from "./discover.module.css";
-import { getGreeting } from "@/lib/greeting";
 
 export const metadata: Metadata = {
   title: "Découvrir des films : populaires, mieux notés, au cinéma",
@@ -77,12 +75,8 @@ export default async function DiscoverPage({
     ).filter((entry): entry is readonly [number, string] => entry[1] !== null),
   ) as Record<number, string>;
 
-  const greeting = getGreeting();
-
   return (
     <div className={styles.page}>
-      <Topbar greeting={greeting} userName={session?.name ?? null} />
-
       {showHero && nowPlaying.length > 0 && (
         <>
           <div className={styles.header}>

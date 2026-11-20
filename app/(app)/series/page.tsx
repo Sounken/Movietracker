@@ -2,17 +2,15 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import { ArrowUp, ArrowDown } from "lucide-react";
 import { fetchOnTheAirSeries, fetchSeriesLogo } from "@/lib/tmdb";
 import { getSeriesCards } from "@/lib/series";
-import Topbar from "../components/Topbar";
-import HeroCarousel from "../components/HeroCarousel";
 import SeriesGrid, { type SeriesGridItem } from "../components/SeriesGrid";
+import { Rating } from "@/lib/rating-scale";
 import SeriesCollectionClient from "../components/SeriesCollectionClient";
 import AddSeriesButton from "../components/AddSeriesButton";
-import styles from "../films/dashboard.module.css";
-import { Rating } from "@/lib/rating-scale";
-import { getGreeting } from "@/lib/greeting";
+import { NocturneHero } from "../films/home/NocturneClient";
+import { delta, type StatItem } from "../films/home/stats";
+import styles from "../films/home/nocturne.module.css";
 
 // ——— Helpers de statistiques (mêmes conventions que l'accueil films) ———
 
@@ -24,37 +22,7 @@ function formatHours(totalMinutes: number): string {
   return rem > 0 ? `${days}j ${rem}h` : `${days}j`;
 }
 
-function Sparkline({ points }: { points: number[] }) {
-  if (points.length < 2) return null;
-  const W = 96, H = 30;
-  const max = Math.max(...points);
-  const min = Math.min(...points);
-  const range = max - min || 1;
-  const step = W / (points.length - 1);
-  const d = points
-    .map((p, i) => {
-      const x = (i * step).toFixed(1);
-      const y = (H - ((p - min) / range) * (H - 6) - 3).toFixed(1);
-      return `${i === 0 ? "M" : "L"} ${x} ${y}`;
-    })
-    .join(" ");
-  return (
-    <svg className={styles.spark} width={W} height={H} viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
-      <path d={d} fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
 
-function Delta({ value, suffix = "", decimals = 0 }: { value: number; suffix?: string; decimals?: number }) {
-  if (value === 0) return <span className={styles.deltaFlat}>= stable</span>;
-  const up = value > 0;
-  return (
-    <span className={up ? styles.deltaUp : styles.deltaDown}>
-      {up ? <ArrowUp size={11} /> : <ArrowDown size={11} />}
-      {up ? "+" : ""}{Math.abs(value).toFixed(decimals)}{suffix}
-    </span>
-  );
-}
 
 /** Nombre d'entrées par mois calendaire, du plus ancien au plus récent. */
 function countByMonth(entries: { updatedAt: Date }[], n: number): number[] {
@@ -105,11 +73,13 @@ async function HeroSection({ userId }: { userId: string | null }) {
   ) as Record<number, string>;
 
   return (
-    <HeroCarousel
+    <NocturneHero
+      kind="series"
+      kicker="Série du moment"
+      queueLabel="Aussi à l'affiche"
       movies={onAir}
       logos={logos}
-      initialWatchlist={watchlistEntries.map((e) => e.tmdbId)}
-      kind="series"
+      watchlistIds={watchlistEntries.map((e) => e.tmdbId)}
     />
   );
 }
@@ -157,13 +127,8 @@ async function InProgressSection({ userId }: { userId: string }) {
   if (inProgress.length === 0) return null;
 
   return (
-    <section>
-      <div className={styles.sectionHead}>
-        <div>
-          <div className={styles.sectionSub}>02 — Reprendre</div>
-          <h2 className={styles.sectionTitle}>Séries en cours</h2>
-        </div>
-      </div>
+    <section className={styles.section}>
+      <h2 className={styles.h2}>Reprendre</h2>
       <SeriesGrid items={inProgress} />
     </section>
   );
@@ -238,40 +203,28 @@ async function CollectionSection({ userId }: { userId: string }) {
 
   const seriesCeMois = ratedEntries.filter((e) => new Date(e.updatedAt) >= startOfMonth).length;
 
+  const stats: StatItem[] = [
+    { label: "Séries notées", value: ratedEntries.length, ...delta(deltaSeries, " ce mois") },
+    { label: "Note moyenne", value: <Rating value={avgRating} />, ...delta(Number(deltaRating.toFixed(1)), "", 1) },
+    { label: "Heures cumulées", value: totalMinutes > 0 ? formatHours(totalMinutes) : "—", ...delta(deltaEpisodes, " épis.") },
+    { label: "Séries ce mois", value: seriesCeMois, ...delta(deltaWeekly, " cette sem.") },
+  ];
+
   return (
     <>
-      {ratedEntries.length > 0 && (
-        <div className={`${styles.stats} stagger`}>
-          <div className={styles.stat}>
-            <div className={styles.statLab}>Séries notées</div>
-            <div className={styles.statVal}>{ratedEntries.length}</div>
-            <Delta value={deltaSeries} suffix=" ce mois" />
-            <Sparkline points={seriesByMonth} />
-          </div>
-
-          <div className={styles.stat}>
-            <div className={styles.statLab}>Note moyenne</div>
-            <div className={styles.statVal}><Rating value={avgRating || null} outOf /></div>
-            <Delta value={Number(deltaRating.toFixed(1))} decimals={1} />
-            <Sparkline points={last10ratings} />
-          </div>
-
-          <div className={styles.stat}>
-            <div className={styles.statLab}>Heures cumulées</div>
-            <div className={styles.statVal}>{totalMinutes > 0 ? formatHours(totalMinutes) : "—"}</div>
-            <Delta value={deltaEpisodes} suffix=" épis. cette sem." />
-            <Sparkline points={episodesByWeek} />
-          </div>
-
-          <div className={styles.stat}>
-            <div className={styles.statLab}>Séries ce mois</div>
-            <div className={styles.statVal}>{seriesCeMois}</div>
-            <Delta value={deltaWeekly} suffix=" cette sem." />
-            <Sparkline points={seriesByWeek} />
-          </div>
-        </div>
-      )}
-
+      <div className={styles.collHead}>
+        <h2 className={styles.h2}>Ma collection</h2>
+        <span className={styles.spacer} />
+        {ratedEntries.length > 0 &&
+          stats.map((st) => (
+            <div key={st.label} className={styles.statPill}>
+              <span className={styles.statVal}>{st.value}</span>
+              <span className={styles.statLab}>{st.label}</span>
+              <span className={styles[`tone_${st.tone}`]}>{st.delta}</span>
+            </div>
+          ))}
+        <AddSeriesButton />
+      </div>
       <SeriesCollectionClient
         initialItems={initialItems}
         total={totalRated}
@@ -288,55 +241,20 @@ export default async function SeriesHomePage() {
   // montrer. « Découvrir » le reprend en tête, suivi du catalogue à explorer.
   if (!session) redirect("/series/discover");
 
-  const greeting = getGreeting();
-
   return (
-    <div className={styles.page}>
-      <Topbar greeting={greeting} userName={session?.name ?? null} />
-
-      <section>
-        <div className={styles.sectionHead}>
-          <div>
-            <div className={styles.sectionSub}>01 — À l&apos;affiche</div>
-            <h2 className={styles.sectionTitle}>Séries du moment</h2>
-          </div>
-        </div>
-      </section>
-
-      <Suspense fallback={<div className={`${styles.skeleton} ${styles.skeletonHero}`} />}>
-        <HeroSection userId={session?.userId ?? null} />
+    <div className={styles.page} data-hero>
+      <Suspense fallback={<section className={`${styles.hero} ${styles.heroSkeleton}`} />}>
+        <HeroSection userId={session.userId} />
       </Suspense>
 
-      {session && (
-        <>
-          <Suspense fallback={null}>
-            <InProgressSection userId={session.userId} />
-          </Suspense>
-
-          <section>
-            <div className={styles.sectionHead}>
-              <div>
-                <div className={styles.sectionSub}>03 — Ma collection</div>
-                <h2 className={styles.sectionTitle}>Séries notées</h2>
-              </div>
-              <div className={styles.sectionActions}>
-                <AddSeriesButton />
-              </div>
-            </div>
-
-            <Suspense
-              fallback={
-                <>
-                  <div className={`${styles.skeleton} ${styles.skeletonStats}`} />
-                  <div className={`${styles.skeleton} ${styles.skeletonGrid}`} />
-                </>
-              }
-            >
-              <CollectionSection userId={session.userId} />
-            </Suspense>
-          </section>
-        </>
-      )}
+      <div className={styles.below}>
+        <Suspense fallback={null}>
+          <InProgressSection userId={session.userId} />
+        </Suspense>
+        <Suspense fallback={<div className={`${styles.skeleton} skeletonBlock`} />}>
+          <CollectionSection userId={session.userId} />
+        </Suspense>
+      </div>
     </div>
   );
 }

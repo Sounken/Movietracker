@@ -1,3 +1,8 @@
+/* Retour, à la place de l'ancienne barre de fiche */
+.backRow {
+  padding: 0 36px;
+}
+
 .page {
   position: relative;
   z-index: 2;

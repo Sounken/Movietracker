@@ -1,13 +1,12 @@
 .sectionHead {
-  margin-bottom: 28px;
+  margin-bottom: 36px;
 }
 .sectionSub {
-  font-size: 10px;
-  letter-spacing: 0.18em;
+  font-size: 12px;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--ink-mute);
-  margin-bottom: 4px;
-  font-weight: 500;
+  color: var(--gold);
+  margin-bottom: 6px;
 }
 .sectionTitle {
   font-family: var(--font-serif, 'Georgia', serif);
@@ -20,10 +19,10 @@
 .card {
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 22px 24px;
-  margin-bottom: 18px;
-  max-width: 760px;
+  border-radius: 24px;
+  padding: 26px 28px;
+  margin-bottom: 20px;
+  max-width: 800px;
 }
 .cardHead {
   display: flex;
@@ -33,20 +32,20 @@
 }
 .cardTitle {
   font-family: var(--font-serif, 'Georgia', serif);
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 400;
   margin: 0;
 }
 .status {
-  font-size: 11px;
-  color: var(--ink-mute);
+  font-size: 12px;
+  color: var(--gold);
   font-family: var(--font-geist-mono, monospace);
 }
 .cardText {
   color: var(--ink-dim);
-  font-size: 13px;
-  line-height: 1.55;
-  margin: 8px 0 18px;
+  font-size: 14.5px;
+  line-height: 1.6;
+  margin: 10px 0 20px;
 }
 
 .providers {
@@ -58,37 +57,38 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 14px 8px 10px;
+  height: 40px;
+  padding: 0 16px 0 12px;
   border-radius: 999px;
-  border: 1px solid var(--line);
-  background: var(--bg-2);
+  border: 1px solid rgba(244, 236, 226, 0.15);
+  background: transparent;
   color: var(--ink-dim);
-  font-size: 13px;
+  font-size: 14px;
   cursor: pointer;
   transition: border-color var(--dur-fast), color var(--dur-fast), background var(--dur-fast);
 }
 .provider:hover {
   color: var(--ink);
-  border-color: var(--ink-mute);
+  border-color: rgba(244, 236, 226, 0.4);
 }
 .providerOn {
-  color: var(--ink);
-  border-color: var(--accent);
-  background: rgba(var(--accent-rgb), 0.1);
+  color: var(--gold);
+  border-color: rgba(var(--gold-rgb), 0.5);
+  background: rgba(var(--gold-rgb), 0.12);
 }
 .checkBox {
   width: 16px;
   height: 16px;
-  border-radius: 4px;
+  border-radius: 50%;
   border: 1px solid var(--ink-mute);
   display: grid;
   place-items: center;
   flex: none;
 }
 .checkBoxOn {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--bg);
 }
 
 @media (max-width: 640px) {
@@ -102,14 +102,14 @@
 
 /* Notifications */
 .callout {
-  background: var(--bg-2);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 14px 16px;
-  font-size: 13px;
+  background: rgba(var(--gold-rgb), 0.06);
+  border: 1px solid rgba(var(--gold-rgb), 0.2);
+  border-radius: 18px;
+  padding: 16px 18px;
+  font-size: 14px;
   color: var(--ink-dim);
   line-height: 1.6;
-  margin: 10px 0 18px;
+  margin: 12px 0 20px;
 }
 .callout strong {
   color: var(--ink);
@@ -135,33 +135,31 @@
   gap: 8px;
 }
 .btn {
-  padding: 8px 14px;
+  height: 40px;
+  padding: 0 18px;
   border-radius: 999px;
-  border: 1px solid var(--line);
-  background: var(--bg-2);
-  color: var(--ink-dim);
-  font-size: 13px;
+  border: 0;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--ink);
+  font-size: 14px;
   cursor: pointer;
   font-family: inherit;
   white-space: nowrap;
 }
 .btn:hover:not(:disabled) {
-  color: var(--ink);
-  border-color: var(--ink-mute);
+  background: rgba(255, 255, 255, 0.16);
 }
 .btn:disabled {
   opacity: 0.6;
   cursor: default;
 }
 .btnAccent {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
+  background: var(--ink);
+  color: var(--bg);
 }
 .btnAccent:hover:not(:disabled) {
+  background: var(--accent);
   color: #fff;
-  border-color: var(--accent);
-  filter: brightness(1.1);
 }
 
 .switches {
@@ -175,7 +173,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 12px 0;
+  padding: 14px 0;
   border-bottom: 1px solid var(--line);
 }
 .switchRow:last-child {
@@ -183,14 +181,14 @@
 }
 .switchLabel {
   display: block;
-  font-size: 14px;
+  font-size: 15px;
   color: var(--ink);
 }
 .switchHint {
   display: block;
-  font-size: 12px;
-  color: var(--ink-mute);
-  margin-top: 2px;
+  font-size: 13px;
+  color: var(--ink-dim);
+  margin-top: 3px;
 }
 .switch {
   position: relative;
@@ -215,12 +213,12 @@
   transition: transform var(--dur-fast) var(--ease-out), background var(--dur-fast);
 }
 .switchOn {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--gold);
+  border-color: var(--gold);
 }
 .switchOn .switchThumb {
   transform: translateX(18px);
-  background: #fff;
+  background: var(--bg);
 }
 @media (prefers-reduced-motion: reduce) {
   .switchThumb {

@@ -1,15 +1,20 @@
 .page {
+  /* Direction Nocturne : la bannière est un hero arrondi en retrait de
+     12 px, sous l'en-tête global (`data-hero`). */
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  padding: 12px 12px 120px;
 }
 
 /* ——— Banner ——— */
 .banner {
-  height: 240px;
+  height: 460px;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(130deg, hsl(18,55%,18%) 0%, hsl(340,40%,12%) 50%, hsl(200,40%,10%) 100%);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(90% 110% at 70% 20%, rgba(var(--gold-rgb), 0.28) 0%, rgba(var(--accent-rgb), 0.12) 35%, var(--bg-2) 75%);
   background-size: cover;
   background-position: center;
   cursor: pointer;
@@ -19,7 +24,9 @@
 .bannerOverlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, transparent 40%, rgba(13,11,10,0.85) 100%);
+  background:
+    linear-gradient(0deg, var(--bg) 0%, rgba(var(--bg-rgb), 0) 55%),
+    linear-gradient(180deg, rgba(var(--bg-rgb), 0.55) 0%, rgba(var(--bg-rgb), 0) 25%);
   z-index: 1;
 }
 
@@ -34,16 +41,15 @@
 
 .bannerHint {
   position: absolute;
-  right: 20px;
-  top: 16px;
+  right: 24px;
+  top: 104px;
   z-index: 5;
-  background: rgba(0,0,0,0.45);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 8px;
-  padding: 7px 12px;
-  font-size: 12px;
-  color: rgba(255,255,255,0.7);
+  background: rgba(var(--bg-rgb), 0.45);
+  backdrop-filter: blur(16px);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 12.5px;
+  color: var(--ink);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -58,10 +64,11 @@
 
 /* ——— Profile Header ——— */
 .profileHeader {
+  /* Posé sur le bas de la bannière, comme le texte d'un hero */
   position: relative;
-  padding: 0 52px;
+  padding: 0 24px;
   z-index: 10;
-  margin-top: -60px;
+  margin-top: -150px;
 }
 
 .profileHeaderInner {
@@ -80,28 +87,28 @@
 }
 
 .avatar {
-  width: 120px;
-  height: 120px;
+  width: 132px;
+  height: 132px;
   border-radius: 50%;
   object-fit: cover;
-  border: 4px solid var(--bg);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  border: 4px solid rgba(var(--bg-rgb), 0.9);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.55);
   cursor: pointer;
   display: block;
 }
 
 .avatarFallback {
-  width: 120px;
-  height: 120px;
+  width: 132px;
+  height: 132px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #3a2a22, #1a1210);
-  border: 4px solid var(--bg);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  background: var(--accent);
+  border: 4px solid rgba(var(--bg-rgb), 0.9);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.55);
   display: grid;
   place-items: center;
   font-family: var(--font-serif), serif;
-  font-size: 52px;
-  color: var(--gold);
+  font-size: 56px;
+  color: var(--bg);
   cursor: pointer;
   position: relative;
   overflow: hidden;
@@ -131,18 +138,17 @@
   position: absolute;
   bottom: 4px;
   right: 4px;
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), #8a3a1c);
+  background: var(--gold);
   border: 3px solid var(--bg);
   display: grid;
   place-items: center;
   font-family: var(--font-geist-mono), monospace;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
-  color: #fff;
-  box-shadow: 0 4px 10px rgba(var(--accent-rgb),0.4);
+  color: var(--bg);
 }
 
 /* ——— Name block ——— */
@@ -154,9 +160,9 @@
 
 .name {
   font-family: var(--font-serif), serif;
-  font-size: 38px;
-  line-height: 1;
-  margin: 0 0 8px;
+  font-size: 64px;
+  line-height: 0.95;
+  margin: 0 0 12px;
   letter-spacing: -0.02em;
   color: var(--ink);
 }
@@ -173,13 +179,14 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 10px;
+  height: 30px;
+  padding: 0 12px;
   border-radius: 999px;
   font-family: var(--font-geist-mono), monospace;
-  font-size: 11px;
-  background: rgba(var(--accent-rgb),0.12);
-  color: var(--accent);
-  border: 1px solid rgba(var(--accent-rgb),0.22);
+  font-size: 12px;
+  background: rgba(var(--gold-rgb), 0.12);
+  color: var(--gold);
+  border: 1px solid rgba(var(--gold-rgb), 0.35);
   white-space: nowrap;
   /* Devenu un bouton : ouvre le tableau des rangs */
   cursor: pointer;
@@ -187,29 +194,30 @@
 }
 
 .profileBadge:hover {
-  background: rgba(var(--accent-rgb),0.2);
-  border-color: var(--accent);
+  background: rgba(var(--gold-rgb), 0.2);
+  border-color: var(--gold);
 }
 
 /* Le niveau chiffré, détaché du titre par un filet */
 .profileBadgeLevel {
   padding-left: 7px;
   margin-left: 1px;
-  border-left: 1px solid rgba(var(--accent-rgb),0.3);
+  border-left: 1px solid rgba(var(--gold-rgb), 0.35);
   opacity: 0.85;
 }
 
 .joinedDate {
-  font-size: 12px;
-  color: var(--ink-mute);
+  font-size: 13px;
+  color: var(--ink-dim);
 }
 
 .bio {
-  font-size: 14px;
+  font-size: 15px;
   color: var(--ink-dim);
-  margin: 10px 0 0;
-  line-height: 1.5;
-  max-height: 4.6em;
+  margin: 12px 0 0;
+  line-height: 1.55;
+  max-width: 560px;
+  max-height: 4.8em;
   overflow-y: auto;
   padding-right: 8px;
   white-space: pre-wrap;
@@ -248,30 +256,30 @@
    modale comme enfant direct, qu'il ne faut surtout pas dimensionner ici. */
 .profileActions .btnEdit,
 .profileActions .btnImport {
-  height: 38px;
+  height: 44px;
   padding-top: 0;
   padding-bottom: 0;
 }
 
 .btnEdit {
-  padding: 9px 20px;
+  padding: 0 20px;
   border-radius: 999px;
-  font-size: 13px;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  color: var(--ink-dim);
+  font-size: 14px;
+  background: var(--ink);
+  border: 0;
+  color: var(--bg);
   cursor: pointer;
   font-family: inherit;
-  transition: all 0.2s;
+  transition: background 0.2s, color 0.2s;
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   white-space: nowrap;
 }
 
 .btnEdit:hover {
-  border-color: var(--accent);
-  color: var(--ink);
+  background: var(--accent);
+  color: #fff;
 }
 
 .btnEdit svg {
@@ -284,23 +292,23 @@
 }
 
 .btnImport {
-  padding: 9px 18px;
+  padding: 0 18px;
   border-radius: 999px;
-  font-size: 13px;
-  background: transparent;
-  border: 1px solid var(--line);
-  color: var(--ink-dim);
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(16px);
+  border: 0;
+  color: var(--ink);
   cursor: pointer;
   font-family: inherit;
-  transition: all 0.2s;
+  transition: background 0.2s, color 0.2s;
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   white-space: nowrap;
 }
 .btnImport:hover {
-  border-color: #00c030;
-  color: #00c030;
+  background: rgba(255, 255, 255, 0.18);
 }
 .btnImport svg {
   width: 14px;
@@ -317,8 +325,7 @@
   text-decoration: none;
 }
 .btnBilan:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+  color: var(--gold);
 }
 
 /* ——— Choix de l'échelle de notation (modale profil) ——— */
@@ -369,8 +376,11 @@
 
 /* ——— XP Section ——— */
 .xpSection {
-  padding: 0 52px;
-  margin-bottom: 40px;
+  margin: 8px 24px 40px;
+  padding: 18px 22px;
+  border-radius: 24px;
+  background: var(--panel);
+  border: 1px solid var(--line);
 }
 
 .xpRow {
@@ -381,20 +391,20 @@
 }
 
 .xpLabel {
-  font-size: 12px;
-  color: var(--ink-dim);
+  font-size: 14px;
+  color: var(--ink);
 }
 
 .xpVal {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 12px;
-  color: var(--accent);
+  font-size: 12.5px;
+  color: var(--gold);
   margin-left: auto;
 }
 
 .xpBarBg {
   height: 6px;
-  background: var(--line);
+  background: var(--track);
   border-radius: 999px;
   overflow: hidden;
 }
@@ -402,8 +412,7 @@
 .xpBarFill {
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--accent), var(--accent-soft));
-  box-shadow: 0 0 8px rgba(var(--accent-rgb),0.5);
+  background: linear-gradient(90deg, var(--accent), var(--gold));
   transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
   min-width: 2px;
 }
@@ -421,13 +430,13 @@
 .xpMilestones span:nth-child(2) {
   text-align: center;
   flex: 1;
-  color: var(--accent);
+  color: var(--gold);
 }
 
 /* ——— Stats Section ——— */
 .statsSection {
-  padding: 0 52px;
-  margin-bottom: 48px;
+  padding: 0 24px;
+  margin-bottom: 52px;
 }
 
 .statsGrid {
@@ -439,43 +448,39 @@
 .statCard {
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 20px 20px 18px;
+  border-radius: 24px;
+  padding: 22px 24px 20px;
   position: relative;
   overflow: hidden;
-  transition: border-color 0.2s, transform 0.2s;
+  transition: border-color 0.2s;
 }
 
 .statCard:hover {
-  border-color: rgba(var(--accent-rgb),0.25);
-  transform: translateY(-2px);
+  border-color: rgba(var(--gold-rgb), 0.3);
 }
 
 .statLabel {
-  font-size: 11px;
-  color: var(--ink-mute);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--ink-dim);
+  margin-bottom: 10px;
   font-family: var(--font-geist-mono), monospace;
 }
 
 .statVal {
   font-family: var(--font-serif), serif;
-  font-size: 38px;
+  font-size: 44px;
   line-height: 1;
-  margin-bottom: 4px;
-  letter-spacing: -0.02em;
+  margin-bottom: 6px;
+  letter-spacing: -0.03em;
   color: var(--ink);
-  /* New Kansas embarque `tnum` : les chiffres passent à chasse fixe et les
-     colonnes s'alignent. Par défaut ils sont proportionnels (8 largeurs). */
+  /* New Kansas embarque `tnum` : chasse fixe, colonnes alignées. */
   font-variant-numeric: tabular-nums;
 }
 
 .statSub {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 11px;
-  color: var(--green);
+  font-size: 11.5px;
+  color: #7ab06a;
   display: flex;
   align-items: center;
   gap: 3px;
@@ -499,7 +504,7 @@
 
 /* ——— Section head ——— */
 .content {
-  padding: 0 52px 80px;
+  padding: 0 24px 40px;
 }
 
 .sectionHead {
@@ -530,13 +535,12 @@
 }
 
 .favSlot {
-  border-radius: 16px;
+  border-radius: 20px;
   overflow: hidden;
   position: relative;
   cursor: pointer;
-  border: 1px solid var(--line);
-  transition: transform 0.25s, border-color 0.25s;
-  aspect-ratio: 3 / 4.5;
+  transition: transform var(--dur-base) var(--ease-out);
+  aspect-ratio: 2 / 3;
   background: var(--panel);
 }
 
@@ -548,8 +552,7 @@
 }
 
 .favSlot:hover {
-  transform: translateY(-4px);
-  border-color: rgba(var(--accent-rgb),0.35);
+  transform: scale(1.03);
 }
 
 .favBg {
@@ -567,22 +570,20 @@
 .favOverlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, transparent 35%, rgba(0,0,0,0.88) 100%);
+  background: linear-gradient(0deg, rgba(var(--bg-rgb), 0.9) 0%, rgba(var(--bg-rgb), 0) 50%);
 }
 
 .favNum {
   position: absolute;
   top: 14px;
-  left: 14px;
+  left: 16px;
   font-family: var(--font-serif), serif;
-  font-size: 48px;
+  font-size: 44px;
   line-height: 1;
-  color: rgba(255,255,255,0.12);
-  font-style: italic;
+  color: rgba(244, 236, 226, 0.85);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
   z-index: 2;
   pointer-events: none;
-  /* New Kansas embarque `tnum` : les chiffres passent à chasse fixe et les
-     colonnes s'alignent. Par défaut ils sont proportionnels (8 largeurs). */
   font-variant-numeric: tabular-nums;
 }
 
@@ -607,8 +608,8 @@
 
 .favMeta {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 11px;
-  color: rgba(255,255,255,0.55);
+  font-size: 11.5px;
+  color: var(--gold);
 }
 
 /* Hover change overlay */
@@ -616,7 +617,7 @@
   position: absolute;
   inset: 0;
   z-index: 5;
-  background: rgba(0,0,0,0.6);
+  background: rgba(var(--bg-rgb), 0.6);
   backdrop-filter: blur(10px);
   display: flex;
   flex-direction: column;
@@ -625,7 +626,7 @@
   gap: 10px;
   opacity: 0;
   transition: opacity 0.2s;
-  border-radius: 16px;
+  border-radius: 20px;
 }
 
 .favSlot:hover .favChange {
@@ -638,22 +639,24 @@
 }
 
 .favChangeBtn {
-  padding: 10px 22px;
+  height: 42px;
+  padding: 0 20px;
   border-radius: 999px;
-  background: var(--accent);
-  color: #fff;
+  background: var(--ink);
+  color: var(--bg);
   border: 0;
   font-family: inherit;
-  font-size: 13px;
+  font-size: 13.5px;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 8px;
-  transition: filter 0.2s;
+  transition: background 0.2s, color 0.2s;
 }
 
 .favChangeBtn:hover {
-  filter: brightness(1.1);
+  background: var(--accent);
+  color: #fff;
 }
 
 .favChangeBtnAlt {
@@ -680,16 +683,16 @@
   align-items: center;
   justify-content: center;
   gap: 12px;
-  border: 1px dashed var(--line);
-  border-radius: 16px;
-  aspect-ratio: 3 / 4.5;
-  background: var(--panel);
+  border: 1px dashed rgba(244, 236, 226, 0.18);
+  border-radius: 20px;
+  aspect-ratio: 2 / 3;
+  background: transparent;
   cursor: pointer;
   transition: border-color 0.2s;
 }
 
 .favEmptySlot:hover {
-  border-color: var(--accent);
+  border-color: var(--gold);
 }
 
 .favEmptyNum {
@@ -724,7 +727,7 @@
 }
 
 .favEmptyBtn:hover {
-  border-color: var(--accent);
+  border-color: var(--gold);
   color: var(--ink);
 }
 
@@ -1173,11 +1176,14 @@
 }
 
 @media (max-width: 768px) {
-  .banner { height: 160px; }
-  .profileHeader { padding: 0 16px; margin-top: -45px; }
-  .xpSection, .statsSection, .content { padding-left: 16px; padding-right: 16px; }
-  .avatar, .avatarFallback { width: 90px; height: 90px; font-size: 38px; }
-  .name { font-size: 28px; }
+  .page { padding: 8px 8px 120px; }
+  .banner { height: 300px; border-radius: 22px; }
+  .bannerHint { top: 76px; right: 16px; }
+  .profileHeader { padding: 0 12px; margin-top: -110px; }
+  .statsSection, .content { padding-left: 8px; padding-right: 8px; }
+  .xpSection { margin-left: 8px; margin-right: 8px; }
+  .avatar, .avatarFallback { width: 92px; height: 92px; font-size: 38px; }
+  .name { font-size: 40px; }
   .statsGrid { grid-template-columns: repeat(2, 1fr); }
   .favsGrid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .profileHeaderInner { --profile-text-offset: 36px; flex-wrap: wrap; gap: 16px; }
@@ -1194,10 +1200,9 @@
 
 /* ——— 2K / 4K ——— */
 @media (min-width: 1600px) {
-  .banner { height: 300px; }
-  .profileHeader { padding: 0 72px; margin-top: -72px; }
-  .xpSection, .statsSection, .content { padding-left: 72px; padding-right: 72px; }
-  .avatar, .avatarFallback { width: 140px; height: 140px; font-size: 60px; }
-  .profileHeaderInner { --profile-text-offset: 66px; }
-  .name { font-size: 44px; }
+  .banner { height: 520px; }
+  .profileHeader { margin-top: -170px; }
+  .avatar, .avatarFallback { width: 148px; height: 148px; font-size: 62px; }
+  .profileHeaderInner { --profile-text-offset: 56px; }
+  .name { font-size: 72px; }
 }

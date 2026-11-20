@@ -1,44 +1,48 @@
 .container {
+  /* Direction Nocturne : la salle s'éteint, une lueur dorée en fond */
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg);
+  background:
+    radial-gradient(60% 55% at 72% 18%, rgba(var(--gold-rgb), 0.16) 0%, rgba(var(--gold-rgb), 0) 70%),
+    radial-gradient(50% 50% at 20% 90%, rgba(var(--accent-rgb), 0.12) 0%, rgba(var(--accent-rgb), 0) 70%),
+    var(--bg);
   padding: 24px;
 }
 
 .card {
-  background: var(--panel);
+  background: rgba(var(--panel-rgb), 0.72);
+  backdrop-filter: blur(20px);
   border: 1px solid var(--line);
-  border-radius: 20px;
-  padding: 40px;
+  border-radius: var(--radius-lg);
+  padding: 40px 40px 36px;
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
 }
 
 .backBtn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: none;
+  height: 32px;
+  padding: 0 14px 0 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
   border: none;
-  padding: 0;
-  /* Le bouton et la marque sont tous deux des éléments en ligne : ils se
-     suivent sur la même ligne, et seul l'espace du code HTML les séparait —
-     d'où « Retour » collé à « Movietracker ». L'écart est désormais explicite.
-     Les passer l'un au-dessus de l'autre a été essayé : la carte paraissait
-     vide et déséquilibrée. */
-  margin-right: 18px;
-  margin-bottom: 20px;
-  font-size: 14px;
+  /* Le bouton et la marque se suivent sur la même ligne : écart explicite. */
+  margin-right: 14px;
+  margin-bottom: 24px;
+  font-size: 13px;
   font-family: inherit;
-  color: var(--ink-dim);
+  color: var(--ink);
   cursor: pointer;
-  transition: color 0.15s ease;
+  transition: background 0.15s ease;
 }
 
 .backBtn:hover {
-  color: var(--ink);
+  background: rgba(255, 255, 255, 0.16);
 }
 
 .brand {
@@ -55,7 +59,7 @@
 
 .brandName {
   font-family: var(--font-serif), serif;
-  font-size: 22px;
+  font-size: 24px;
   color: var(--ink);
 }
 
@@ -66,15 +70,16 @@
 
 .title {
   font-family: var(--font-serif), serif;
-  font-size: 32px;
+  font-size: 44px;
+  line-height: 1;
   font-weight: 400;
   letter-spacing: -0.02em;
   color: var(--ink);
-  margin-bottom: 6px;
+  margin-bottom: 10px;
 }
 
 .subtitle {
-  font-size: 14px;
+  font-size: 15px;
   color: var(--ink-dim);
   margin-bottom: 28px;
 }
@@ -88,10 +93,10 @@
 .error {
   background: rgba(var(--red-rgb), 0.1);
   border: 1px solid rgba(var(--red-rgb), 0.3);
-  color: #e57060;
-  font-size: 13px;
-  padding: 10px 14px;
-  border-radius: 8px;
+  color: var(--red-soft);
+  font-size: 13.5px;
+  padding: 12px 16px;
+  border-radius: 16px;
 }
 
 /* Confirmation (lien envoyé, mot de passe changé) : pendant vert de .error. */
@@ -99,29 +104,30 @@
   background: rgba(106, 138, 90, 0.12);
   border: 1px solid rgba(106, 138, 90, 0.4);
   color: var(--ink);
-  font-size: 13px;
+  font-size: 13.5px;
   line-height: 1.6;
-  padding: 12px 14px;
-  border-radius: 8px;
+  padding: 12px 16px;
+  border-radius: 16px;
 }
 
 /* Bouton principal rendu par un lien (« Se connecter » après réinitialisation). */
 .btnLink {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-top: 16px;
-  text-align: center;
   text-decoration: none;
 }
 
 /* « Mot de passe oublié ? » : sous le champ, aligné à droite, discret. */
 .forgotLink {
   align-self: flex-end;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--ink-dim);
 }
 
 .forgotLink:hover {
-  color: var(--accent-soft);
+  color: var(--gold);
 }
 
 .field {
@@ -133,9 +139,9 @@
 .label {
   font-size: 12px;
   font-family: var(--font-geist-mono), monospace;
-  color: var(--ink-dim);
+  color: var(--gold);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.04em;
 }
 
 .hint {
@@ -145,12 +151,13 @@
 }
 
 .input {
-  background: var(--bg);
+  background: rgba(var(--bg-rgb), 0.6);
   border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 11px 14px;
+  border-radius: 999px;
+  height: 48px;
+  padding: 0 20px;
   font-family: var(--font-sans), system-ui, sans-serif;
-  font-size: 14px;
+  font-size: 15px;
   color: var(--ink);
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
@@ -162,28 +169,26 @@
 }
 
 .input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.12);
+  border-color: var(--gold);
+  box-shadow: 0 0 0 4px rgba(var(--gold-rgb), 0.12);
 }
 
 .btn {
-  margin-top: 8px;
-  padding: 12px;
-  background: var(--accent);
+  margin-top: 10px;
+  height: 50px;
+  background: var(--ink);
   border: none;
-  border-radius: 10px;
+  border-radius: 999px;
   font-family: var(--font-sans), system-ui, sans-serif;
-  font-size: 14px;
-  font-weight: 500;
-  color: #fff;
+  font-size: 15px;
+  color: var(--bg);
   cursor: pointer;
-  transition: filter 0.2s, transform 0.2s;
-  box-shadow: 0 4px 20px rgba(var(--accent-rgb), 0.25);
+  transition: background 0.2s, color 0.2s;
 }
 
 .btn:hover:not(:disabled) {
-  filter: brightness(1.1);
-  transform: translateY(-1px);
+  background: var(--accent);
+  color: #fff;
 }
 
 .btn:disabled {
@@ -192,15 +197,14 @@
 }
 
 .switchLink {
-  margin-top: 20px;
-  font-size: 13px;
+  margin-top: 22px;
+  font-size: 14px;
   color: var(--ink-dim);
   text-align: center;
 }
 
 .switchLink a {
-  color: var(--accent-soft);
-  font-weight: 500;
+  color: var(--gold);
 }
 
 .switchLink a:hover {

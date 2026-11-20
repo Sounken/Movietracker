@@ -48,6 +48,7 @@ model User {
   passwordResets PasswordResetToken[]
   filmWatches    FilmWatch[]
   activities     Activity[]
+  ratingDetails  RatingDetail[]
   reactions      ActivityReaction[]
   reminders      ReleaseReminder[]
   pushDevices    PushSubscription[]
@@ -484,4 +485,26 @@ model PuzzlePlay {
   @@unique([userId, media, day])
   /// Série de victoires : on remonte les parties d'un joueur par jour.
   @@index([userId, media, day])
+}
+
+/// Notes détaillées d'une œuvre, saisies avec « M'aider à noter » : le niveau
+/// retenu pour chaque critère et les bonus / malus. La note finale reste dans
+/// `UserFilm.rating` / `UserSeries.rating` ; ce détail sert à la ré-afficher
+/// (carte « Notes » de la fiche) et à rouvrir l'assistant là où on l'a laissé.
+model RatingDetail {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// « movie » ou « tv », comme les routes TMDB.
+  media       String
+  tmdbId      Int
+  /// `AssistantState` de lib/rating-assistant.ts : levels, malus, bonus,
+  /// customMalus, customBonus.
+  state       Json
+  /// Note calculée par l'assistant, sur 10.
+  score       Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, media, tmdbId])
 }

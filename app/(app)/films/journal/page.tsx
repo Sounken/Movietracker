@@ -6,8 +6,6 @@ import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { getFilmCards } from "@/lib/films";
 import { Rating } from "@/lib/rating-scale";
-import Topbar from "../../components/Topbar";
-import { getGreeting } from "@/lib/greeting";
 import styles from "./journal.module.css";
 
 export const metadata: Metadata = { title: "Journal", robots: { index: false } };
@@ -76,14 +74,13 @@ export default async function JournalPage({
 
   return (
     <div>
-      <Topbar greeting={getGreeting()} userName={session.name} />
 
       <div className={styles.head}>
         <div className={styles.sectionSub}>Bibliothèque</div>
         <h2 className={styles.sectionTitle}>Journal</h2>
         {total > 0 && (
           <p className={styles.stats}>
-            {yearCount} visionnage{yearCount > 1 ? "s" : ""} en {yearStart.getUTCFullYear()} ·{" "}
+            {yearCount} visionnage{yearCount > 1 ? "s" : ""} en {yearStart.getUTCFullYear()} •{" "}
             {total} au total
           </p>
         )}

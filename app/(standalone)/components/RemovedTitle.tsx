@@ -6,7 +6,8 @@ import { getSession } from "@/lib/session";
 import { searchTmdbTitles } from "@/lib/tmdb";
 import { removeDeletedFilm } from "@/app/actions/film";
 import { removeDeletedSeries } from "@/app/actions/series";
-import FilmTopbar from "../film/[id]/components/FilmTopbar";
+import { BackButton } from "../film/[id]/nocturne/FilmNocturneClient";
+import nocturne from "../film/[id]/nocturne/film-nocturne.module.css";
 import RemoveDeletedButton from "./RemoveDeletedButton";
 import styles from "./RemovedTitle.module.css";
 
@@ -38,7 +39,9 @@ export default async function RemovedTitle({ kind, tmdbId }: { kind: "movie" | "
 
   return (
     <>
-      <FilmTopbar fallbackHref={isFilm ? "/films" : "/series"} />
+      <div className={styles.backRow}>
+        <BackButton className={nocturne.back} fallbackHref={isFilm ? "/films" : "/series"} />
+      </div>
       <div className={styles.page}>
         <div className={styles.card}>
           {cached.posterUrl && (

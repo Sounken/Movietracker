@@ -15,6 +15,11 @@ export function useLibraryLookup(status: LibraryStatus | undefined) {
   }, [status]);
 }
 
+/** Ma note d'un titre, ou null : affichée à côté de l'année sur la carte. */
+export function useLibraryRating(status: LibraryStatus | undefined) {
+  return (id: number): number | null => status?.ratings?.[id] ?? null;
+}
+
 /**
  * Pastille en haut à gauche de l'affiche (la note TMDB occupe la droite).
  * Icône + mot court : l'icône seule ne se comprend pas sur mobile, où le

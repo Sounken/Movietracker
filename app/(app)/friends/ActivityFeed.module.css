@@ -11,8 +11,8 @@
 .item {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  padding: 14px 20px;
+  gap: 14px;
+  padding: 16px 22px;
   border-bottom: 1px solid var(--line);
   scroll-margin: 120px;
 }
@@ -20,7 +20,7 @@
   border-bottom: none;
 }
 .item:target {
-  background: rgba(var(--accent-rgb), 0.07);
+  background: rgba(var(--gold-rgb), 0.07);
 }
 
 .avatar {
@@ -58,7 +58,7 @@
 }
 a.name:hover,
 .title:hover {
-  color: var(--accent);
+  color: var(--gold);
 }
 .title {
   color: var(--ink);
@@ -86,11 +86,11 @@ a.name:hover,
 }
 
 .review {
-  margin: 8px 0 0;
-  padding-left: 10px;
-  border-left: 2px solid var(--line);
-  font-size: 13.5px;
-  line-height: 1.55;
+  margin: 10px 0 0;
+  padding-left: 12px;
+  border-left: 2px solid rgba(var(--gold-rgb), 0.4);
+  font-size: 14px;
+  line-height: 1.6;
   color: var(--ink-dim);
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -114,9 +114,9 @@ a.name:hover,
 
 .poster {
   position: relative;
-  width: 44px;
-  height: 66px;
-  border-radius: 6px;
+  width: 46px;
+  height: 69px;
+  border-radius: 10px;
   overflow: hidden;
   flex: none;
   background: var(--line);

@@ -14,7 +14,9 @@
      `--red`, réservé aux erreurs et aux suppressions. */
   --red-soft: #e7a39b;
   --green: #6a8a5a;
-  --radius: 14px;
+  --radius: 20px;
+  /* Grands blocs (hero, cartes de premier plan), direction Nocturne. */
+  --radius-lg: 28px;
   /* Composantes RVB des couleurs de marque, pour les fonds et bordures
      translucides : `rgba(var(--accent-rgb), 0.12)`. */
   --accent-rgb: 217, 119, 66;
@@ -25,6 +27,28 @@
   --bg-rgb: 13, 11, 10;
   --bg-2-rgb: 21, 17, 15;
   --panel-rgb: 26, 22, 20;
+  /* Liquid glass (à la Apple) : verre translucide flou et saturé, reflet
+     lumineux en haut, liseré clair et ombre portée. S'emploie ainsi :
+       background: var(--glass-sheen), var(--glass-fill);
+       backdrop-filter: var(--glass-blur);
+       border: 1px solid var(--glass-edge);
+       box-shadow: var(--glass-shadow);
+     `--glass-lens` est la variante plus claire d'un élément actif posé sur
+     du verre (pastille de sélection). */
+  --glass-fill: rgba(255, 255, 255, 0.07);
+  --glass-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 55%);
+  --glass-blur: blur(14px) saturate(180%);
+  --glass-edge: rgba(255, 255, 255, 0.16);
+  --glass-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.05),
+    0 8px 24px rgba(0, 0, 0, 0.28);
+  --glass-lens: linear-gradient(180deg, rgba(255, 255, 255, 0.34) 0%, rgba(255, 255, 255, 0.12) 100%);
+  --glass-lens-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.18),
+    0 2px 10px rgba(0, 0, 0, 0.3);
+
   /* Surfaces de survol / pistes : voile clair sur fond sombre */
   --hover: rgba(255, 255, 255, 0.05);
   --hover-strong: rgba(255, 255, 255, 0.09);

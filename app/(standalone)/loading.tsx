@@ -5,34 +5,24 @@ import styles from "./loading.module.css";
  *
  * Ces pages enchaînent plusieurs appels TMDB : sans écran intermédiaire, le
  * clic sur « voir la fiche » laissait l'écran précédent figé pendant une
- * seconde. Le squelette reprend la structure poster + colonne de métadonnées.
+ * seconde. Le squelette reprend le gabarit Nocturne : hero arrondi sous
+ * l'en-tête, colonne de l'affiche qui le chevauche.
  */
 export default function StandaloneLoading() {
   return (
-    <div className={styles.hero} aria-busy="true" aria-label="Chargement de la fiche">
-      <div className={styles.posterCol}>
-        <div className={`skeletonBlock ${styles.poster}`} />
-        <div className={`skeletonBlock ${styles.action}`} />
-        <div className={`skeletonBlock ${styles.action}`} />
-      </div>
-
-      <div className={styles.metaCol}>
-        <div className={styles.tags}>
-          <div className={`skeletonBlock ${styles.tag}`} />
-          <div className={`skeletonBlock ${styles.tag}`} />
+    <div className={styles.page} data-hero aria-busy="true" aria-label="Chargement de la fiche">
+      <div className={`skeletonBlock ${styles.hero}`} />
+      <div className={styles.body}>
+        <div className={styles.side}>
+          <div className={`skeletonBlock ${styles.poster}`} />
+          <div className={`skeletonBlock ${styles.card}`} />
         </div>
-        <div className={`skeletonBlock ${styles.title}`} />
-
-        <div className={styles.scores}>
-          {Array.from({ length: 5 }, (_, i) => (
-            <div key={i} className={`skeletonBlock ${styles.score}`} />
-          ))}
+        <div className={styles.main}>
+          <div className={`skeletonBlock ${styles.tabs}`} />
+          <div className={`skeletonBlock ${styles.line}`} />
+          <div className={`skeletonBlock ${styles.line}`} />
+          <div className={`skeletonBlock ${styles.lineShort}`} />
         </div>
-
-        <div className={`skeletonBlock ${styles.widget}`} />
-        <div className={`skeletonBlock ${styles.line}`} />
-        <div className={`skeletonBlock ${styles.line}`} />
-        <div className={`skeletonBlock ${styles.lineShort}`} />
       </div>
     </div>
   );

@@ -3,10 +3,8 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { type TmdbFilmCard } from "@/lib/tmdb";
 import { getFilmCards } from "@/lib/films";
-import Topbar from "../../components/Topbar";
 import CollectionClient from "../../components/CollectionClient";
 import styles from "../collection.module.css";
-import { getGreeting } from "@/lib/greeting";
 
 const PAGE_SIZE = 24;
 
@@ -14,7 +12,6 @@ export default async function WatchlistPage() {
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const greeting = getGreeting();
 
   const [total, entries, ratedCount] = session
     ? await Promise.all([
@@ -42,8 +39,6 @@ export default async function WatchlistPage() {
 
   return (
     <div className={styles.page}>
-      <Topbar greeting={greeting} userName={session?.name ?? null} />
-
       <div className={styles.header}>
         <div className={styles.sectionSub}>Ma bibliothèque</div>
         <h2 className={styles.sectionTitle}>À voir</h2>

@@ -5,9 +5,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { getCalendar, type CalendarEntry } from "@/lib/calendar";
 import { shiftDay } from "@/lib/releases";
-import Topbar from "../../components/Topbar";
 import ReminderToggle from "../../components/ReminderToggle";
-import { getGreeting } from "@/lib/greeting";
 import styles from "./calendrier.module.css";
 
 export const metadata: Metadata = { title: "Calendrier", robots: { index: false } };
@@ -74,7 +72,6 @@ export default async function CalendarPage() {
 
   return (
     <div>
-      <Topbar greeting={getGreeting()} userName={session.name} />
 
       <div className={styles.head}>
         <div className={styles.sectionSub}>Bibliothèque</div>

@@ -112,7 +112,7 @@ export default async function PublicSeriesProfilePage({
   const joinedYear = new Date(user.createdAt).getFullYear();
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} data-hero>
       <div
         className={styles.banner}
         style={user.bannerUrl ? { backgroundImage: `url("${user.bannerUrl}")` } : undefined}

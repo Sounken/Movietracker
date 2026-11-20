@@ -6,7 +6,9 @@
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--ink-mute);
+  /* --ink-dim et non --ink-mute : posé sur le verre du hero, le libellé
+     (« En abonnement », « En location ») ne se lisait plus. */
+  color: var(--ink-dim);
   font-family: var(--font-geist-mono), monospace;
   margin-bottom: 10px;
 }

@@ -2,11 +2,9 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { computeXP, getLevelInfo } from "@/lib/xp";
-import Topbar from "../../components/Topbar";
 import { getFeed } from "@/lib/activity";
 import ActivityFeed from "../../friends/ActivityFeed";
 import FriendsClient from "../../friends/FriendsClient";
-import { getGreeting } from "@/lib/greeting";
 
 // Champs nécessaires au calcul du niveau (cf. computeXP).
 const XP_SELECT = { rating: true, review: true, liked: true, watched: true } as const;
@@ -15,7 +13,6 @@ export default async function SeriesFriendsPage() {
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const greeting = getGreeting();
 
   const followingRaw = await prisma.userFollow.findMany({
     where: { followerId: session.userId },
@@ -77,7 +74,6 @@ export default async function SeriesFriendsPage() {
 
   return (
     <div>
-      <Topbar greeting={greeting} userName={session.name} />
       <FriendsClient
         following={following}
         followers={followers}

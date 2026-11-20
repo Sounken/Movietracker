@@ -73,7 +73,7 @@ export default async function SeriesProfilePage() {
   const joinedYear = new Date(user.createdAt).getFullYear();
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} data-hero>
       {/* Bannière + en-tête + XP (identité partagée, niveau séries) */}
       <ProfileHeaderClient
         name={user.name ?? ""}

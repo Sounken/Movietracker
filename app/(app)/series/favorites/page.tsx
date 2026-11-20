@@ -2,10 +2,8 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { getSeriesCards } from "@/lib/series";
-import Topbar from "../../components/Topbar";
 import SeriesCollectionClient from "../../components/SeriesCollectionClient";
 import discover from "../../films/discover/discover.module.css";
-import { getGreeting } from "@/lib/greeting";
 
 export default async function SeriesFavoritesPage() {
   const session = await getSession();
@@ -31,11 +29,8 @@ export default async function SeriesFavoritesPage() {
     })
     .filter((x): x is NonNullable<typeof x> => x !== null);
 
-  const greeting = getGreeting();
-
   return (
     <div className={discover.page}>
-      <Topbar greeting={greeting} userName={session.name ?? null} />
       <div className={discover.header}>
         <div className={discover.sectionSub}>Favoris</div>
         <h2 className={discover.sectionTitle}>Mes séries aimées</h2>

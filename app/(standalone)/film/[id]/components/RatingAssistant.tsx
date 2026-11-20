@@ -24,16 +24,18 @@ type Props = {
   scale: RatingScale;
   /** Titre de l'œuvre, rappelé en sous-titre de la modale. */
   title: string;
-  /** Reçoit la note sur 10, déjà calée sur la granularité de l'échelle. */
-  onApply: (rating: number) => void;
+  /** Notes détaillées déjà enregistrées : l'assistant rouvre là où on l'a laissé. */
+  initial?: AssistantState | null;
+  /** Reçoit la note sur 10, déjà calée sur l'échelle, et le détail des critères. */
+  onApply: (rating: number, state: AssistantState) => void;
   onClose: () => void;
 };
 
 /** Une décimale, séparateur du reste de l'app (point, comme `formatRating`). */
 const fmt1 = (v: number) => v.toFixed(1);
 
-export default function RatingAssistant({ scale, title, onApply, onClose }: Props) {
-  const [state, setState] = useState<AssistantState>(initialState);
+export default function RatingAssistant({ scale, title, initial, onApply, onClose }: Props) {
+  const [state, setState] = useState<AssistantState>(() => initial ?? initialState());
   // On ouvre le premier groupe seulement : la modale tient à l'écran, et
   // l'enchaînement œuvre → expérience se fait naturellement. Les ajustements
   // restent fermés, ils sont optionnels.
@@ -288,7 +290,7 @@ export default function RatingAssistant({ scale, title, onApply, onClose }: Prop
               {formatRating(snapped, scale)}
               <span className={styles.scoreScale}>/{scale}</span>
             </div>
-            <button className={styles.apply} onClick={() => onApply(snapped)}>
+            <button className={styles.apply} onClick={() => onApply(snapped, state)}>
               Appliquer {formatRating(snapped, scale)}
             </button>
           </div>

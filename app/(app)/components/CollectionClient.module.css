@@ -45,38 +45,39 @@
 }
 
 .select {
-  padding: 7px 12px;
-  border-radius: 8px;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  color: var(--ink-dim);
-  font-size: 12px;
+  height: 36px;
+  border-radius: 999px;
+  background: none;
+  border: 1px solid rgba(244, 236, 226, 0.15);
+  color: var(--ink);
+  font-size: 13.5px;
   font-family: var(--font-geist-mono), monospace;
   cursor: pointer;
-  transition: border-color 0.15s;
+  transition: background var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast);
+  padding: 0 32px 0 16px;
   appearance: none;
   -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23a59689' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 10px center;
-  padding-right: 28px;
+  background-position: right 13px center;
 }
 
 .select:focus {
   outline: none;
-  border-color: var(--accent);
+  border-color: var(--gold);
 }
 
 .clearBtn {
-  padding: 7px 12px;
-  border-radius: 8px;
-  background: rgba(var(--accent-rgb), 0.08);
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: rgba(var(--accent-rgb), 0.1);
   border: 1px solid rgba(var(--accent-rgb), 0.3);
-  color: var(--accent);
-  font-size: 12px;
+  color: var(--accent-soft);
+  font-size: 13.5px;
   font-family: var(--font-geist-mono), monospace;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: background var(--dur-fast);
 }
 
 .clearBtn:hover {
@@ -84,19 +85,20 @@
 }
 
 .sortBtn {
-  padding: 7px 14px;
-  border-radius: 8px;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  color: var(--ink-dim);
-  font-size: 12px;
+  height: 36px;
+  border-radius: 999px;
+  background: none;
+  border: 1px solid rgba(244, 236, 226, 0.15);
+  color: var(--ink);
+  font-size: 13.5px;
   font-family: var(--font-geist-mono), monospace;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: background var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast);
+  padding: 0 16px;
 }
 
 .sortBtn:hover {
-  color: var(--ink);
+  border-color: rgba(244, 236, 226, 0.4);
 }
 
 .sortOn {
@@ -139,7 +141,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 7px 10px;
+  width: 36px;
+  padding: 0;
 }
 
 .searchField {
@@ -163,12 +166,13 @@
 
 .searchInput {
   width: 190px;
-  padding: 7px 26px 7px 12px;
-  border-radius: 8px;
+  height: 36px;
+  padding: 0 30px 0 16px;
+  border-radius: 999px;
   background: var(--panel);
   border: 1px solid var(--line);
   color: var(--ink);
-  font-size: 12px;
+  font-size: 13.5px;
   font-family: var(--font-geist-mono), monospace;
   transition: border-color 0.15s;
 }
@@ -179,7 +183,7 @@
 
 .searchInput:focus {
   outline: none;
-  border-color: var(--accent);
+  border-color: var(--gold);
 }
 
 /* Chrome/Safari ajoutent leur propre croix sur input[type=search] */
@@ -221,12 +225,12 @@
   gap: 6px;
   /* le chevron est un vrai élément ici, pas l'image de fond de `.select` */
   background-image: none;
-  padding-right: 10px;
+  padding-right: 14px;
 }
 
 .noteOn {
-  border-color: var(--ink-mute);
-  color: var(--ink);
+  border-color: var(--gold);
+  color: var(--gold);
 }
 
 .noteChevron {
@@ -240,17 +244,17 @@
 
 .notePanel {
   position: absolute;
-  top: calc(100% + 6px);
+  top: calc(100% + 8px);
   left: 0;
   z-index: 20;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 10px;
-  border-radius: 10px;
+  padding: 12px;
+  border-radius: 18px;
   background: var(--panel);
   border: 1px solid var(--line);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
 }
 
 .noteRow {
@@ -258,10 +262,10 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  font-size: 11px;
-  font-family: var(--font-geist-mono), monospace;
+  font-size: 13px;
   color: var(--ink-dim);
   white-space: nowrap;
+  font-family: var(--font-geist-mono), monospace;
 }
 
 /* ——— No result ——— */
@@ -270,7 +274,7 @@
   text-align: center;
   font-size: 14px;
   color: var(--ink-dim);
-  border: 1px dashed var(--line);
+  border: 1px dashed rgba(244, 236, 226, 0.15);
   border-radius: var(--radius);
 }
 
@@ -280,13 +284,8 @@
     align-items: flex-start;
   }
 
-  .select {
-    font-size: 11px;
-    padding: 6px 26px 6px 10px;
-  }
-
+  .select,
   .sortBtn {
-    font-size: 11px;
-    padding: 6px 10px;
+    font-size: 13px;
   }
 }

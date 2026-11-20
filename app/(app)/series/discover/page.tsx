@@ -8,12 +8,10 @@ import { fetchForYouSeries } from "@/lib/recommendations";
 import { parseProviders } from "@/lib/watch-providers";
 import { discoverQuery, parseDiscoverParams } from "@/lib/discover-params";
 import { getSeriesLibraryStatus } from "@/lib/library-status";
-import Topbar from "../../components/Topbar";
 import HeroCarousel from "../../components/HeroCarousel";
 import SeriesDiscoverFilters from "./SeriesDiscoverFilters";
 import SeriesDiscoverGrid from "./SeriesDiscoverGrid";
 import styles from "../../films/discover/discover.module.css";
-import { getGreeting } from "@/lib/greeting";
 
 export const metadata: Metadata = {
   title: "Découvrir des séries : du moment, populaires, mieux notées",
@@ -74,12 +72,8 @@ export default async function SeriesDiscoverPage({
     ).filter((entry): entry is readonly [number, string] => entry[1] !== null),
   ) as Record<number, string>;
 
-  const greeting = getGreeting();
-
   return (
     <div className={styles.page}>
-      <Topbar greeting={greeting} userName={session?.name ?? null} />
-
       {showHero && onAir.length > 0 && (
         <>
           <div className={styles.header}>

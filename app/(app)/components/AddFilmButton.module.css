@@ -1,21 +1,21 @@
 .btn {
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 8px 16px;
+  gap: 8px;
+  height: 40px;
+  padding: 0 18px;
   border-radius: 999px;
   background: var(--ink);
-  border: 1px solid var(--ink);
+  border: 0;
   color: var(--bg);
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 14px;
   cursor: pointer;
-  transition: opacity 0.18s;
+  transition: background 0.18s, color 0.18s;
   white-space: nowrap;
   font-family: var(--font-geist-mono), monospace;
-  letter-spacing: 0.02em;
 }
 
 .btn:hover {
-  opacity: 0.85;
+  background: var(--accent);
+  color: #fff;
 }

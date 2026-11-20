@@ -63,7 +63,12 @@ export default function tmdbImageLoader({
     const capped = Math.min(fitting ?? Number.POSITIVE_INFINITY, sourceWidth(size));
     if (!Number.isFinite(capped)) return src;
 
-    return `${TMDB_PREFIX}w${capped}/${path}`;
+    const url = `${TMDB_PREFIX}w${capped}/${path}`;
+    // Largeur demandée au-delà de la source : on renvoie la source telle
+    // quelle, et Next en conclut (à tort) que le loader ignore `width`. Le
+    // fragment, jamais envoyé au serveur ni pris en compte par le cache, rend
+    // l'URL distincte sans changer l'image téléchargée.
+    return url === src ? `${url}#w${capped}` : url;
   }
 
   if (src.startsWith(YOUTUBE_PREFIX)) return src;

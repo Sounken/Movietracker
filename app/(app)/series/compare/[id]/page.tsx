@@ -4,10 +4,8 @@ import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { compareSeries } from "@/lib/compare";
 import { Rating } from "@/lib/rating-scale";
-import Topbar from "../../../components/Topbar";
 import CompareClient from "../../../compare/[id]/CompareClient";
 import styles from "../../../compare/[id]/compare.module.css";
-import { getGreeting } from "@/lib/greeting";
 
 function Avatar({ url, name }: { url: string | null; name: string }) {
   if (url) {
@@ -43,12 +41,8 @@ export default async function SeriesComparePage({
   const myName = me.name ?? me.email.split("@")[0];
   const theirName = them.name ?? them.email.split("@")[0];
 
-  const greeting = getGreeting();
-
   return (
     <div className={styles.page}>
-      <Topbar greeting={greeting} userName={session.name} />
-
       <div className={styles.header}>
         <div className={styles.headerSub}>Social — Comparaison</div>
         <h1 className={styles.headerTitle}>Vos séries face à celles de {theirName}</h1>

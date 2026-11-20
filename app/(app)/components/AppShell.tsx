@@ -1,13 +1,15 @@
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import Sidebar from "./Sidebar";
+import AppTopbar from "./AppTopbar";
 import styles from "../app.module.css";
 import { computeXP, getLevelInfo } from "@/lib/xp";
 import { RatingScaleProvider } from "@/lib/rating-scale";
 import { toRatingScale } from "@/lib/rating";
 
 /**
- * Cadre de l'application : barre latérale + zone de contenu.
+ * Cadre de l'application : en-tête Nocturne + zone de contenu (la barre
+ * latérale ne sert plus que de barre du bas sur mobile).
  *
  * Extrait du layout du groupe `(app)` pour que les fiches film, série, acteur
  * et société — qui vivent dans `(standalone)` — en bénéficient aussi. Elles
@@ -57,18 +59,23 @@ export default async function AppShell({
   const filmLevel = getLevelInfo(computeXP(filmEntries as XpEntry[]));
   const seriesLevel = getLevelInfo(computeXP(seriesEntries as XpEntry[]));
 
+  const chromeProps = {
+    isAuthenticated: !!session,
+    userName: session?.name ?? null,
+    avatarUrl: user?.avatarUrl ?? null,
+    counts: { watchlist: watchlist as number, liked: liked as number },
+    seriesCounts: { watchlist: sWatchlist as number, liked: sLiked as number },
+    levelInfo: filmLevel,
+    seriesLevel,
+  };
+
   return (
     <RatingScaleProvider scale={toRatingScale(user?.ratingScale)}>
       <div className={flush ? `${styles.app} ${styles.appFlush}` : styles.app}>
-        <Sidebar
-          isAuthenticated={!!session}
-          userName={session?.name ?? null}
-          avatarUrl={user?.avatarUrl ?? null}
-          counts={{ watchlist: watchlist as number, liked: liked as number }}
-          seriesCounts={{ watchlist: sWatchlist as number, liked: sLiked as number }}
-          levelInfo={filmLevel}
-          seriesLevel={seriesLevel}
-        />
+        {/* Barre du bas sur mobile uniquement : sur grand écran, la
+            navigation vit dans l'en-tête (direction Nocturne). */}
+        <Sidebar {...chromeProps} />
+        <AppTopbar {...chromeProps} />
         <main className={flush ? styles.mainFlush : styles.main}>{children}</main>
       </div>
     </RatingScaleProvider>

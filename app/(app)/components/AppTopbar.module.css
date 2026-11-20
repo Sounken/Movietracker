@@ -1,0 +1,431 @@
+/* En-tête global, direction Nocturne. Transparent en haut de page, verre
+   sombre au défilement. Sur une page à hero (`data-hero`), il se pose sur
+   l'image : cf. app.module.css. */
+
+/* Géométrie commune à toutes les pages : marge latérale de 36px (celle du
+   contenu, cf. app.module.css) et rangée de 40px à 36px du haut — la même
+   distance des deux côtés du coin. Barre de 96px, rangée sur 36 → 76px. Au
+   défilement, elle remonte de 16px (transform, sans toucher à la mise en
+   page) : 80px visibles, rangée à 20px du haut. */
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  height: 96px;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 16px 36px 0;
+  transition: transform var(--dur-base) var(--ease-out), background var(--dur-base), backdrop-filter var(--dur-base), box-shadow var(--dur-base);
+}
+
+.bar[data-scrolled] {
+  transform: translateY(-16px);
+}
+
+.scrolled {
+  background: rgba(var(--bg-rgb), 0.72);
+  backdrop-filter: blur(18px) saturate(1.2);
+  box-shadow: 0 1px 0 rgba(244, 236, 226, 0.06);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+  white-space: nowrap;
+}
+
+.brand:hover {
+  opacity: 0.85;
+}
+
+/* Le logo fait 170x155 : on déclare à `next/image` un multiple exact (68x62)
+   et on fixe la taille d'affichage ici, `height: auto` pour garder le ratio. */
+.brandMark {
+  display: flex;
+  align-items: center;
+}
+
+.brandMark img {
+  width: 38px;
+  height: auto;
+}
+
+/* Mêmes police, taille et couleur que la marque de l'ancienne barre latérale */
+.brandName {
+  font-family: var(--font-serif), serif;
+  font-size: 27px;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.brandName em {
+  font-style: italic;
+  color: var(--accent-soft);
+}
+
+/* Films / Séries, pastille glissante */
+.world {
+  position: relative;
+  /* Deux colonnes égales : la pastille fait 50 % de large, chaque libellé
+     doit donc occuper exactement la moitié, quelle que soit sa longueur. */
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  /* Liquid glass (tokens dans globals.css) */
+  background: var(--glass-sheen), var(--glass-fill);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-shadow);
+  flex: none;
+}
+
+/* La pastille active est une lentille de verre plus claire qui glisse */
+.worldThumb {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc(50% - 6px);
+  border-radius: 999px;
+  background: var(--glass-lens);
+  box-shadow: var(--glass-lens-shadow);
+  transition: transform 0.32s var(--ease-out);
+  pointer-events: none;
+}
+
+.world[data-side="series"] .worldThumb {
+  transform: translateX(calc(100% + 4px));
+}
+
+.worldBtn {
+  position: relative;
+  z-index: 1;
+  height: 32px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 13.5px;
+  color: var(--ink-dim);
+  transition: color 0.2s ease 0.06s;
+}
+
+.worldBtn:hover {
+  color: var(--ink);
+}
+
+.worldOn,
+.worldOn:hover {
+  color: var(--ink);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  min-width: 0;
+}
+
+.nav > a,
+.moreBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0;
+  font-size: 14.5px;
+  color: rgba(244, 236, 226, 0.7);
+  white-space: nowrap;
+  transition: color var(--dur-fast);
+}
+
+.nav > a:hover,
+.moreBtn:hover {
+  color: var(--gold);
+}
+
+.nav > a.navOn,
+.moreBtn.navOn {
+  color: var(--ink);
+}
+
+/* Trait sous l'entrée active */
+.nav > a.navOn {
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+.moreBtn {
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 14.5px;
+  cursor: pointer;
+}
+
+.moreBtn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.count {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  color: var(--gold);
+}
+
+.spacer {
+  flex: 1;
+}
+
+.ic {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--glass-sheen), var(--glass-fill);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-shadow);
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex: none;
+  transition: background var(--dur-fast);
+}
+
+.ic:hover {
+  background: var(--glass-sheen), rgba(255, 255, 255, 0.14);
+}
+
+.ic svg {
+  width: 17px;
+  height: 17px;
+}
+
+.login {
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--bg);
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.login:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* ——— Menus déroulants ——— */
+.dropWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.menu {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 10px);
+  z-index: 45;
+  min-width: 200px;
+  padding: 6px;
+  border-radius: 18px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  animation: menuIn var(--dur-fast) var(--ease-out) backwards;
+}
+
+.menuRight {
+  left: auto;
+  right: 0;
+  min-width: 230px;
+}
+
+/* Keyframes locales : `riseIn` (globals.css) serait renommée par les CSS
+   Modules et ne correspondrait plus à rien. */
+@keyframes menuIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 0;
+  background: none;
+  text-align: left;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink-dim);
+  cursor: pointer;
+}
+
+.item:hover,
+.itemOn {
+  background: var(--hover);
+  color: var(--ink);
+}
+
+.sep {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--line);
+}
+
+.logout:hover {
+  color: var(--red-soft);
+}
+
+.menuHead {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px 12px;
+}
+
+.menuName {
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.menuSub {
+  font-size: 12.5px;
+  color: var(--ink-dim);
+}
+
+.xpTrack {
+  height: 3px;
+  margin-top: 8px;
+  border-radius: 3px;
+  background: var(--track);
+  overflow: hidden;
+}
+
+.xpFill {
+  display: block;
+  height: 100%;
+  background: var(--gold);
+}
+
+.avatarBtn {
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  display: block;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  overflow: hidden;
+}
+
+.avatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.searchPop {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 10px);
+  z-index: 45;
+  width: 400px;
+  animation: menuIn var(--dur-fast) var(--ease-out) backwards;
+}
+
+.searchPop > div {
+  min-width: 0;
+}
+
+/* ——— Largeurs intermédiaires : on resserre, puis on replie ——— */
+@media (max-width: 1360px) {
+  .bar {
+    gap: 20px;
+  }
+
+  .nav {
+    gap: 18px;
+  }
+}
+
+.itemCompact,
+.compactOnly {
+  display: none;
+}
+
+@media (max-width: 1180px) {
+  .nav > a:nth-child(n + 4) {
+    display: none;
+  }
+
+  .itemCompact {
+    display: flex;
+  }
+
+  .compactOnly {
+    display: flex;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Mobile : marge de 16px (celle du contenu), rangée à 24px du haut */
+  .bar {
+    height: 76px;
+    padding: 12px 16px 0;
+    gap: 10px;
+  }
+
+  .bar[data-scrolled] {
+    transform: translateY(-12px);
+  }
+
+  .brandName {
+    font-size: 22px;
+  }
+
+  .brandMark img {
+    width: 32px;
+  }
+
+  .world,
+  .nav {
+    display: none;
+  }
+
+  .searchPop {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    top: 70px;
+    width: auto;
+  }
+}

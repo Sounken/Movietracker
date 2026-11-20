@@ -283,31 +283,31 @@
   margin-bottom: 56px;
 }
 .btnHome {
-  padding: 12px 28px;
+  height: 48px;
+  padding: 0 24px;
   border-radius: 999px;
-  font-size: 14px;
-  background: var(--accent);
-  color: #fff;
+  font-size: 15px;
+  background: var(--ink);
+  color: var(--bg);
   border: 0;
   font-family: inherit;
-  font-weight: 500;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 9px;
-  box-shadow: 0 4px 20px rgba(var(--accent-rgb), 0.35);
-  transition: all 0.2s;
+  transition: background 0.2s, color 0.2s;
 }
-.btnHome:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.btnHome:hover { background: var(--accent); color: #fff; }
 .btnHome svg { width: 15px; height: 15px; }
 
 .btnGhost {
-  padding: 12px 24px;
+  height: 48px;
+  padding: 0 22px;
   border-radius: 999px;
-  font-size: 14px;
-  background: transparent;
-  color: var(--ink-dim);
-  border: 1px solid var(--line);
+  font-size: 15px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--ink);
+  border: 0;
   cursor: pointer;
   font-family: inherit;
   transition: all 0.2s;
@@ -315,7 +315,7 @@
   align-items: center;
   gap: 9px;
 }
-.btnGhost:hover { border-color: var(--ink-mute); color: var(--ink); }
+.btnGhost:hover { background: rgba(255, 255, 255, 0.16); }
 .btnGhost svg { width: 15px; height: 15px; }
 
 /* Suggestions */

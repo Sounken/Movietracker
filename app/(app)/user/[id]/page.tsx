@@ -87,7 +87,7 @@ export default async function PublicProfilePage({
   const joinedYear = new Date(user.createdAt).getFullYear();
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} data-hero>
       {/* Bannière */}
       <div
         className={styles.banner}

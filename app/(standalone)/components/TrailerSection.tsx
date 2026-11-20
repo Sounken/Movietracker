@@ -55,6 +55,9 @@ export default function TrailerSection({
               fill
               sizes="(max-width: 900px) 100vw, 720px"
               style={{ objectFit: "cover" }}
+              // Vignette YouTube à taille fixe : rien à redimensionner, et le
+              // loader la renverrait telle quelle (avertissement de Next).
+              unoptimized
             />
             <span className={styles.play}>
               <Play size={22} fill="currentColor" />

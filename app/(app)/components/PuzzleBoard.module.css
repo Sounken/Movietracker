@@ -4,7 +4,7 @@
 .board {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 22px;
   container: puzzle / inline-size;
 }
 
@@ -18,7 +18,7 @@
 
 .sectionSub {
   font-size: 12px;
-  color: var(--ink-mute);
+  color: var(--gold);
   margin-bottom: 4px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -28,21 +28,23 @@
 
 .title {
   font-family: var(--font-serif), serif;
-  font-size: 30px;
+  font-size: 34px;
   margin: 0;
   font-weight: 400;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
   color: var(--ink);
 }
 
 .streak {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--gold);
-  background: rgba(var(--gold-rgb), 0.1);
-  border: 1px solid rgba(var(--gold-rgb), 0.2);
+  background: rgba(var(--gold-rgb), 0.12);
   border-radius: 999px;
-  padding: 4px 12px;
+  height: 32px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
   white-space: nowrap;
 }
 
@@ -55,21 +57,22 @@
 
 .searchIcon {
   position: absolute;
-  left: 14px;
+  left: 20px;
   color: var(--ink-mute);
   pointer-events: none;
 }
 
 .searchInput {
   width: 100%;
-  padding: 13px 16px 13px 40px;
-  border-radius: 12px;
+  height: 54px;
+  padding: 0 20px 0 48px;
+  border-radius: 999px;
   background: var(--panel);
   border: 1px solid var(--line);
   color: var(--ink);
-  font-size: 14px;
+  font-size: 15px;
   font-family: inherit;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .searchInput::placeholder {
@@ -78,12 +81,13 @@
 
 .searchInput:focus {
   outline: none;
-  border-color: var(--accent);
+  border-color: var(--gold);
+  box-shadow: 0 0 0 4px rgba(var(--gold-rgb), 0.12);
 }
 
 .suggestions {
   position: absolute;
-  top: calc(100% + 6px);
+  top: calc(100% + 8px);
   left: 0;
   right: 0;
   z-index: 30;
@@ -96,21 +100,21 @@
   max-height: min(360px, 60vh);
   overflow-y: auto;
   padding: 6px;
-  border-radius: 12px;
+  border-radius: 20px;
   background: var(--panel);
   border: 1px solid var(--line);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
 }
 
 .suggestion {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   flex: none;
-  padding: 7px 8px;
-  border-radius: 8px;
+  padding: 7px 10px;
+  border-radius: 14px;
   color: var(--ink);
-  font-size: 13px;
+  font-size: 14px;
   cursor: pointer;
   transition: background 0.15s;
 }
@@ -119,7 +123,7 @@
    fois laisseraient le joueur deviner laquelle Entrée va jouer. */
 .suggestionActive {
   background: var(--hover);
-  box-shadow: inset 2px 0 0 var(--accent);
+  box-shadow: inset 2px 0 0 var(--gold);
 }
 
 /* Déjà proposé : visible mais inerte. Le retirer de la liste laisserait
@@ -372,12 +376,13 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
+  height: 34px;
+  padding: 0 14px;
   border-radius: 999px;
-  border: 1px solid var(--line);
-  background: var(--panel);
+  border: 1px solid rgba(244, 236, 226, 0.15);
+  background: transparent;
   font: inherit;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--ink-dim);
 }
 
@@ -412,11 +417,11 @@
 
 /* ——— États ——— */
 .unavailable {
-  padding: 20px 22px;
-  border-radius: var(--radius);
+  padding: 22px 24px;
+  border-radius: 24px;
   background: var(--panel);
   border: 1px solid var(--line);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.6;
   color: var(--ink-dim);
 }
@@ -436,14 +441,14 @@
    qui ouvre la page pour la première fois. */
 .instruction {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--ink-dim);
 }
 
 .empty {
   padding: 20px 22px;
-  border: 1px dashed var(--line);
-  border-radius: var(--radius);
+  border: 1px dashed rgba(244, 236, 226, 0.15);
+  border-radius: 24px;
   font-size: 13px;
   line-height: 1.6;
   color: var(--ink-dim);

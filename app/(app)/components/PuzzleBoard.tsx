@@ -306,7 +306,7 @@ export default function PuzzleBoard({
                     <div key={h.key} className={`${styles.hint} ${styles.hintLocked}`}>
                       <Lock size={12} />
                       <span>
-                        {h.label} · dans {left} essai{left > 1 ? "s" : ""}
+                        {h.label} • dans {left} essai{left > 1 ? "s" : ""}
                       </span>
                     </div>
                   );

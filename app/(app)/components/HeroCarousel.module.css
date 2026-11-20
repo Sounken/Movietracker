@@ -1,10 +1,9 @@
 .wrap {
   position: relative;
-  height: 520px;
-  margin-bottom: 64px;
-  border-radius: 20px;
+  height: 560px;
+  margin-bottom: 56px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  border: 1px solid var(--line);
 }
 
 /* ——— Background ——— */
@@ -22,11 +21,10 @@
   position: absolute;
   inset: 0;
   background: linear-gradient(
-    105deg,
-    rgba(13, 11, 10, 0.97) 0%,
-    rgba(13, 11, 10, 0.82) 36%,
-    rgba(13, 11, 10, 0.35) 65%,
-    rgba(13, 11, 10, 0.05) 100%
+    90deg,
+    rgba(var(--bg-rgb), 0.92) 0%,
+    rgba(var(--bg-rgb), 0.5) 38%,
+    rgba(var(--bg-rgb), 0) 62%
   );
 }
 
@@ -35,7 +33,7 @@
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: linear-gradient(0deg, rgba(0, 0, 0, 0.65) 0%, transparent 32%);
+  background: linear-gradient(0deg, var(--bg) 0%, transparent 40%);
 }
 
 /* ——— Content ——— */
@@ -55,22 +53,22 @@
 }
 
 .lab {
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 10px;
-  color: var(--accent);
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
+  font-size: 13px;
+  color: var(--accent-soft);
   margin-bottom: 14px;
   display: flex;
   align-items: center;
   gap: 10px;
+  font-family: var(--font-geist-mono), monospace;
 }
 
 .lab::before {
   content: "";
-  width: 24px;
-  height: 1px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
   background: var(--accent);
+  box-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.2);
 }
 
 /* 42px et non 52 : c'est le seul titre du site contraint en largeur (54% du
@@ -90,8 +88,7 @@
 }
 
 .title em {
-  font-style: italic;
-  color: var(--accent);
+  font-style: normal;
 }
 
 /* Logo officiel du film, à la place du titre texte.
@@ -121,7 +118,7 @@
   display: flex;
   gap: 8px;
   align-items: center;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--ink-dim);
   margin-bottom: 18px;
   flex-wrap: wrap;
@@ -139,19 +136,17 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  background: rgba(var(--accent-rgb), 0.13);
-  color: var(--accent);
-  padding: 3px 9px;
-  border-radius: 5px;
+  color: var(--gold);
+  padding: 3px 10px;
+  border-radius: 999px;
   font-family: var(--font-geist-mono), monospace;
-  font-size: 11px;
-  font-weight: 500;
-  border: 1px solid rgba(var(--accent-rgb), 0.22);
+  font-size: 12px;
+  border: 1px solid rgba(var(--gold-rgb), 0.35);
 }
 
 .synopsis {
-  font-size: 13.5px;
-  line-height: 1.65;
+  font-size: 15px;
+  line-height: 1.6;
   color: var(--ink-dim);
   margin: 0 0 28px;
   max-width: 410px;
@@ -171,43 +166,43 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 11px 22px;
+  height: 48px;
+  padding: 0 24px;
   border-radius: 999px;
-  font-size: 13px;
+  font-size: 15px;
   cursor: pointer;
   border: 0;
   font-family: inherit;
   text-decoration: none;
-  transition: all 0.2s;
-  background: var(--accent);
-  color: #fff;
-  font-weight: 500;
-  box-shadow: 0 4px 20px rgba(var(--accent-rgb), 0.3);
+  transition: background 0.2s, color 0.2s;
+  background: var(--ink);
+  color: var(--bg);
 }
 
 .btnPrimary:hover {
-  filter: brightness(1.1);
-  transform: translateY(-1px);
+  background: var(--accent);
+  color: #fff;
 }
 
 .btnGhost {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 11px 22px;
+  height: 48px;
+  padding: 0 24px;
   border-radius: 999px;
-  font-size: 13px;
+  font-size: 15px;
   cursor: pointer;
   font-family: inherit;
-  transition: all 0.2s;
-  background: rgba(255, 255, 255, 0.08);
+  transition: background 0.2s;
+  background: rgba(255, 255, 255, 0.12);
   color: var(--ink);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(8px);
+  border: 0;
+  backdrop-filter: blur(16px);
 }
 
 .btnGhost:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.2);
 }
 
 /* ——— Poster ——— */
@@ -218,7 +213,7 @@
   transform: translateY(-50%);
   width: 210px;
   height: 315px;
-  border-radius: 14px;
+  border-radius: 20px;
   overflow: hidden;
   background-size: cover;
   background-position: center;
@@ -245,7 +240,7 @@
 .thumb {
   width: 52px;
   height: 78px;
-  border-radius: 7px;
+  border-radius: 10px;
   position: relative;
   overflow: hidden;
   flex-shrink: 0;
@@ -266,7 +261,7 @@
 }
 
 .thumbOn {
-  border-color: var(--accent);
+  border-color: var(--gold);
   opacity: 1;
   filter: none;
   transform: translateY(-6px) scale(1.06);
@@ -295,9 +290,7 @@
 }
 
 .arrow:hover {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
+  background: rgba(255, 255, 255, 0.2);
 }
 
 /* ——— Progress bar ——— */
@@ -323,7 +316,7 @@
 .progressFill {
   height: 100%;
   width: 100%;
-  background: var(--accent);
+  background: var(--ink);
   transform-origin: left;
   transition: transform 0.06s linear;
   /* Justifié par l'animation continue ; à ne pas généraliser. */
@@ -337,7 +330,7 @@
     /* 520 -> 420 : à hauteur de bureau sur une colonne étroite, l'affiche
        était presque entièrement recouverte par le texte et son voile. */
     min-height: 420px;
-    border-radius: 14px;
+    border-radius: 22px;
   }
 
   /* Le voile oblique du bureau (105deg) s'éteint à 65% de la largeur : sur

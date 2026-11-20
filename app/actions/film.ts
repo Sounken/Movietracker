@@ -154,6 +154,8 @@ export async function deleteRating(tmdbId: number) {
       data: { rating: null, review: "" },
     });
   }
+  // Sans note, plus de détail à ré-afficher
+  await prisma.ratingDetail.deleteMany({ where: { userId: session.userId, media: "movie", tmdbId } });
   await track(forgetRating(session.userId, "movie", tmdbId));
 
   revalidateFilmPages(tmdbId);

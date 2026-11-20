@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import styles from "./actor.module.css";
 
@@ -10,6 +9,10 @@ const BackIcon = () => (
   </svg>
 );
 
+/**
+ * Retour des fiches acteur et société. La marque et la recherche vivent
+ * désormais dans l'en-tête global (AppTopbar).
+ */
 export default function ActorTopbar() {
   const router = useRouter();
   return (
@@ -17,10 +20,6 @@ export default function ActorTopbar() {
       <button className={styles.backBtn} onClick={() => router.back()}>
         <BackIcon /> <span>Retour</span>
       </button>
-      {/* Logo cliquable : retour à l'accueil films. */}
-      <Link href="/films" className={styles.brand} aria-label="Retour à l'accueil">
-        Movie<em>tracker</em>
-      </Link>
     </div>
   );
 }

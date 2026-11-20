@@ -6,8 +6,6 @@ import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { MAX_GROUP_SIZE, mutualFriends, tonightSuggestions } from "@/lib/tonight";
 import { formatRuntime } from "@/lib/tmdb";
-import Topbar from "../../components/Topbar";
-import { getGreeting } from "@/lib/greeting";
 import TonightControls from "./TonightControls";
 import DrawButton from "./DrawButton";
 import styles from "./ce-soir.module.css";
@@ -49,7 +47,6 @@ export default async function TonightPage({
 
   return (
     <div>
-      <Topbar greeting={getGreeting()} userName={session.name} />
 
       <div className={styles.head}>
         <div className={styles.sectionSub}>Social</div>
@@ -87,7 +84,7 @@ export default async function TonightPage({
           <div className={styles.resultsHead}>
             <span className={styles.count}>
               {films.length} film{films.length > 1 ? "s" : ""}
-              {groupProviders.length > 0 && <> · plateformes du groupe : {groupProviders.join(", ")}</>}
+              {groupProviders.length > 0 && <> • plateformes du groupe : {groupProviders.join(", ")}</>}
             </span>
             <DrawButton
               candidates={films
@@ -97,11 +94,11 @@ export default async function TonightPage({
           </div>
 
           <ul className={styles.grid}>
-            {films.map((f) => (
+            {films.map((f, i) => (
               <li key={f.tmdbId} className={styles.card}>
                 <Link href={`/film/${f.tmdbId}`} className={styles.posterLink}>
                   {f.posterUrl ? (
-                    <Image src={f.posterUrl} alt="" width={200} height={300} className={styles.poster} />
+                    <Image src={f.posterUrl} alt="" width={200} height={300} className={styles.poster} loading={i < 6 ? "eager" : undefined} />
                   ) : (
                     <span className={styles.poster} />
                   )}
@@ -116,7 +113,7 @@ export default async function TonightPage({
                     {f.title}
                   </Link>
                   <div className={styles.meta}>
-                    {[f.year, f.runtime ? formatRuntime(f.runtime) : null].filter(Boolean).join(" · ")}
+                    {[f.year, f.runtime ? formatRuntime(f.runtime) : null].filter(Boolean).join(" • ")}
                   </div>
                   <div className={styles.avatars} aria-label={`Envie de : ${f.wantedBy.map((id) => people.get(id)?.name).join(", ")}`}>
                     {f.wantedBy.map((id) => {

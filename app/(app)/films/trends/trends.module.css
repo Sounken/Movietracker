@@ -1,5 +1,6 @@
 .page {
-  padding: 36px 48px 80px;
+  /* Les marges viennent du cadre (.main) */
+  padding: 0 0 40px;
 }
 
 /* Header */
@@ -12,12 +13,11 @@
   flex-wrap: wrap;
 }
 .headerSub {
-  font-size: 10px;
-  letter-spacing: 0.18em;
+  font-size: 12px;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--ink-mute);
-  margin-bottom: 4px;
-  font-weight: 500;
+  color: var(--gold);
+  margin-bottom: 6px;
 }
 .headerTitle {
   font-family: var(--font-serif, serif);
@@ -29,30 +29,34 @@
 
 /* Period pills */
 .periodPills {
+  /* Segmenté, comme les onglets Nocturne */
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.pill {
-  padding: 7px 14px;
+  gap: 4px;
+  padding: 4px;
   border-radius: 999px;
-  font-size: 12px;
   background: var(--panel);
   border: 1px solid var(--line);
+}
+.pill {
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font-size: 13.5px;
+  background: none;
+  border: 0;
   color: var(--ink-dim);
   cursor: pointer;
   transition: all 0.18s;
   font-family: var(--font-geist-mono, monospace);
-  letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
 }
 .pill:hover {
   color: var(--ink);
-  border-color: var(--ink-mute);
 }
 .pillOn {
   background: var(--ink);
   color: var(--bg);
-  border-color: var(--ink);
 }
 
 /* Stats grid */
@@ -67,17 +71,18 @@
 .statCard {
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 20px 16px;
+  border-radius: 24px;
+  padding: 22px 22px 20px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 .statIcon {
   font-size: 18px;
   line-height: 1;
   margin-bottom: 4px;
-  opacity: 0.7;
+  color: var(--gold);
+  opacity: 0.8;
 }
 /* ——— Chiffres en New Kansas ———
    Les nombres de cette page passent de Geist Mono à la serif de titrage.
@@ -93,17 +98,15 @@
 .statValue {
   font-family: var(--font-serif), serif;
   font-variant-numeric: tabular-nums;
-  font-size: 22px;
+  font-size: 40px;
+  line-height: 1;
   font-weight: 400;
   color: var(--ink);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
 }
 .statLabel {
-  font-size: 11px;
-  color: var(--ink-mute);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 500;
+  font-size: 12.5px;
+  color: var(--ink-dim);
 }
 
 /* Layout */
@@ -137,39 +140,23 @@
 .section {
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: 24px;
   overflow: hidden;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
 }
 .sectionHead {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 16px 20px;
+  padding: 18px 22px;
   border-bottom: 1px solid var(--line);
-  /* Teinte à peine plus soutenue que le corps : la barre de titre se lit
-     comme un en-tête, pas comme la première ligne du contenu. */
-  background: rgba(255, 255, 255, 0.02);
 }
 
-/* Filet d'accent devant le titre, pour marquer le début d'une partie. */
-.sectionTitle::before {
-  content: "";
-  display: inline-block;
-  width: 3px;
-  height: 12px;
-  border-radius: 2px;
-  background: var(--accent);
-  margin-right: 9px;
-  vertical-align: -1px;
-}
 .sectionTitle {
   font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--ink-mute);
+  color: var(--gold);
 }
 .sectionCount {
   background: var(--bg);
@@ -185,27 +172,28 @@
 /* Tabs */
 .tabs {
   display: flex;
-  gap: 6px;
+  gap: 4px;
 }
 .tab {
-  padding: 5px 11px;
+  height: 30px;
+  padding: 0 12px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 12.5px;
   background: transparent;
-  border: 1px solid var(--line);
-  color: var(--ink-mute);
+  border: 1px solid rgba(244, 236, 226, 0.15);
+  color: var(--ink-dim);
   cursor: pointer;
   transition: all 0.15s;
   font-family: var(--font-geist-mono, monospace);
 }
 .tab:hover {
   color: var(--ink);
-  border-color: var(--ink-mute);
+  border-color: rgba(244, 236, 226, 0.4);
 }
 .tabOn {
-  background: var(--accent);
-  color: #fff;
-  border-color: var(--accent);
+  background: var(--ink);
+  color: var(--bg);
+  border-color: var(--ink);
 }
 
 .empty {
@@ -222,22 +210,22 @@
 .rankItem {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 16px;
+  gap: 14px;
+  padding: 10px 20px;
   transition: background 0.15s;
   text-decoration: none;
   color: inherit;
 }
 .rankItem:hover {
-  background: rgba(var(--accent-rgb), 0.04);
+  background: var(--hover);
 }
 .rankNum {
   font-family: var(--font-serif), serif;
   font-variant-numeric: tabular-nums;
-  font-size: 13px;
+  font-size: 18px;
   font-weight: 400;
   color: var(--ink-mute);
-  width: 20px;
+  width: 24px;
   text-align: right;
   flex-shrink: 0;
 }
@@ -245,17 +233,17 @@
   color: var(--gold);
 }
 .rankPoster {
-  width: 36px;
-  height: 54px;
-  border-radius: 4px;
+  width: 40px;
+  height: 60px;
+  border-radius: 8px;
   object-fit: cover;
   flex-shrink: 0;
   background: var(--bg);
 }
 .rankPosterFallback {
-  width: 36px;
-  height: 54px;
-  border-radius: 4px;
+  width: 40px;
+  height: 60px;
+  border-radius: 8px;
   background: var(--bg);
   border: 1px solid var(--line);
   flex-shrink: 0;
@@ -265,8 +253,7 @@
   min-width: 0;
 }
 .rankTitle {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 14.5px;
   color: var(--ink);
   white-space: nowrap;
   overflow: hidden;
@@ -282,15 +269,15 @@
   text-overflow: ellipsis;
 }
 .rankBar {
-  height: 3px;
-  background: var(--line);
+  height: 4px;
+  background: var(--track);
   border-radius: 999px;
-  margin-top: 7px;
+  margin-top: 8px;
   overflow: hidden;
 }
 .rankBarFill {
   height: 100%;
-  background: linear-gradient(90deg, var(--accent), var(--accent-soft));
+  background: linear-gradient(90deg, var(--accent), var(--gold));
   border-radius: 999px;
   min-width: 4px;
 }
@@ -302,20 +289,18 @@
   font-variant-numeric: tabular-nums;
   font-size: 12px;
   color: var(--ink-dim);
-  background: var(--bg);
-  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.06);
   border-radius: 999px;
-  padding: 2px 9px;
+  padding: 3px 10px;
 }
 .rankRating {
   font-family: var(--font-serif), serif;
   font-variant-numeric: tabular-nums;
   font-size: 12px;
   color: var(--gold);
-  background: rgba(var(--gold-rgb), 0.1);
-  border: 1px solid rgba(var(--gold-rgb), 0.2);
+  background: rgba(var(--gold-rgb), 0.12);
   border-radius: 999px;
-  padding: 2px 9px;
+  padding: 3px 10px;
 }
 
 /* Genre bars */
@@ -336,8 +321,7 @@
   justify-content: space-between;
 }
 .genreName {
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 13.5px;
   color: var(--ink);
 }
 .genrePercent {
@@ -348,14 +332,13 @@
 }
 .genreTrack {
   height: 5px;
-  background: var(--bg);
+  background: var(--track);
   border-radius: 999px;
   overflow: hidden;
-  border: 1px solid var(--line);
 }
 .genreBar {
   height: 100%;
-  background: linear-gradient(90deg, var(--accent), var(--accent-soft));
+  background: linear-gradient(90deg, var(--accent), var(--gold));
   border-radius: 999px;
   min-width: 3px;
   transition: width 0.4s ease;
@@ -377,10 +360,10 @@
 }
 
 .userCard:hover .userName {
-  color: var(--accent);
+  color: var(--gold);
 }
 .userCard:hover {
-  background: rgba(var(--accent-rgb), 0.04);
+  background: var(--hover);
 }
 .userRank {
   font-family: var(--font-serif), serif;
@@ -452,7 +435,7 @@
   border-bottom: 0;
 }
 .reviewCard:hover {
-  background: rgba(var(--accent-rgb), 0.03);
+  background: var(--hover);
 }
 .reviewPoster {
   width: 48px;
@@ -485,7 +468,7 @@
 }
 
 .reviewUser:hover {
-  color: var(--accent);
+  color: var(--gold);
 }
 .reviewFilm {
   color: var(--accent-soft);
@@ -527,7 +510,7 @@
 }
 @media (max-width: 900px) {
   .page {
-    padding: 20px 16px 80px;
+    padding: 0 0 40px;
   }
   .cols {
     grid-template-columns: minmax(0, 1fr);
